@@ -1,9 +1,9 @@
-import { ApiError, newWorkspace } from './domain.mjs';
+import { ApiError, newWorkspace, apiKeyRecord, changedKeys } from './domain.mjs';
 export class MemoryStore {
   constructor() {
     this.workspaces = new Map();
     this.users = new Map();
-    this.keyIndex = new Map();
+    this.apiKeys = new Map();
     this.locks = new Map();
     this.config = {
       credits: { starter: 2000, growth: 10000, business: 40000 },
@@ -38,9 +38,11 @@ export class MemoryStore {
     try {
       const w = await this.getWorkspace(id);
       if (!w) throw new ApiError(404, 'workspace_missing', 'Workspace not found.');
-      const result = await mutate(w);
+      const previousKeys = structuredClone(w.keys),
+        result = await mutate(w);
       this.workspaces.set(id, w);
-      for (const key of w.keys) this.keyIndex.set(key.hash, { workspaceId: id, id: key.id });
+      for (const key of changedKeys(previousKeys, w.keys))
+        this.apiKeys.set(key.hash, apiKeyRecord(id, key));
       return result;
     } finally {
       release();
@@ -48,7 +50,8 @@ export class MemoryStore {
     }
   }
   async findKey(hash) {
-    return this.keyIndex.get(hash) || null;
+    const record = this.apiKeys.get(hash);
+    return record ? { ...structuredClone(record), id: record.keyId } : null;
   }
   async getConfig() {
     return structuredClone(this.config);
@@ -86,19 +89,17 @@ export class FirestoreStore {
         snapshot = await transaction.get(ref);
       if (!snapshot.exists) throw new ApiError(404, 'workspace_missing', 'Workspace not found.');
       const workspace = snapshot.data(),
-        previousHashes = new Set(workspace.keys.map((key) => key.hash)),
+        previousKeys = structuredClone(workspace.keys),
         result = await mutate(workspace);
       transaction.set(ref, workspace);
-      for (const key of workspace.keys.filter((key) => !previousHashes.has(key.hash)))
-        transaction.set(this.db.doc(`consoleKeyIndex/${key.hash}`), {
-          workspaceId: id,
-          id: key.id,
-        });
+      for (const key of changedKeys(previousKeys, workspace.keys))
+        transaction.set(this.db.doc(`apiKeys/${key.hash}`), apiKeyRecord(id, key));
       return result;
     });
   }
   async findKey(hash) {
-    return (await this.db.doc(`consoleKeyIndex/${hash}`).get()).data() || null;
+    const record = (await this.db.doc(`apiKeys/${hash}`).get()).data();
+    return record ? { ...record, id: record.keyId } : null;
   }
   async getConfig() {
     return (

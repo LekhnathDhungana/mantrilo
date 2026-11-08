@@ -62,6 +62,24 @@ export function log(workspace, entry) {
   workspace.logs.unshift({ id: randomUUID(), at: new Date().toISOString(), ...entry });
   workspace.logs = workspace.logs.slice(0, 200);
 }
+// One document per key (apiKeys/{sha256}) so the public API resolves and revokes keys with a
+// single read/write. The raw secret is never stored; only its hash and a display prefix.
+export function apiKeyRecord(workspaceId, key) {
+  return {
+    workspaceId,
+    keyId: key.id,
+    name: key.name,
+    prefix: key.prefix,
+    environment: key.environment,
+    status: key.status,
+    createdAt: key.createdAt,
+  };
+}
+// Keys whose index record must be written: new keys and keys whose status changed.
+export function changedKeys(previousKeys, keys) {
+  const before = new Map(previousKeys.map((key) => [key.hash, key.status]));
+  return keys.filter((key) => before.get(key.hash) !== key.status);
+}
 export function publicWorkspace(workspace) {
   const copy = structuredClone(workspace);
   copy.keys = copy.keys.map(({ hash: _hash, ...key }) => key);
