@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Sandbox",
+    "price": 0,
+    "requests": "1,000",
+    "audio": "Sample audio only",
+    "catalog": "Sample catalog for testing",
+    "products": "Testing only",
+    "support": "No promised support level"
+  },
+  {
+    "name": "Starter",
+    "price": 49,
+    "requests": "50,000",
+    "audio": "10 GB",
+    "catalog": "Full available catalog",
+    "products": "1",
+    "support": "Email support"
+  },
+  {
+    "name": "Growth",
+    "price": 149,
+    "requests": "250,000",
+    "audio": "50 GB",
+    "catalog": "Full available catalog",
+    "products": "3",
+    "support": "Priority email support"
+  },
+  {
+    "name": "Business",
+    "price": 399,
+    "requests": "1,000,000",
+    "audio": "200 GB",
+    "catalog": "Full available catalog",
+    "products": "10",
+    "support": "Integration assistance"
+  }
+]

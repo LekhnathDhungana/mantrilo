@@ -1,0 +1,7 @@
+rules_version = '2';
+service firebase.storage {
+ match /b/{bucket}/o {
+  // No public audio delivery until catalog rights and signed URL flows exist.
+  match /{allPaths=**} { allow read, write: if false; }
+ }
+}

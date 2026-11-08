@@ -1,0 +1,68 @@
+{
+  "/": {
+    "title": "Hindu Content API for Apps & Websites | Mantrilo",
+    "description": "Hindu content and astrology APIs for developers building apps and websites. Explore mantras, shlokas, sacred audio, shastra books, and integration options.",
+    "label": "Home",
+    "indexable": true
+  },
+  "/mantra-shloka-api": {
+    "title": "Mantra & Shloka API for Developers | Mantrilo",
+    "description": "Explore Mantrilo’s approach to Sanskrit verses, transliteration, translation, meaning, and source references for apps and websites. Review sample structures.",
+    "label": "Mantra & shloka API",
+    "indexable": true
+  },
+  "/sacred-audio-api": {
+    "title": "Sacred Audio API for Apps & Websites | Mantrilo",
+    "description": "Plan linked sacred-audio experiences with Mantrilo. Explore recording metadata, content relationships, monthly data-delivery allowances, and integration limits.",
+    "label": "Sacred audio API",
+    "indexable": true
+  },
+  "/shastra-books-api": {
+    "title": "Hindu Scripture & Shastra Books API | Mantrilo",
+    "description": "Explore structured Hindu scripture and religious-book integration with Mantrilo: books, chapters, verses, source context, and illustrative reading workflows.",
+    "label": "Shastras & books API",
+    "indexable": true
+  },
+  "/astrology-api": {
+    "title": "Astrology API for Developers | Mantrilo",
+    "description": "Explore astrology integration for apps and websites with Mantrilo. Review service configuration, separate credit accounting, and API access requirements.",
+    "label": "Astrology API",
+    "indexable": true
+  },
+  "/pricing": {
+    "title": "Mantrilo API Pricing: Sandbox to Business",
+    "description": "Compare Mantrilo’s monthly API plans: Free, $49, $149, and $399, with request limits, audio data delivery, catalog access, and customer-product allowances.",
+    "label": "Pricing",
+    "indexable": true
+  },
+  "/docs": {
+    "title": "Mantrilo API Integration Planning Guide",
+    "description": "Plan a server-side Mantrilo integration, review illustrative request and content structures, protect API credentials, and confirm catalog coverage before building.",
+    "label": "Integration guide",
+    "indexable": true
+  },
+  "/access": {
+    "title": "Prepare a Mantrilo API Access Request",
+    "description": "Prepare a local API access request or astrology inquiry for Mantrilo. No account, subscription, or server submission is created.",
+    "label": "Request access",
+    "indexable": false
+  },
+  "/privacy": {
+    "title": "Privacy & Data Handling Status | Mantrilo",
+    "description": "Understand how this Mantrilo preview prepares request drafts locally and which privacy-policy details remain to be supplied before launch.",
+    "label": "Privacy",
+    "indexable": false
+  },
+  "/terms": {
+    "title": "Website Terms Status | Mantrilo",
+    "description": "Review the current status of Mantrilo website and service terms. Production access, billing, and final service agreements are not connected.",
+    "label": "Terms",
+    "indexable": false
+  },
+  "/license": {
+    "title": "Content License Status | Mantrilo",
+    "description": "Review Mantrilo’s content-licensing status before commercial integration. Final license documentation and content-specific rights must be confirmed.",
+    "label": "Content license",
+    "indexable": false
+  }
+}

@@ -1,0 +1,10 @@
+node_modules
+dist
+.git
+.expo
+.env*
+*.log
+developer/node_modules
+developer/dist
+developer/.expo
+**/.env*

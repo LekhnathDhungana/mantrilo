@@ -1,0 +1,2 @@
+import { Text, ScrollView } from 'react-native';
+export default function Login(){return <ScrollView contentContainerStyle={{padding:30,paddingTop:80,gap:20,backgroundColor:'#faf8f2'}}><Text style={{fontSize:32}}>Mantrilo Developer Console</Text><Text>The console uses secure, HTTP-only browser sessions. Open the console’s configured HTTPS address in your mobile browser to sign in. No native account or credentials are stored by this screen.</Text></ScrollView>;}

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "mantrilo",
+    "name": "Mantrilo",
     "slug": "mantrilo",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -18,7 +18,14 @@
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "favicon": "./assets/mantrilo-favicon.png",
+      "output": "static",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar"
+    ],
+    "scheme": "mantrilo"
   }
 }
