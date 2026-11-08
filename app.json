@@ -22,10 +22,7 @@
       "output": "static",
       "bundler": "metro"
     },
-    "plugins": [
-      "expo-router",
-      "expo-status-bar"
-    ],
+    "plugins": ["expo-router", "expo-status-bar"],
     "scheme": "mantrilo"
   }
 }

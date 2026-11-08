@@ -1,4 +1,65 @@
 import { Link } from 'expo-router';
 import PageShell from './PageShell.web';
 import PricingTables from './PricingTables.web';
-export default function PricingPage() { return <PageShell path="/pricing"><section className="wrap product-hero compact-hero"><div className="eyebrow">API PRICING / MONTHLY BILLING</div><h1>Content plans that grow<br/><em>with your product.</em></h1><p className="product-intro">Compare monthly API requests, audio data delivery, catalog access, and customer-product allowances. A customer product means an app or website covered by the plan.</p><div className="notice">Astrology is separate from the content plans below. Add-on billing and credit costs require configuration. Requests prepare a draft; live account provisioning and checkout are not connected.</div></section><PricingTables /><section className="wrap related-section"><h2>Before choosing your plan.</h2><div className="pricing-explainer"><article><h3>Review available content</h3><p>Paid plans include available mantras, shlokas, sacred audio, shastra books, and discovery for commercial integration, subject to the documented content license. Confirm the specific titles, recordings, and language coverage your product needs.</p><Link className="text-link" href="/shastra-books-api">Explore book structures →</Link></article><article><h3>Understand delivery and products</h3><p>All allowances reset monthly. Audio is measured as delivered data, not storage. A customer product is an app or website: choose a plan that covers your intended product count and review the license before distribution.</p><Link className="text-link" href="/license">Content license status →</Link></article><article><h3>Prepare your integration</h3><p>The integration guide separates illustrative structures from a production contract. Confirm endpoints, authentication, request handling, and catalog coverage before implementation.</p><Link className="text-link" href="/docs">Read the planning guide →</Link></article></div></section></PageShell>; }
+export default function PricingPage() {
+  return (
+    <PageShell path="/pricing">
+      <section className="wrap product-hero compact-hero">
+        <div className="eyebrow">API PRICING / MONTHLY BILLING</div>
+        <h1>
+          Content plans that grow
+          <br />
+          <em>with your product.</em>
+        </h1>
+        <p className="product-intro">
+          Compare monthly API requests, audio data delivery, catalog access, and customer-product
+          allowances. A customer product means an app or website covered by the plan.
+        </p>
+        <div className="notice">
+          Astrology is separate from the content plans below. Add-on billing and credit costs
+          require configuration. Requests prepare a draft; live account provisioning and checkout
+          are not connected.
+        </div>
+      </section>
+      <PricingTables />
+      <section className="wrap related-section">
+        <h2>Before choosing your plan.</h2>
+        <div className="pricing-explainer">
+          <article>
+            <h3>Review available content</h3>
+            <p>
+              Paid plans include available mantras, shlokas, sacred audio, shastra books, and
+              discovery for commercial integration, subject to the documented content license.
+              Confirm the specific titles, recordings, and language coverage your product needs.
+            </p>
+            <Link className="text-link" href="/shastra-books-api">
+              Explore book structures →
+            </Link>
+          </article>
+          <article>
+            <h3>Understand delivery and products</h3>
+            <p>
+              All allowances reset monthly. Audio is measured as delivered data, not storage. A
+              customer product is an app or website: choose a plan that covers your intended product
+              count and review the license before distribution.
+            </p>
+            <Link className="text-link" href="/license">
+              Content license status →
+            </Link>
+          </article>
+          <article>
+            <h3>Prepare your integration</h3>
+            <p>
+              The integration guide separates illustrative structures from a production contract.
+              Confirm endpoints, authentication, request handling, and catalog coverage before
+              implementation.
+            </p>
+            <Link className="text-link" href="/docs">
+              Read the planning guide →
+            </Link>
+          </article>
+        </div>
+      </section>
+    </PageShell>
+  );
+}

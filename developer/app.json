@@ -1,1 +1,9 @@
-{"expo":{"name":"Mantrilo Developer Console","slug":"mantrilo-developer","scheme":"mantrilo-developer","plugins":["expo-router"],"web":{"output":"static","bundler":"metro","favicon":"../assets/mantrilo-favicon.png"}}}
+{
+  "expo": {
+    "name": "Mantrilo Developer Console",
+    "slug": "mantrilo-developer",
+    "scheme": "mantrilo-developer",
+    "plugins": ["expo-router"],
+    "web": { "output": "static", "bundler": "metro", "favicon": "../assets/mantrilo-favicon.png" }
+  }
+}
