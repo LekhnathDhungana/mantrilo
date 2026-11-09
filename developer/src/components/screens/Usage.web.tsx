@@ -1,19 +1,17 @@
 import { useState } from 'react';
 import { useConsole } from '../Session.web';
-import { Badge, Empty, ErrorNotice, formatBytes, Loading, PageTitle, useLoad } from '../ui.web';
+import { Badge, Empty, ErrorNotice, formatBytes, Loading, useLoad } from '../ui.web';
 import type { Activity } from '../../lib/types';
 
-export default function Usage() {
+export default function UsageDetails() {
   const { session } = useConsole();
   const [from, setFrom] = useState(`${session?.period || new Date().toISOString().slice(0, 7)}-01`),
     [to, setTo] = useState(new Date().toISOString().slice(0, 10)),
     [range, setRange] = useState({ from, to }),
-    [metric, setMetric] = useState<'contentRequests' | 'audioBytes' | 'astrologyCredits'>(
-      'contentRequests',
-    ),
+    [metric, setMetric] = useState<'contentRequests' | 'audioBytes'>('contentRequests'),
     [page, setPage] = useState(0);
   const { data, error, loading } = useLoad<{
-    daily: { day: string; contentRequests: number; audioBytes: number; astrologyCredits: number }[];
+    daily: { day: string; contentRequests: number; audioBytes: number }[];
     logs: Activity[];
     endpoints: Record<string, number>;
     policy: string;
@@ -22,16 +20,10 @@ export default function Usage() {
   const labels = {
     contentRequests: 'Content requests',
     audioBytes: 'Audio bytes delivered',
-    astrologyCredits: 'Astrology credits',
   };
   const maximum = Math.max(1, ...(data?.daily.map((day) => day[metric]) || []));
   return (
     <>
-      <PageTitle
-        eyebrow="OBSERVABILITY"
-        title="Usage & request logs"
-        copy="Separate server-side meters. Inspect activity without exposing credentials or personal inputs."
-      />
       <form
         className="date-filter panel"
         onSubmit={(event) => {
@@ -108,7 +100,6 @@ export default function Usage() {
                           <th>Date · UTC</th>
                           <th>Content requests</th>
                           <th>Audio delivered</th>
-                          <th>Astrology credits</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -117,7 +108,6 @@ export default function Usage() {
                             <td>{day.day}</td>
                             <td>{day.contentRequests.toLocaleString()}</td>
                             <td>{formatBytes(day.audioBytes)}</td>
-                            <td>{day.astrologyCredits.toLocaleString()}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -126,8 +116,8 @@ export default function Usage() {
                 </>
               ) : (
                 <Empty title="No metered activity in this period.">
-                  Successful demo catalog requests appear here. Keys, settings, and failed requests
-                  do not consume demo credits.
+                  Successful API requests appear here. Keys, settings, and failed requests don’t
+                  count.
                 </Empty>
               )}
             </section>
@@ -166,9 +156,13 @@ export default function Usage() {
             </section>
             <section className="panel">
               <div className="panel-heading">
-                <h2>Recent activity & errors</h2>
+                <h2>Console activity & errors</h2>
                 <span className="small muted">Most recent {data.logLimit} retained records</span>
               </div>
+              <p className="small muted">
+                The totals above include every API request. Individual API requests aren’t listed
+                here.
+              </p>
               {data.logs.length ? (
                 <>
                   <div className="table-scroll">
@@ -197,7 +191,7 @@ export default function Usage() {
                             </td>
                             <td>
                               {log.cost
-                                ? `${log.cost.contentRequests} content · ${log.cost.audioBytes} bytes · ${log.cost.astrologyCredits} astrology`
+                                ? `${log.cost.contentRequests} content · ${log.cost.audioBytes} bytes`
                                 : 'No usage charge'}
                             </td>
                           </tr>

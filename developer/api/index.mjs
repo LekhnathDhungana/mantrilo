@@ -38,11 +38,12 @@ try {
     bucketName,
   );
 
+  const store = new FirestoreStore(db);
   const server = createApiServer({
-    keys: new KeyResolver(new FirestoreStore(db)),
+    keys: new KeyResolver(store),
     content: new FirestoreContent(db),
     media: new StorageMedia(bucket),
-    meter: new UsageMeter(new FirestoreUsageSink(db)),
+    meter: new UsageMeter(new FirestoreUsageSink(db), { keyActivity: store }),
     trustProxy: onCloudRun,
   });
   server.requestTimeout = 15000;

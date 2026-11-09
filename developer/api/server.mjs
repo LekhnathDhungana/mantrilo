@@ -1,11 +1,13 @@
 import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
-import { ApiError } from '../server/domain.mjs';
+import { ApiError, readJson } from '../server/domain.mjs';
+import { calculate } from '../server/astrology/engine.mjs';
 import { readKey } from './keys.mjs';
 import { RESOURCES, encodeCursor, decodeCursor } from './content.mjs';
 import { RATE_LIMITS, RateLimiter, limitsFor } from './usage.mjs';
 
 export const API_VERSION = '2026-11-08';
+const ASTROLOGY_ROUTE = '/v1/astrology/calculate';
 const ROUTE = /^\/v1\/(shlokas|mantras)(?:\/([^/]+)(?:\/(audio))?)?$/;
 const ID = /^[\w-]{1,200}$/;
 const FAILED_AUTH_LIMIT = { rate: 0.2, burst: 10 }; // per client IP: 10 bad keys, then 1 per 5 s
@@ -31,10 +33,13 @@ export function createApiServer({
       response.writeHead(status);
       response.end(JSON.stringify({ ...body, requestId }));
     };
+    // Cloud Run appends the real client address last; anything before it is caller-supplied.
+    // Put a load balancer in front and this must skip that hop too.
     const clientIp = () =>
       (trustProxy &&
         String(request.headers['x-forwarded-for'] || '')
-          .split(',')[0]
+          .split(',')
+          .at(-1)
           .trim()) ||
       request.socket.remoteAddress ||
       'unknown';
@@ -42,8 +47,10 @@ export function createApiServer({
       const url = new URL(request.url, 'http://localhost');
       const route = url.pathname.replace(/\/+$/, '') || '/';
       if (route === '/healthz') return send(200, { ok: true });
-      if (request.method !== 'GET')
-        throw new ApiError(405, 'method_not_allowed', 'The Mantrilo API is read-only; use GET.');
+      const astrology = route === ASTROLOGY_ROUTE,
+        allowedMethod = astrology ? 'POST' : 'GET';
+      if (request.method !== allowedMethod)
+        throw new ApiError(405, 'method_not_allowed', `Use ${allowedMethod} for this endpoint.`);
       if (route === '/v1')
         return send(200, {
           name: 'Mantrilo API',
@@ -55,32 +62,41 @@ export function createApiServer({
             '/v1/shlokas/{id}/audio',
             '/v1/mantras',
             '/v1/mantras/{id}',
+            'POST /v1/astrology/calculate',
           ],
         });
       const match = route.match(ROUTE);
-      if (!match) throw new ApiError(404, 'not_found', 'No such endpoint.');
-      const [, resource, rawId, sub] = match;
+      if (!match && !astrology) throw new ApiError(404, 'not_found', 'No such endpoint.');
+      const [, resource, rawId, sub] = match || [];
       if (sub && resource !== 'shlokas') throw new ApiError(404, 'not_found', 'No such endpoint.');
 
-      // 1. Authenticate the key (bad keys are throttled per client IP).
+      // 1. Authenticate the key. Bad keys are throttled per client IP, and a throttled client
+      // can't cause database reads.
+      const tooManyFailures = () =>
+        new ApiError(
+          429,
+          'too_many_failed_attempts',
+          'Too many invalid API keys. Try again later.',
+        );
       let principal;
       try {
-        principal = await keys.resolve(readKey(request));
+        principal = await keys.resolve(readKey(request), {
+          beforeLookup() {
+            if (!authLimiter.available(clientIp(), FAILED_AUTH_LIMIT)) throw tooManyFailures();
+          },
+        });
       } catch (error) {
         if (error.status === 401 && !authLimiter.take(clientIp(), FAILED_AUTH_LIMIT).ok)
-          throw new ApiError(
-            429,
-            'too_many_failed_attempts',
-            'Too many invalid API keys. Try again later.',
-          );
+          throw tooManyFailures();
         throw error;
       }
 
-      // 2. Per-key rate limit (sandbox keys always get the Sandbox rate, whatever the plan).
+      // 2. Rate limit per workspace and environment, so extra keys don't add capacity and test
+      // traffic can't starve production (sandbox keys always get the Sandbox rate).
       const rate =
           (principal.environment !== 'sandbox' && RATE_LIMITS[principal.plan.name]) ||
           RATE_LIMITS.Sandbox,
-        taken = limiter.take(principal.keyHash, rate);
+        taken = limiter.take(`${principal.workspaceId}:${principal.environment}`, rate);
       response.setHeader('X-RateLimit-Limit', String(rate.rate));
       response.setHeader('X-RateLimit-Remaining', String(taken.remaining));
       if (!taken.ok) {
@@ -88,7 +104,7 @@ export function createApiServer({
         throw new ApiError(
           429,
           'rate_limited',
-          `This key allows ${rate.rate} requests per second.`,
+          `This workspace allows ${rate.rate} requests per second for ${principal.environment} keys.`,
         );
       }
 
@@ -118,6 +134,12 @@ export function createApiServer({
               audioBytes,
             })
             .catch((error) => logger.error(`usage write failed ${requestId}: ${error.message}`));
+
+      if (astrology) {
+        const data = calculate(await readJson(request)); // Invalid input costs nothing.
+        charge(`astrology.${data.operation}`);
+        return send(200, { data, calculated: true });
+      }
 
       if (!rawId) {
         const limit = url.searchParams.has('limit') ? Number(url.searchParams.get('limit')) : 20;

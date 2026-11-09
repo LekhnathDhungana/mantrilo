@@ -1,8 +1,7 @@
 export type Usage = {
   contentRequests: number;
   audioBytes: number;
-  astrologyCredits: number;
-  daily: Record<string, { contentRequests: number; audioBytes: number; astrologyCredits: number }>;
+  daily: Record<string, { contentRequests: number; audioBytes: number }>;
   endpoints: Record<string, number>;
 };
 export type KeyRecord = {
@@ -31,7 +30,7 @@ export type Activity = {
   requestId?: string;
   code?: string;
   billable?: boolean;
-  cost?: { contentRequests: number; audioBytes: number; astrologyCredits: number };
+  cost?: { contentRequests: number; audioBytes: number };
 };
 export type Workspace = {
   id: string;
@@ -42,6 +41,13 @@ export type Workspace = {
   products: Product[];
   logs: Activity[];
   preferences: { emailNotifications: boolean; usageAlertThreshold: number };
+  billing?: {
+    customerId?: string;
+    subscriptionId?: string;
+    status?: string;
+    currentPeriodEnd?: string | null;
+    cancelsAt?: string | null;
+  };
 };
 export type Plan = {
   name: string;
@@ -49,19 +55,19 @@ export type Plan = {
   requests: string;
   audio: string;
   catalog: string;
+  astrology: string;
   products: string;
   support: string;
 };
-export type Addon = {
-  id: string;
-  name: string;
-  plan: string;
-  price: number;
-  credits: number;
-  combined: number;
-};
 export type Session = {
-  user: { uid: string; email: string; admin: boolean };
+  user: {
+    uid: string;
+    email: string;
+    admin: boolean;
+    verified: boolean;
+    name: string;
+    onboarded: boolean;
+  };
   workspace: Workspace;
   mode: 'demo' | 'firebase';
   period: string;
@@ -71,7 +77,6 @@ export type Session = {
     requests: number;
     audioBytes: number;
     products: number | null;
-    astrologyCredits: number;
   };
   accountingPolicy: string;
   billingPeriod: null;
@@ -86,30 +91,8 @@ export type AuthConfig = {
     appId: string;
     authEmulatorHost?: string | null;
   } | null;
-  registration: false;
-};
-export type CatalogRecord = {
-  id: string;
-  type: string;
-  label: string;
-  language: string | null;
-  source_reference: string | null;
-  original_text?: string;
-  transliteration?: string;
-  translation?: string | null;
-  meaning?: string | null;
-  audio_id?: string;
-  content_id?: string;
-  recording_url?: string | null;
-  title?: string;
-  chapters?: {
-    number: number;
-    verses: {
-      number: number;
-      original_text: string;
-      translation: string | null;
-      source_reference: string | null;
-    }[];
-  }[];
-  demo: boolean;
+  apiUrl: string | null;
+  registration: boolean;
+  emailCodes: boolean;
+  phoneCodes: boolean;
 };

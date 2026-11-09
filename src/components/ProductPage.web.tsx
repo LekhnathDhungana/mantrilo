@@ -65,8 +65,8 @@ export default function ProductPage({ slug }: { slug: ProductSlug }) {
         </div>
         <p>
           Existing content plans cover available mantras, shlokas, sacred audio, shastra books, and
-          discovery, subject to the documented content license. Astrology uses separate add-on
-          configuration and credit accounting.
+          discovery, subject to the documented content license. Astrology calculations are
+          included too, and each counts as one API request.
         </p>
       </section>
     </PageShell>

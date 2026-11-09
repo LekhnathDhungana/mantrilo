@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createServer } from 'node:http';
 import { createConsoleServer, DemoSessions, seedDemo } from '../server/app.mjs';
 import { MemoryStore } from '../server/store.mjs';
-import { hash, currentPeriod, plans, proposedAddons, secret } from '../server/domain.mjs';
+import { hash, currentPeriod, plans, secret } from '../server/domain.mjs';
 import { bootstrapAdmin } from '../server/bootstrap.mjs';
-async function fixture(t, mode = 'demo') {
+async function fixture(t, mode = 'demo', options = {}) {
   const store = new MemoryStore(),
     sessions = new DemoSessions();
   await seedDemo(store);
@@ -14,6 +15,7 @@ async function fixture(t, mode = 'demo') {
     mode,
     appOrigin: 'http://localhost:4190',
     staticRoot: '/tmp/nonexistent-console-test',
+    ...options,
   });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   t.after(() => new Promise((resolve) => server.close(resolve)));
@@ -135,7 +137,6 @@ test('one-time key disclosure, hashes, ownership isolation, and revocation', asy
   const me = (await owner.call('/api/me')).body;
   assert.equal(me.usage.contentRequests, 1);
   assert.equal(me.usage.audioBytes, 0);
-  assert.equal(me.usage.astrologyCredits, 0);
 });
 test('concurrent quota reservations cannot exceed remaining allowance; failures cost zero', async (t) => {
   const f = await fixture(t),
@@ -149,7 +150,6 @@ test('concurrent quota reservations cannot exceed remaining allowance; failures 
     w.usage[currentPeriod()] = {
       contentRequests: 999,
       audioBytes: 0,
-      astrologyCredits: 0,
       daily: {},
       endpoints: {},
     };
@@ -169,6 +169,130 @@ test('concurrent quota reservations cannot exceed remaining allowance; failures 
     me.workspace.logs.filter((l) => l.type === 'error').every((l) => l.cost.contentRequests === 0),
   );
   assert.ok(!JSON.stringify(me.workspace.logs).includes(created.body.secret));
+});
+test('new keys carry a checksum and show their last public API use', async (t) => {
+  const f = await fixture(t),
+    c = f.client();
+  await c.login();
+  const created = await c.call('/api/keys', 'POST', { name: 'Used', environment: 'sandbox' });
+  assert.match(created.body.secret, /^mtr_sbx_[\w-]{49}$/);
+  assert.equal(created.body.key.lastUsedAt, null);
+  const at = '2026-11-08T10:00:00.000Z';
+  await f.store.touchKey('workspace_demo_owner', created.body.key.id, at);
+  assert.equal((await c.call('/api/keys')).body.keys[0].lastUsedAt, at);
+  assert.equal((await c.call('/api/me')).body.workspace.keys[0].lastUsedAt, at);
+});
+test('revoked keys do not use up the cap, and old revoked records are pruned', async (t) => {
+  const f = await fixture(t),
+    c = f.client();
+  await c.login();
+  const create = () => c.call('/api/keys', 'POST', { name: 'Key', environment: 'sandbox' });
+  let first;
+  for (let i = 0; i < 60; i++) {
+    const created = await create();
+    assert.equal(created.status, 201);
+    first ||= created.body.secret;
+    assert.equal((await c.call(`/api/keys/${created.body.key.id}`, 'DELETE')).status, 200);
+  }
+  assert.equal(await f.store.findKey(hash(first)), null);
+  for (let i = 0; i < 50; i++) assert.equal((await create()).status, 201);
+  assert.equal((await create()).body.error.code, 'key_capacity');
+  assert.ok((await f.store.getWorkspace('workspace_demo_owner')).keys.length <= 100);
+});
+test("the playground relays /v1 requests only, and only with this workspace's keys", async (t) => {
+  const seen = [];
+  const upstream = createServer((request, response) => {
+    seen.push({ url: request.url, authorization: request.headers.authorization });
+    response.setHeader('X-Request-Id', 'upstream-id');
+    response.writeHead(200, { 'Content-Type': 'application/json' });
+    response.end(JSON.stringify({ data: [], requestId: 'upstream-id' }));
+  });
+  await new Promise((resolve) => upstream.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise((resolve) => upstream.close(resolve)));
+  const apiUrl = `http://127.0.0.1:${upstream.address().port}`,
+    f = await fixture(t, 'demo', { apiUrl }),
+    c = f.client();
+  await c.login();
+  assert.equal((await c.call('/api/auth/config')).body.apiUrl, apiUrl);
+  const key = (await c.call('/api/keys', 'POST', { name: 'P', environment: 'sandbox' })).body
+    .secret;
+  const ok = await c.call('/api/playground', 'POST', { path: '/v1/shlokas?limit=2', key });
+  assert.equal(ok.body.response.status, 200);
+  assert.equal(ok.body.response.requestId, 'upstream-id');
+  assert.deepEqual(seen, [{ url: '/v1/shlokas?limit=2', authorization: `Bearer ${key}` }]);
+  for (const path of [
+    '//evil.invalid/v1',
+    '/v1/../healthz',
+    '/v1/shlokas/%2e%2e/audio',
+    '/internal',
+    '/v1/mantras/a/b',
+  ])
+    assert.equal(
+      (await c.call('/api/playground', 'POST', { path, key })).body.error.code,
+      'invalid_path',
+    );
+  const foreign = await c.call('/api/playground', 'POST', {
+    path: '/v1/shlokas',
+    key: `mtr_sbx_${secret()}`,
+  });
+  assert.equal(foreign.body.error.code, 'key_not_in_workspace');
+  assert.equal(seen.length, 1);
+});
+test('the playground reports an unconfigured or unreachable API', async (t) => {
+  const off = await fixture(t),
+    a = off.client();
+  await a.login();
+  assert.equal(
+    (await a.call('/api/playground', 'POST', { path: '/v1', key: 'x' })).body.error.code,
+    'api_unconfigured',
+  );
+  const down = await fixture(t, 'demo', { apiUrl: 'http://127.0.0.1:9' }),
+    b = down.client();
+  await b.login();
+  const key = (await b.call('/api/keys', 'POST', { name: 'P', environment: 'sandbox' })).body
+    .secret;
+  assert.equal(
+    (await b.call('/api/playground', 'POST', { path: '/v1', key })).body.error.code,
+    'api_unreachable',
+  );
+});
+test('overview and usage include public API traffic', async (t) => {
+  const f = await fixture(t),
+    c = f.client(),
+    id = 'workspace_demo_owner',
+    period = currentPeriod(),
+    today = new Date().toISOString().slice(0, 10),
+    event = (at, endpoint, audioBytes = 0) => ({
+      workspaceId: id,
+      keyId: 'k',
+      endpoint,
+      requests: 1,
+      audioBytes,
+      period: at.toISOString().slice(0, 7),
+      at,
+    });
+  await c.login();
+  const lastMonth = new Date(
+    Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth() - 1, 15),
+  );
+  f.store.apiEvents.push(
+    event(new Date(), 'shlokas.list'),
+    event(new Date(), 'shlokas.audio', 2048),
+    event(lastMonth, 'mantras.get'),
+    { ...event(new Date(), 'shlokas.list'), workspaceId: 'someone-else' },
+  );
+  const me = (await c.call('/api/me')).body;
+  assert.equal(me.usage.contentRequests, 2);
+  assert.equal(me.usage.audioBytes, 2048);
+  assert.equal(me.allowance.audioBytes, 50 * 1024 * 1024);
+  const thisMonth = (await c.call(`/api/usage?from=${period}-01&to=${today}`)).body;
+  assert.deepEqual(thisMonth.endpoints, { 'shlokas.list': 1, 'shlokas.audio': 1 });
+  assert.equal(thisMonth.daily.find((d) => d.day === today).contentRequests, 2);
+  const from = lastMonth.toISOString().slice(0, 10),
+    range = (await c.call(`/api/usage?from=${from}&to=${today}`)).body;
+  assert.equal(range.endpoints['mantras.get'], 1);
+  assert.equal(range.daily.length, 2);
+  assert.ok(range.policy.includes('audio link'));
 });
 test('paid product limits and Sandbox production restriction are server-side', async (t) => {
   const f = await fixture(t),
@@ -197,42 +321,14 @@ test('paid product limits and Sandbox production restriction are server-side', a
   ]);
   assert.deepEqual(records.map((r) => r.status).sort(), [201, 409]);
 });
-test('administrator actions reject customers; provisional settings cannot enable purchases', async (t) => {
+test('administrator actions reject customers', async (t) => {
   const f = await fixture(t),
     customer = f.client(),
     admin = f.client();
   await customer.login();
   await admin.login('admin');
   assert.equal((await customer.call('/api/admin/workspaces')).status, 403);
-  assert.equal(
-    (
-      await customer.call('/api/admin/astrology', 'PATCH', {
-        credits: { starter: 1, growth: 1, business: 1 },
-      })
-    ).status,
-    403,
-  );
   assert.equal((await admin.call('/api/admin/workspaces')).status, 200);
-  assert.equal(
-    (
-      await admin.call('/api/admin/astrology', 'PATCH', {
-        credits: { starter: 2500, growth: 10000, business: 40000 },
-        billingConfigured: true,
-        costsConfirmed: true,
-      })
-    ).status,
-    200,
-  );
-  const config = (await admin.call('/api/admin/astrology')).body.config;
-  assert.equal(config.credits.starter, 2500);
-  assert.equal(config.billingConfigured, false);
-  assert.equal(config.costsConfirmed, false);
-  const publicConfig = (await customer.call('/api/config')).body;
-  assert.deepEqual(
-    publicConfig.astrology.map((a) => a.combined),
-    [78, 228, 598],
-  );
-  assert.equal((await customer.call('/api/astrology')).body.canPurchase, false);
   const bill = (await customer.call('/api/billing')).body;
   assert.equal(bill.monthlyTotal, 0);
   assert.deepEqual(bill.invoices, []);
@@ -267,7 +363,7 @@ test('Firebase mode exposes no demo login or simulated catalog', async (t) => {
   assert.equal((await c.login()).status, 404);
   assert.equal((await c.call('/api/demo/catalog')).status, 503);
 });
-test('content prices and proposed totals match the requested contract', () => {
+test('content prices match the requested contract, and every plan includes astrology', () => {
   assert.deepEqual(
     plans.map((p) => [p.price, p.requests, p.audio, p.products]),
     [
@@ -277,10 +373,7 @@ test('content prices and proposed totals match the requested contract', () => {
       [399, '1,000,000', '200 GB', '10'],
     ],
   );
-  assert.deepEqual(
-    proposedAddons.map((a) => a.price),
-    [29, 79, 199],
-  );
+  assert.ok(plans.every((p) => p.astrology === 'Astrology calculations included'));
 });
 test('administrator bootstrap is idempotent and never resets an existing password', async () => {
   let record = null,

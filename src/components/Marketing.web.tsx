@@ -36,14 +36,25 @@ const categories = [
     type: 'book' as SampleType,
   },
 ];
+const coreCategories = [
+  ...categories,
+  {
+    icon: '✧',
+    title: 'Astrology',
+    subtitle: 'Celestial insight, ready to integrate.',
+    copy: 'Calculate planetary positions, rashis, nakshatras, and instant Panchang elements through one structured API.',
+    tags: ['Planetary positions', 'Nakshatras', 'Panchang'],
+    href: '/astrology-api',
+  },
+];
 const faqs = [
   [
     'What content is available?',
-    'Mantrilo is designed for mantras, shlokas, sacred audio, and shastra books. Paid plans cover the full available catalog; Sandbox covers sample content for testing. A verified title list is not yet connected to this preview. Astrology is separate from the content catalog and its plan allowances.',
+    'Mantrilo is designed for mantras, shlokas, sacred audio, and shastra books. Paid plans cover the full available catalog; Sandbox covers sample content for testing. A verified title list is not yet connected to this preview. Astrology calculations are included in every plan.',
   ],
   [
     'How do I access the astrology API?',
-    'Astrology uses a separate service connection and credit allowance. This local preview has no astrology provider configured, so live requests require integration setup. Prepare an inquiry to describe your requirements; the form does not submit or register interest.',
+    'The server-side engine calculates planetary positions and instant Panchang elements through the Developer Console and authenticated API. Each calculation counts as one normal content request on your plan. The default sidereal offset is approximate, with a custom ayanamsa option.',
   ],
   [
     'How do I integrate Mantrilo?',
@@ -143,9 +154,8 @@ export default function Marketing() {
               </em>
             </h1>
             <p className="hero-sub">
-              A Hindu content API for developers building apps and websites. Integrate mantras,
-              shlokas, sacred audio, and shastra books.{' '}
-              <Link href="/astrology-api">Explore the astrology API.</Link>
+              Hindu content and astrology APIs for developers building apps and websites.
+              Integrate mantras, shlokas, sacred audio, shastra books, and astrology calculations.
             </p>
             <div className="hero-actions">
               <Link className="button" href="/access">
@@ -198,6 +208,14 @@ export default function Marketing() {
                   </div>
                   <span>↗</span>
                 </div>
+                <div className="preview-row">
+                  <span className="preview-icon">✧</span>
+                  <div>
+                    <strong>Astrology</strong>
+                    <small>Planetary positions · Nakshatras · Panchang</small>
+                  </div>
+                  <span>↗</span>
+                </div>
               </div>
               <div className="window-bottom">
                 <span className="status-dot" /> ILLUSTRATIVE LIBRARY PREVIEW<span>JSON</span>
@@ -226,7 +244,7 @@ export default function Marketing() {
         <section id="library" className="section wrap">
           <div className="section-heading">
             <div>
-              <div className="eyebrow">01 / THE CONTENT LIBRARY</div>
+              <div className="eyebrow">01 / THE CORE APIS</div>
               <h2>
                 A deeper foundation
                 <br />
@@ -234,13 +252,13 @@ export default function Marketing() {
               </h2>
             </div>
             <p>
-              From a single verse to a chapter-by-chapter reading experience. Bring sacred content
-              into your product with context intact.
+              From sacred verses and audio to planetary positions and Panchang. Build with
+              structured content and calculations, connected through Mantrilo.
             </p>
           </div>
           <div className="category-grid">
-            {categories.map((c, i) => (
-              <article className="category" key={c.type}>
+            {coreCategories.map((c, i) => (
+              <article className="category" key={c.href}>
                 <div className="category-top">
                   <span className="category-icon" aria-hidden="true">
                     {c.icon}
@@ -262,21 +280,6 @@ export default function Marketing() {
                 </Link>
               </article>
             ))}
-          </div>
-          <div className="astrology-overview">
-            <span className="astrology-symbol" aria-hidden="true">
-              ✧
-            </span>
-            <div>
-              <h3>Astrology</h3>
-              <p>
-                Astrology integration for apps and websites, with credit accounting separate from
-                content requests and audio delivery.
-              </p>
-            </div>
-            <Link className="text-link" href="/astrology-api">
-              Explore astrology ↗
-            </Link>
           </div>
           <p className="section-footnote">
             Catalog examples are illustrative. Available titles and recordings will be confirmed

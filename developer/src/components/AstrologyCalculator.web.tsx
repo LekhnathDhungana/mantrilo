@@ -2,22 +2,19 @@ import { useState } from 'react';
 import { Link } from 'expo-router';
 import { mutate, ConsoleError } from '../lib/api';
 import { useConsole } from './Session.web';
-import { Badge, CopyButton, ErrorNotice, Loading, Meter, PageTitle, useLoad } from './ui.web';
+import { Badge, CopyButton, ErrorNotice, Loading, Meter, useLoad } from './ui.web';
 type Budget = {
   status: string;
-  scope: string;
   engineVersion: string;
   allowance: number;
   used: number;
   balance: number;
-  creditCost: number;
+  requestCost: number;
   availableOperations: {
     id: string;
     name: string;
     description: string;
-    sandboxCreditCost: number;
   }[];
-  notice: string;
 };
 type Planet = {
   body: string;
@@ -45,13 +42,13 @@ type Calculation = {
       moonRashi: { name: string };
     };
   };
-  usage: { astrologyCredits: number; remaining: number; billable: false };
+  usage: { contentRequests: number; remaining: number };
   requestId: string;
   responseTimeMs: number;
 };
 export default function AstrologyCalculator() {
   const budget = useLoad<Budget>('/api/astrology'),
-    { refresh } = useConsole();
+    { refresh, config } = useConsole();
   const [operation, setOperation] = useState('positions'),
     [datetime, setDatetime] = useState(() => new Date().toISOString().slice(0, 19)),
     [model, setModel] = useState('approximate'),
@@ -65,9 +62,9 @@ export default function AstrologyCalculator() {
     datetime: `${datetime.length === 16 ? datetime + ':00' : datetime}Z`,
     ...(model === 'custom' ? { ayanamsaDegrees: Number(custom) } : {}),
   };
-  const origin = typeof window === 'undefined' ? 'CONSOLE_ORIGIN' : window.location.origin;
-  const curl = `curl --request POST '${origin}/api/v1/astrology/calculate' \\\n  -H "Authorization: Bearer $MANTRILO_API_KEY" \\\n  -H 'Content-Type: application/json' \\\n  --data '${JSON.stringify(payload, null, 2)}'`;
-  const javascript = `const response = await fetch('/api/v1/astrology/calculate', {\n  method: 'POST',\n  headers: {\n    Authorization: 'Bearer YOUR_SANDBOX_KEY',\n    'Content-Type': 'application/json'\n  },\n  body: JSON.stringify(${JSON.stringify(payload, null, 2)})\n});\nconst result = await response.json();`;
+  const base = config?.apiUrl ?? 'https://api.mantrilo.com';
+  const curl = `curl --request POST '${base}/v1/astrology/calculate' \\\n  -H "Authorization: Bearer $MANTRILO_API_KEY" \\\n  -H 'Content-Type: application/json' \\\n  --data '${JSON.stringify(payload, null, 2)}'`;
+  const javascript = `// Run this on your server. Never ship the key in an app or browser.\nconst response = await fetch('${base}/v1/astrology/calculate', {\n  method: 'POST',\n  headers: {\n    Authorization: \`Bearer \${process.env.MANTRILO_API_KEY}\`,\n    'Content-Type': 'application/json'\n  },\n  body: JSON.stringify(${JSON.stringify(payload, null, 2)})\n});\nconst result = await response.json();`;
   async function run(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     setPending(true);
@@ -91,11 +88,6 @@ export default function AstrologyCalculator() {
   }
   return (
     <>
-      <PageTitle
-        eyebrow="ASTROLOGY / CALCULATION ENGINE"
-        title="Calculate. Inspect. Integrate."
-        copy="Real astronomical calculations, running on your server. No external provider required."
-      />
       <ErrorNotice message={budget.error || error} />
       {budget.loading && !budget.data ? (
         <Loading />
@@ -103,10 +95,10 @@ export default function AstrologyCalculator() {
         <>
           <div className="metrics two">
             <Meter
-              label="Sandbox astrology credits used"
+              label="Content requests used"
               value={budget.data?.used || 0}
               limit={budget.data?.allowance || 0}
-              note={`${budget.data?.balance || 0} remaining this UTC month · Nonbillable`}
+              note={`${(budget.data?.balance || 0).toLocaleString()} remaining this month`}
             />
             <section className="metric-card">
               <span className="metric-label">ENGINE STATUS</span>
@@ -168,8 +160,8 @@ export default function AstrologyCalculator() {
                 )}
                 <div className="cost-box">
                   <span>COST BEFORE EXECUTION</span>
-                  <strong>{budget.data?.creditCost || 1} sandbox astrology credit</strong>
-                  <small>0 content requests · 0 audio bytes · Not billed</small>
+                  <strong>{budget.data?.requestCost || 1} content request</strong>
+                  <small>Failed calculations cost nothing</small>
                 </div>
                 <button
                   className="button"
@@ -203,19 +195,20 @@ export default function AstrologyCalculator() {
                 Houses, ascendant, nodes, dashas, birth-chart interpretation, and additional
                 traditions are outside this initial version.
               </p>
-              <Link href="/docs" className="text-link">
-                Integration & accounting guide →
-              </Link>
             </section>
           </div>
           {result && (
             <section className="panel response-panel" aria-live="polite">
               <div className="panel-heading">
-                <h2>Calculated result</h2>
+                <h2>
+                  {result.data.operation === 'positions'
+                    ? 'Planetary positions result'
+                    : 'Instant Panchang result'}
+                </h2>
                 <div className="action-row">
                   <Badge tone="green">HTTP 200</Badge>
                   <Badge>{result.responseTimeMs} ms server time</Badge>
-                  <Badge>1 astrology credit</Badge>
+                  <Badge>1 content request</Badge>
                 </div>
               </div>
               <p className="response-id">
@@ -307,7 +300,7 @@ export default function AstrologyCalculator() {
           )}
           <section className="panel request-example astrology-api-example">
             <div className="panel-heading">
-              <h2>Use your sandbox API key</h2>
+              <h2>Use your API key</h2>
               <div className="segmented compact">
                 <button aria-pressed={example === 'curl'} onClick={() => setExample('curl')}>
                   cURL
@@ -325,14 +318,10 @@ export default function AstrologyCalculator() {
             </pre>
             <CopyButton text={example === 'curl' ? curl : javascript} />
             <p className="small muted example-note">
-              The API uses the same engine and credit ledger as this console.{' '}
-              <Link href="/keys">Create a sandbox API key →</Link>
+              The API uses the same engine and allowance as this console.{' '}
+              <Link href="/keys">Create an API key →</Link>
             </p>
           </section>
-          <div className="notice">
-            Sandbox calculations are working and nonbillable. Paid astrology add-on purchases remain
-            disabled until billing and paid endpoint credit costs are confirmed.
-          </div>
         </>
       )}
     </>

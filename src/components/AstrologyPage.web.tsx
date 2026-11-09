@@ -11,8 +11,7 @@ export default function AstrologyPage() {
           <em>what you build.</em>
         </h1>
         <p className="product-intro">
-          Bring astrology into your app or website through a server-side integration. Keep its
-          service configuration and credit accounting separate from your content catalog.
+          Calculate planetary positions, rashis, nakshatras, and instant Panchang elements with Mantrilo’s server-side engine. Included in every plan: each calculation counts as one normal content request.
         </p>
         <div className="hero-actions">
           <Link className="button" href="/access?interest=astrology">
@@ -23,42 +22,33 @@ export default function AstrologyPage() {
           </Link>
         </div>
         <div className="notice">
-          This local preview is not connected to an astrology service. Live requests require a
-          configured provider and documented endpoint contract.
+          The calculation engine works in the Developer Console and authenticated API. Sandbox calculations are nonbillable. Paid astrology purchases still require billing configuration.
         </div>
       </section>
       <section className="wrap product-detail">
         <div className="product-copy">
           <section>
-            <h2>Start with your product’s requirements</h2>
+            <h2>Planetary positions you can inspect</h2>
             <p>
-              Describe the user experience you want to support, the inputs your application can
-              provide, and the outputs it needs. Match those requirements to the connected service’s
-              documented capabilities before implementation.
+              Calculate geocentric positions for the Sun, Moon, Mercury, Venus, Mars, Jupiter, and Saturn at a specified instant. Responses include tropical and sidereal longitudes, latitude, distance, rashi, nakshatra/pada, and apparent direct or retrograde motion.
             </p>
           </section>
           <section>
-            <h2>Keep data and interpretation distinct</h2>
+            <h2>Instant Panchang elements</h2>
             <p>
-              Calculated astronomical data and interpretive astrology content require different
-              documentation and validation. Confirm the output type and methodology with the service
-              you connect; this preview supplies neither.
+              Calculate tithi and paksha, Moon nakshatra and pada, yoga number, karana, and Sun/Moon rashis at the requested instant. This version does not calculate sunrise-based day assignment, location-based almanacs, or transition times.
             </p>
           </section>
           <section>
-            <h2>Integrate through your server</h2>
+            <h2>Make the calculation method explicit</h2>
             <p>
-              Keep provider credentials server-side. Validate required inputs, show the documented
-              credit cost before execution, and record usage without exposing exact birth details in
-              general request logs.
+              The starter sidereal model uses a clearly labeled linear Lahiri approximation. A custom ayanamsa can be supplied for the instant being calculated. Exact tradition matching needs a verified offset or a later model extension.
             </p>
           </section>
           <section>
-            <h2>Manage astrology as a separate allowance</h2>
+            <h2>Use the authenticated calculation API</h2>
             <p>
-              Content requests, audio delivery, and astrology credits have distinct usage meters.
-              Astrology add-ons require their own billing configuration and endpoint credit costs;
-              content plan access does not activate them automatically.
+              Send your API key to POST /v1/astrology/calculate. Choose positions or panchang, provide an ISO date-time with an explicit UTC offset, and optionally supply ayanamsaDegrees. A successful calculation uses one content request from your plan. Inputs and results are not stored in general logs. Houses, ascendant, nodes, dashas, and predictive interpretations are outside this initial version.
             </p>
             <Link className="text-link" href="/pricing">
               Review content plans →
@@ -67,16 +57,16 @@ export default function AstrologyPage() {
         </div>
         <aside className="product-example astrology-status">
           <div className="eyebrow">INTEGRATION SETUP</div>
-          <h2>Connect your astrology service.</h2>
+          <h2>Run the calculation engine.</h2>
           <dl>
-            <dt>Provider connection</dt>
-            <dd>Not configured in this preview</dd>
-            <dt>Inputs, outputs & methodology</dt>
-            <dd>Confirm against service documentation</dd>
-            <dt>Credit costs</dt>
-            <dd>Configuration required</dd>
-            <dt>Billing</dt>
-            <dd>Separate add-on setup</dd>
+            <dt>Engine</dt>
+            <dd>Server-side · Available</dd>
+            <dt>Supported operations</dt>
+            <dd>Planetary positions · Instant Panchang</dd>
+            <dt>Cost</dt>
+            <dd>1 content request per successful calculation</dd>
+            <dt>Plans</dt>
+            <dd>Included in every plan</dd>
           </dl>
           <h3>Request access with context</h3>
           <ul>

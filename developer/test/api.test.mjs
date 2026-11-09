@@ -1,12 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { MemoryStore } from '../server/store.mjs';
-import { hash, secret, currentPeriod } from '../server/domain.mjs';
+import { MemoryStore, FirestoreStore } from '../server/store.mjs';
+import { hash, secret, currentPeriod, newApiKey } from '../server/domain.mjs';
 import { KeyResolver } from '../api/keys.mjs';
 import { MemoryContent, SANDBOX_SAMPLE_SIZE } from '../api/content.mjs';
 import { MemoryMedia } from '../api/media.mjs';
-import { MemoryUsageSink, UsageMeter, RateLimiter, SANDBOX_AUDIO_BYTES } from '../api/usage.mjs';
+import {
+  FirestoreUsageSink,
+  MemoryUsageSink,
+  UsageMeter,
+  RateLimiter,
+  SANDBOX_AUDIO_BYTES,
+} from '../api/usage.mjs';
 import { createApiServer } from '../api/server.mjs';
 
 const shloka = (n, extra = {}) => ({
@@ -34,7 +40,7 @@ const shloka = (n, extra = {}) => ({
   ...extra,
 });
 
-async function fixture(t, { plan = 'Starter', rate } = {}) {
+async function fixture(t, { plan = 'Starter', rate, ...serverOptions } = {}) {
   const store = new MemoryStore();
   await store.ensureWorkspace('w1', 'owner', 'Acme');
   await store.transact('w1', (w) => {
@@ -89,9 +95,10 @@ async function fixture(t, { plan = 'Starter', rate } = {}) {
     keys: new KeyResolver(store, { ttlMs: 0 }),
     content,
     media: new MemoryMedia(files),
-    meter: new UsageMeter(sink, { ttlMs: 0 }),
+    meter: new UsageMeter(sink, { ttlMs: 0, keyActivity: store }),
     limiter,
     logger: { error() {} },
+    ...serverOptions,
   });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   t.after(() => new Promise((resolve) => server.close(resolve)));
@@ -100,7 +107,7 @@ async function fixture(t, { plan = 'Starter', rate } = {}) {
     const response = await fetch(base + path, {
       redirect: 'manual',
       ...init,
-      headers: key ? { Authorization: `Bearer ${key}` } : {},
+      headers: { ...init.headers, ...(key ? { Authorization: `Bearer ${key}` } : {}) },
     });
     return { status: response.status, headers: response.headers, body: await response.json() };
   };
@@ -239,6 +246,47 @@ test('monthly request quota and per-key rate limits', async (t) => {
   assert.ok(Number(limited.headers.get('retry-after')) >= 1);
 });
 
+test('astrology calculations cost one content request on sandbox and production keys', async (t) => {
+  const f = await fixture(t),
+    post = (key, body) =>
+      f.call('/v1/astrology/calculate', key, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }),
+    input = { operation: 'positions', datetime: '2026-11-07T12:00:00Z' },
+    charged = () => f.sink.events.filter((e) => e.endpoint === 'astrology.positions');
+  for (const key of [f.keys.sandbox, f.keys.production]) {
+    const result = await post(key, input);
+    assert.equal(result.status, 200);
+    assert.equal(result.body.calculated, true);
+    assert.equal(result.body.data.planets.length, 7);
+  }
+  assert.deepEqual(
+    charged().map((e) => [e.requests, e.audioBytes]),
+    [
+      [1, 0],
+      [1, 0],
+    ],
+  );
+  assert.equal((await post(f.keys.sandbox, { ...input, datetime: 'bad' })).status, 400);
+  assert.equal((await post(undefined, input)).status, 401);
+  assert.equal(charged().length, 2);
+  assert.equal((await f.call('/v1/astrology/calculate', f.keys.sandbox)).status, 405);
+  assert.equal((await f.call('/v1/shlokas', f.keys.sandbox, { method: 'POST' })).status, 405);
+});
+
+test('astrology calculations stop at the monthly request quota', async (t) => {
+  const f = await fixture(t, { plan: 'Sandbox' });
+  f.sink.events.push({ workspaceId: 'w1', period: currentPeriod(), requests: 1000, audioBytes: 0 });
+  const over = await f.call('/v1/astrology/calculate', f.keys.sandbox, {
+    method: 'POST',
+    body: JSON.stringify({ operation: 'panchang', datetime: '2026-11-07T12:00:00Z' }),
+  });
+  assert.equal(over.status, 429);
+  assert.equal(over.body.error.code, 'quota_exceeded');
+});
+
 test('repeated invalid keys from one client are throttled', async (t) => {
   const f = await fixture(t);
   const codes = [];
@@ -272,4 +320,144 @@ test('console key changes keep the per-key index in sync', async () => {
   assert.equal(record.workspaceId, 'w2');
   assert.equal(record.id, 'k1');
   assert.ok(!('hash' in record));
+});
+
+async function addKey(store, environment, raw = newApiKey(environment)) {
+  await store.transact('w1', (w) => {
+    w.keys.push({
+      id: randomUUID(),
+      name: 'extra',
+      environment,
+      prefix: raw.slice(0, 16),
+      hash: hash(raw),
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      lastUsedAt: null,
+    });
+  });
+  return raw;
+}
+
+function countLookups(store) {
+  const counter = { reads: 0 },
+    findKey = store.findKey.bind(store);
+  store.findKey = (keyHash) => {
+    counter.reads += 1;
+    return findKey(keyHash);
+  };
+  return counter;
+}
+
+test('keys with a checksum work; a bad checksum is refused without a database read', async (t) => {
+  const f = await fixture(t),
+    raw = await addKey(f.store, 'production'),
+    lookups = countLookups(f.store);
+  assert.equal((await f.call('/v1/shlokas', raw)).status, 200);
+  assert.equal(lookups.reads, 1);
+  const last = raw.at(-1) === 'A' ? 'B' : 'A',
+    tampered = await f.call('/v1/shlokas', raw.slice(0, -1) + last);
+  assert.equal(tampered.body.error.code, 'invalid_api_key');
+  assert.equal(lookups.reads, 1);
+});
+
+test('extra keys do not add rate-limit capacity, and sandbox cannot starve production', async (t) => {
+  const f = await fixture(t, { rate: { rate: 0.001, burst: 2 } }),
+    second = await addKey(f.store, 'production');
+  assert.equal((await f.call('/v1/shlokas', f.keys.production)).status, 200);
+  assert.equal((await f.call('/v1/shlokas', second)).status, 200);
+  const limited = await f.call('/v1/shlokas', second);
+  assert.equal(limited.body.error.code, 'rate_limited');
+  assert.equal((await f.call('/v1/shlokas', f.keys.sandbox)).status, 200);
+});
+
+test('a throttled client causes no lookups, and a forged forwarding header cannot evade it', async (t) => {
+  const f = await fixture(t, { trustProxy: true }),
+    lookups = countLookups(f.store);
+  const attempt = (n) =>
+    f.call('/v1/shlokas', `mtr_live_${secret()}`, {
+      headers: { 'X-Forwarded-For': `10.0.0.${n}, 203.0.113.9` },
+    });
+  for (let i = 0; i < 10; i++) assert.equal((await attempt(i)).status, 401);
+  assert.equal(lookups.reads, 10);
+  const blocked = await attempt(99);
+  assert.equal(blocked.status, 429);
+  assert.equal(blocked.body.error.code, 'too_many_failed_attempts');
+  assert.equal(lookups.reads, 10);
+});
+
+test('unknown keys are cached, so repeating one costs a single lookup', async () => {
+  let reads = 0;
+  const resolver = new KeyResolver({
+      findKey: async () => {
+        reads += 1;
+        return null;
+      },
+    }),
+    raw = `mtr_live_${secret()}`;
+  await assert.rejects(resolver.resolve(raw), { code: 'invalid_api_key' });
+  await assert.rejects(resolver.resolve(raw), { code: 'invalid_api_key' });
+  assert.equal(reads, 1);
+});
+
+test('public API requests record when the key was last used', async (t) => {
+  const f = await fixture(t);
+  assert.equal((await f.call('/v1/shlokas', f.keys.production)).status, 200);
+  await new Promise((resolve) => setImmediate(resolve));
+  const { id } = (await f.store.getWorkspace('w1')).keys.find(
+    (k) => k.environment === 'production',
+  );
+  assert.ok((await f.store.keyActivity('w1'))[id]);
+});
+
+test('last-used writes are limited per key', async () => {
+  const writes = [],
+    meter = new UsageMeter(new MemoryUsageSink(), {
+      keyActivity: { touchKey: async (...args) => writes.push(args) },
+    });
+  await meter.record({ workspaceId: 'w', keyId: 'k', endpoint: 'e' });
+  await meter.record({ workspaceId: 'w', keyId: 'k', endpoint: 'e' });
+  await meter.record({ workspaceId: 'w', keyId: 'other', endpoint: 'e' });
+  assert.deepEqual(
+    writes.map(([, keyId]) => keyId),
+    ['k', 'other'],
+  );
+});
+
+test('Firestore usage records daily endpoints and the console adds its shards together', async () => {
+  const written = [];
+  await new FirestoreUsageSink({
+    doc: (path) => ({ set: async (data) => written.push({ path, data }) }),
+  }).add({
+    workspaceId: 'w',
+    keyId: 'k',
+    endpoint: 'shlokas.list',
+    requests: 1,
+    audioBytes: 0,
+    period: '2026-11',
+    at: new Date('2026-11-08T10:00:00Z'),
+  });
+  assert.ok(written[0].data.daily['2026-11-08'].endpoints['shlokas.list']);
+  const shard = {
+    contentRequests: 2,
+    audioBytes: 10,
+    endpoints: { 'shlokas.list': 2 },
+    daily: {
+      '2026-11-08': { contentRequests: 2, audioBytes: 10, endpoints: { 'shlokas.list': 2 } },
+    },
+  };
+  const filters = [],
+    query = {
+      where(...args) {
+        filters.push(args);
+        return query;
+      },
+      get: async () => ({ docs: [{ data: () => shard }, { data: () => shard }] }),
+    };
+  const total = await new FirestoreStore({ collection: () => query }).apiUsage('w', '2026-11');
+  assert.deepEqual(filters, [
+    ['workspaceId', '==', 'w'],
+    ['period', '==', '2026-11'],
+  ]);
+  assert.equal(total.contentRequests, 4);
+  assert.equal(total.daily['2026-11-08'].endpoints['shlokas.list'], 4);
 });

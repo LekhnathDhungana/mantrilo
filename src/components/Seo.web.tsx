@@ -63,7 +63,7 @@ export default function Seo({ path, notFound = false }: { path: string; notFound
             name: 'Mantrilo',
             url: `${siteOrigin}/`,
             description:
-              'A B2B Hindu content API for developers building apps and websites. Astrology is a separate product integration.',
+              'A B2B Hindu content API for developers building apps and websites. Astrology calculations are included in every plan.',
           },
         ]
       : [

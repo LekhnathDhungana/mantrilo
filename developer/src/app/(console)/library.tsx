@@ -1,7 +1,7 @@
 import Screen from '../../components/Screen';
 export default function Page() {
-  return <Screen page="usage" />;
+  return <Screen page="library" />;
 }
 export function generateMetadata() {
-  return { title: 'Usage | Mantrilo Console', robots: 'noindex,nofollow' };
+  return { title: 'Library | Mantrilo Console', robots: 'noindex,nofollow' };
 }

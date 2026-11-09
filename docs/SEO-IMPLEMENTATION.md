@@ -1,12 +1,12 @@
 # Mantrilo SEO and astrology implementation
 
-**Positioning update:** Astrology no longer carries a Planned badge in the website or console. This supersedes the planned-positioning descriptions in the original audit below. The local preview still has no live service connection or calculation engine; backend status is `setup_required`, and purchase controls remain tied to actual billing configuration.
+**Positioning update:** Astrology no longer carries a Planned badge in the website or console. This supersedes the planned-positioning descriptions in the original audit below. The console now includes a real server-side positions and instant Panchang engine, included in every plan at one content request per calculation. Its sidereal default is explicitly approximate. See `developer/server/astrology/README.md`.
 
 ## Scope and evidence
 
-The repository contains an Expo 58 static marketing website and illustrative schema fixtures. It has no production catalog, API documentation contract, account/key provisioning, usage dashboard, billing, or astrology service. No Panchang, birth-chart, planetary-position, nakshatra, rashi, or horoscope implementation was found. This is evidence about this checkout, not an audit of an external service.
+At the original SEO audit, the repository contained only an Expo 58 static marketing website and illustrative schema fixtures. At that time it had no production catalog, API documentation contract, account/key provisioning, usage dashboard, billing, or astrology service. No Panchang, birth-chart, planetary-position, nakshatra, rashi, or horoscope implementation was found then. This is evidence about this checkout, not an audit of an external service.
 
-Astrology is now presented as **planned** in the homepage, navigation, product overview, FAQ, a dedicated overview page, and the inquiry draft flow. It is not included in the existing plan entitlements. No astrology demo, endpoint, calculation accuracy, tradition, release date, or price is invented. Existing plan values and allowances remain unchanged. They are now shared through `shared/content-plans.json`, re-exported by `src/data/plans.ts` for the marketing site and reused by the separate Developer Console.
+The original SEO implementation presented astrology as **planned** in the homepage, navigation, product overview, FAQ, a dedicated overview page, and the inquiry draft flow. It is not included in the existing plan entitlements. No astrology demo, endpoint, calculation accuracy, tradition, release date, or price is invented. Existing plan values and allowances remain unchanged. They are now shared through `shared/content-plans.json`, re-exported by `src/data/plans.ts` for the marketing site and reused by the separate Developer Console.
 
 ## Audit findings and fixes
 

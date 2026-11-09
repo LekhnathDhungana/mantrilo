@@ -1,21 +1,25 @@
 import { useState } from 'react';
+import { router } from 'expo-router';
 import { useConsole } from '../Session.web';
-import { mutate } from '../../lib/api';
+import { ConsoleError, mutate } from '../../lib/api';
 import { Badge, CopyButton, Empty, ErrorNotice, formatDate, PageTitle } from '../ui.web';
 import type { KeyRecord } from '../../lib/types';
 
 export default function Keys() {
-  const { session, refresh } = useConsole();
+  const { session, config, refresh } = useConsole();
   const [open, setOpen] = useState(false),
     [pending, setPending] = useState(false),
     [error, setError] = useState(''),
     [newSecret, setNewSecret] = useState(''),
-    [revokeId, setRevokeId] = useState('');
+    [revokeId, setRevokeId] = useState(''),
+    [needsLogin, setNeedsLogin] = useState(false),
+    [verificationSent, setVerificationSent] = useState(false);
   if (!session) return null;
   async function create(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     setPending(true);
     setError('');
+    setNeedsLogin(false);
     const f = new FormData(event.currentTarget);
     try {
       const result = await mutate<{ secret: string; key: KeyRecord }>('/api/keys', 'POST', {
@@ -26,6 +30,7 @@ export default function Keys() {
       setOpen(false);
       await refresh();
     } catch (e) {
+      setNeedsLogin(e instanceof ConsoleError && e.code === 'reauthentication_required');
       setError(e instanceof Error ? e.message : 'Key creation failed.');
     } finally {
       setPending(false);
@@ -44,6 +49,33 @@ export default function Keys() {
       setPending(false);
     }
   }
+  async function sendVerification() {
+    if (!config?.firebase) return;
+    setPending(true);
+    setError('');
+    try {
+      const { token } = await mutate<{ token: string }>('/api/auth/verification-token', 'POST');
+      const { sendVerificationEmail } = await import('../../lib/firebase');
+      await sendVerificationEmail(config.firebase, token);
+      setVerificationSent(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not send the verification email.');
+    } finally {
+      setPending(false);
+    }
+  }
+  async function signInAgain() {
+    setPending(true);
+    setError('');
+    try {
+      await mutate('/api/auth/logout', 'POST');
+      await refresh();
+      router.replace('/login');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not sign out.');
+      setPending(false);
+    }
+  }
   return (
     <>
       <PageTitle
@@ -54,13 +86,38 @@ export default function Keys() {
           <button
             className="button"
             onClick={() => setOpen(!open)}
-            disabled={pending || !!newSecret}
+            disabled={pending || !!newSecret || !session.user.verified}
           >
             Create API key <span>＋</span>
           </button>
         }
       />
       <ErrorNotice message={error} />
+      {needsLogin && (
+        <div className="action-row">
+          <button className="button subtle" disabled={pending} onClick={signInAgain}>
+            Sign in again
+          </button>
+        </div>
+      )}
+      {!session.user.verified && (
+        <section className="panel form-panel">
+          <h2>Verify your email to create API keys.</h2>
+          <p>
+            {verificationSent
+              ? `We sent a link to ${session.user.email}. Open it, then come back here.`
+              : `Confirm that ${session.user.email} is yours. Check your inbox for our link, or send a new one.`}
+          </p>
+          <div className="action-row">
+            <button className="button" disabled={pending} onClick={sendVerification}>
+              Send verification email
+            </button>
+            <button className="button subtle" disabled={pending} onClick={refresh}>
+              I’ve verified it
+            </button>
+          </div>
+        </section>
+      )}
       {newSecret && (
         <section className="secret-card" role="status">
           <Badge tone="saffron">SHOWN ONCE</Badge>

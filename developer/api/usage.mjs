@@ -12,7 +12,7 @@ export function limitsFor(plan) {
   };
 }
 
-// Requests per second and burst per key, by plan. Tune as real traffic arrives.
+// Requests per second and burst per workspace and environment, by plan. Tune as real traffic arrives.
 export const RATE_LIMITS = {
   Sandbox: { rate: 2, burst: 10 },
   Starter: { rate: 10, burst: 20 },
@@ -26,6 +26,12 @@ export class RateLimiter {
   constructor({ now = () => Date.now() } = {}) {
     this.now = now;
     this.buckets = new Map();
+  }
+  // Whether take() would succeed, without spending a token.
+  available(id, { rate, burst }) {
+    const bucket = this.buckets.get(id);
+    if (!bucket) return true;
+    return Math.min(burst, bucket.tokens + ((this.now() - bucket.at) / 1000) * rate) >= 1;
   }
   take(id, { rate, burst }) {
     const now = this.now(),
@@ -45,11 +51,25 @@ export class RateLimiter {
 // (apiUsage/{workspace}_{period}_{n}) so a busy key never contends on a single document.
 // Totals are cached briefly; quota checks can overshoot by a few requests, billing totals stay exact.
 export class UsageMeter {
-  constructor(sink, { ttlMs = 30_000, now = () => Date.now() } = {}) {
+  // `keyActivity` receives each key's last use, written at most once per `touchMs` per instance.
+  constructor(
+    sink,
+    { ttlMs = 30_000, now = () => Date.now(), keyActivity = null, touchMs = 60_000 } = {},
+  ) {
     this.sink = sink;
     this.ttlMs = ttlMs;
     this.now = now;
     this.cache = new Map();
+    this.keyActivity = keyActivity;
+    this.touchMs = touchMs;
+    this.touched = new Map();
+  }
+  async touch(workspaceId, keyId, at) {
+    if (!this.keyActivity || this.touched.get(keyId) > this.now() - this.touchMs) return;
+    this.touched.delete(keyId);
+    this.touched.set(keyId, this.now());
+    if (this.touched.size > 10_000) this.touched.delete(this.touched.keys().next().value);
+    await this.keyActivity.touchKey(workspaceId, keyId, at.toISOString());
   }
   async totals(workspaceId, period = currentPeriod()) {
     const id = `${workspaceId}_${period}`,
@@ -66,7 +86,10 @@ export class UsageMeter {
       cached.totals.contentRequests += requests;
       cached.totals.audioBytes += audioBytes;
     }
-    return this.sink.add({ workspaceId, keyId, endpoint, requests, audioBytes, period, at });
+    return Promise.all([
+      this.sink.add({ workspaceId, keyId, endpoint, requests, audioBytes, period, at }),
+      this.touch(workspaceId, keyId, at),
+    ]);
   }
 }
 
@@ -85,15 +108,15 @@ export class FirestoreUsageSink {
         period,
         contentRequests: inc(requests),
         audioBytes: inc(audioBytes),
-        daily: { [day]: { contentRequests: inc(requests), audioBytes: inc(audioBytes) } },
-        endpoints: { [endpoint]: inc(requests) },
-        keys: {
-          [keyId]: {
-            requests: inc(requests),
+        daily: {
+          [day]: {
+            contentRequests: inc(requests),
             audioBytes: inc(audioBytes),
-            lastUsedAt: at.toISOString(),
+            endpoints: { [endpoint]: inc(requests) },
           },
         },
+        endpoints: { [endpoint]: inc(requests) },
+        keys: { [keyId]: { requests: inc(requests), audioBytes: inc(audioBytes) } },
       },
       { merge: true },
     );
@@ -115,8 +138,8 @@ export class FirestoreUsageSink {
 }
 
 export class MemoryUsageSink {
-  constructor() {
-    this.events = [];
+  constructor(events = []) {
+    this.events = events;
   }
   async add(event) {
     this.events.push(event);

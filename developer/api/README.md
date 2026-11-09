@@ -16,18 +16,29 @@ key created in the Developer Console: `Authorization: Bearer mtr_live_…` (or `
 
 1. **Key** — hashed (SHA-256) and looked up in `apiKeys/{hash}`, which the console writes when keys
    are created or revoked. Cached 60 s, so a revoked key stops within a minute. Production keys need
-   a paid plan. Ten bad keys from one IP are then throttled.
-2. **Rate limit** — per key, by plan (`RATE_LIMITS` in `usage.mjs`); sandbox keys always get the
-   Sandbox rate. In memory per instance.
+   a paid plan. New keys end in a checksum, so made-up keys are refused without a read. After ten
+   bad keys from one IP, that IP can't trigger lookups until its allowance refills. Accepting keys
+   without a checksum is only for those issued before it existed.
+2. **Rate limit** — per workspace and environment, by plan (`RATE_LIMITS` in `usage.mjs`), so extra
+   keys don't add capacity; sandbox keys always get the Sandbox rate. In memory per instance. Client
+   IPs come from the last `X-Forwarded-For` entry, which assumes no load balancer in front of Cloud Run.
 3. **Allowance** — monthly requests and audio bytes from `shared/content-plans.json`. Usage is
    written as increments to `apiUsage/{workspace}_{YYYY-MM}_{0-9}` (sharded, no transactions) and
-   totals are cached 30 s, so a quota can overshoot slightly; the stored totals are exact.
+   totals are cached 30 s, so a quota can overshoot slightly; the stored totals are exact. Each
+   key's last use goes to `apiKeyActivity/{workspace}`, at most once a minute per instance. The console's
+   Overview and Usage screens read these same documents.
 4. **Content** — read from Firestore with server credentials (client rules stay deny-all) and
    mapped to the public shape in `content.mjs`. Storage paths and internal fields are never returned.
    Sandbox keys see the first 5 items of each resource.
 5. **Audio** — the file size is charged when the link is issued. The bucket stays private.
 
 Only successful responses are charged.
+
+## Console
+
+The console's Docs and Playground use `MANTRILO_API_URL` (for example `https://api.mantrilo.com`). The
+API has no CORS, so the Playground relays requests through `POST /api/playground` on the console.
+Local demo mode runs this server over placeholder data (`demo.mjs`) on the console's port + 100.
 
 ## Run locally
 

@@ -29,40 +29,12 @@ function AdminControls() {
       name: string;
       plan: string;
       products: number;
-      usage: { contentRequests: number; audioBytes: number; astrologyCredits: number };
+      usage: { contentRequests: number; audioBytes: number };
     }[];
   }>('/api/admin/workspaces');
-  const settings = useLoad<{
-    config: {
-      credits: Record<string, number>;
-      costsConfirmed: boolean;
-      billingConfigured: boolean;
-    };
-  }>('/api/admin/astrology');
   const [pending, setPending] = useState(false),
     [error, setError] = useState(''),
     [notice, setNotice] = useState('');
-  async function save(event: React.SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setPending(true);
-    setError('');
-    const f = new FormData(event.currentTarget);
-    try {
-      const r = await mutate<{ notice: string }>('/api/admin/astrology', 'PATCH', {
-        credits: {
-          starter: Number(f.get('starter')),
-          growth: Number(f.get('growth')),
-          business: Number(f.get('business')),
-        },
-      });
-      setNotice(r.notice);
-      await settings.reload();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save proposed credits.');
-    } finally {
-      setPending(false);
-    }
-  }
   async function provision(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const f = new FormData(event.currentTarget);
@@ -82,9 +54,9 @@ function AdminControls() {
       <PageTitle
         eyebrow="ADMINISTRATION · PRIVILEGED"
         title="Administrator workspace"
-        copy="Customer workspaces, proposed configuration, and connection status. Every action is authorized server-side."
+        copy="Customer workspaces and connection status. Every action is authorized server-side."
       />
-      <ErrorNotice message={error || workspaces.error || settings.error} />
+      <ErrorNotice message={error || workspaces.error} />
       {notice && (
         <div className="notice" role="status">
           {notice}
@@ -107,7 +79,6 @@ function AdminControls() {
                   <th>Products</th>
                   <th>Content requests</th>
                   <th>Audio delivery</th>
-                  <th>Astrology credits</th>
                 </tr>
               </thead>
               <tbody>
@@ -121,7 +92,6 @@ function AdminControls() {
                     <td>{w.products}</td>
                     <td>{w.usage.contentRequests}</td>
                     <td>{formatBytes(w.usage.audioBytes)}</td>
-                    <td>{w.usage.astrologyCredits}</td>
                   </tr>
                 ))}
               </tbody>
@@ -130,39 +100,6 @@ function AdminControls() {
         )}
       </section>
       <div className="settings-grid">
-        <section className="panel form-panel">
-          <div className="panel-heading">
-            <h2>Astrology configuration</h2>
-            <Badge tone="saffron">PROPOSED ONLY</Badge>
-          </div>
-          {settings.loading ? (
-            <Loading />
-          ) : (
-            <form onSubmit={save}>
-              {['starter', 'growth', 'business'].map((id) => (
-                <label key={id}>
-                  {id.charAt(0).toUpperCase() + id.slice(1)} provisional monthly credits
-                  <input
-                    type="number"
-                    name={id}
-                    min="1"
-                    max="10000000"
-                    step="1"
-                    defaultValue={settings.data?.config.credits[id]}
-                    required
-                  />
-                </label>
-              ))}
-              <p className="small muted">
-                These settings do not activate an add-on, set endpoint costs, or grant purchased
-                credits. Paid purchases remain disabled.
-              </p>
-              <button className="button" disabled={pending}>
-                Save proposed allowances
-              </button>
-            </form>
-          )}
-        </section>
         <section className="panel prose">
           <div className="panel-heading">
             <h2>Integration status</h2>

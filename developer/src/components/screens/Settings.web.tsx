@@ -7,7 +7,8 @@ export default function Settings() {
   const { session, config, refresh } = useConsole();
   const [pending, setPending] = useState(false),
     [error, setError] = useState(''),
-    [notice, setNotice] = useState('');
+    [notice, setNotice] = useState(''),
+    [confirm, setConfirm] = useState('');
   if (!session) return null;
   async function save(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -31,13 +32,26 @@ export default function Settings() {
   async function reset() {
     if (!config?.firebase || !session) return;
     setPending(true);
+    setError('');
     try {
       const firebase = await import('../../lib/firebase');
       await firebase.resetPassword(config.firebase, session.user.email);
-      setNotice('If your account exists, check your email for password-reset instructions.');
+      setNotice('Check your email for a password-reset link.');
     } catch {
-      setError('Reset could not be requested. Check Firebase configuration.');
+      setError('The reset email could not be sent. Try again.');
     } finally {
+      setPending(false);
+    }
+  }
+  async function remove(event: React.SubmitEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPending(true);
+    setError('');
+    try {
+      await mutate('/api/account/delete', 'POST', { confirm });
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Your account could not be deleted.');
       setPending(false);
     }
   }
@@ -93,7 +107,7 @@ export default function Settings() {
         <section className="panel form-panel">
           <h2>Account</h2>
           <dl className="account-details">
-            <dt>Email</dt>
+            <dt>Signed in as</dt>
             <dd>{session.user.email}</dd>
             <dt>Access</dt>
             <dd>{session.user.admin ? 'Administrator' : 'Workspace owner'}</dd>
@@ -104,21 +118,35 @@ export default function Settings() {
                 : 'Firebase session cookie · up to 5 days'}
             </dd>
           </dl>
-          <button
-            className="button outline"
-            onClick={reset}
-            disabled={pending || !config?.firebase}
-          >
-            Send password-reset email
-          </button>
-          {!config?.firebase && (
-            <p className="small muted">
-              Real account actions require Firebase configuration. Demo login has no password.
-            </p>
+          {session.mode === 'firebase' && session.user.email.includes('@') && (
+            <button className="button outline" onClick={reset} disabled={pending}>
+              Send password-reset email
+            </button>
           )}
           <p className="small muted">
             API credentials and session cookies are never stored in browser local storage.
           </p>
+          {session.mode === 'firebase' && !session.user.admin && (
+            <form className="danger-zone" onSubmit={remove}>
+              <h3>Delete account</h3>
+              <p className="small muted">
+                Permanently deletes your account, workspace, API keys and usage. Live integrations
+                using your keys will stop working. This can&apos;t be undone.
+              </p>
+              <label>
+                Type DELETE to confirm
+                <input
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  autoComplete="off"
+                  disabled={pending}
+                />
+              </label>
+              <button className="button outline" disabled={pending || confirm !== 'DELETE'}>
+                Delete my account
+              </button>
+            </form>
+          )}
         </section>
       </div>
     </>

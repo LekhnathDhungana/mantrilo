@@ -15,6 +15,7 @@ COPY developer/package*.json ./
 RUN npm ci --omit=dev
 COPY --from=build /app/developer/dist ./dist
 COPY developer/server ./server
+COPY developer/api ./api
 COPY shared/ /app/shared/
 USER node
 EXPOSE 8080

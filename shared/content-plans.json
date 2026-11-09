@@ -5,6 +5,7 @@
     "requests": "1,000",
     "audio": "Sample audio only",
     "catalog": "Sample catalog for testing",
+    "astrology": "Astrology calculations included",
     "products": "Testing only",
     "support": "No promised support level"
   },
@@ -14,6 +15,7 @@
     "requests": "50,000",
     "audio": "10 GB",
     "catalog": "Full available catalog",
+    "astrology": "Astrology calculations included",
     "products": "1",
     "support": "Email support"
   },
@@ -23,6 +25,7 @@
     "requests": "250,000",
     "audio": "50 GB",
     "catalog": "Full available catalog",
+    "astrology": "Astrology calculations included",
     "products": "3",
     "support": "Priority email support"
   },
@@ -32,6 +35,7 @@
     "requests": "1,000,000",
     "audio": "200 GB",
     "catalog": "Full available catalog",
+    "astrology": "Astrology calculations included",
     "products": "10",
     "support": "Integration assistance"
   }

@@ -8,14 +8,12 @@ export const OPERATIONS = [
     name: 'Planetary positions',
     description:
       'Geocentric Sun, Moon, Mercury, Venus, Mars, Jupiter, and Saturn; tropical and sidereal longitudes, rashis, nakshatras, and apparent motion.',
-    sandboxCreditCost: 1,
   },
   {
     id: 'panchang',
     name: 'Instant Panchang elements',
     description:
       'Tithi, nakshatra and pada, yoga number, karana, and Sun/Moon rashis at a specified instant. Not a sunrise-based daily almanac.',
-    sandboxCreditCost: 1,
   },
 ];
 export const RASHIS = [

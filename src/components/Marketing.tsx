@@ -8,8 +8,8 @@ export default function Marketing() {
       <Text style={styles.eyebrow}>ANCIENT WISDOM. MODERN INFRASTRUCTURE.</Text>
       <Text style={styles.title}>Mantras, sacred audio, and shastra books. One API.</Text>
       <Text style={styles.body}>
-        A Hindu content API for developers building apps and websites. Astrology integration is
-        managed separately from content allowances.
+        A Hindu content API for developers building apps and websites. Astrology calculations are
+        included in every plan.
       </Text>
       <Link style={styles.link} href="/access">
         Request API access ↗

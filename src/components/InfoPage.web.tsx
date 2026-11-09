@@ -72,7 +72,7 @@ Astrology availability and plan inclusion: undecided\nProduct: ${data.get('produ
           <>
             <p>
               {astrologyInquiry
-                ? 'Describe your astrology integration to prepare an inquiry draft. The live service connection and billing are not configured in this local preview.'
+                ? 'Describe your astrology integration to prepare an inquiry draft. The calculation engine is available in the console; it is included in every plan.'
                 : 'Tell us what you’re creating and which existing content plan fits. Prepare an access request to share with the Mantrilo team.'}
             </p>
             <div className="notice">
@@ -155,8 +155,7 @@ Astrology availability and plan inclusion: undecided\nProduct: ${data.get('produ
         ) : page === 'docs' ? (
           <>
             <div className="notice">
-              Integration planning guide · The repository has no production API documentation or
-              endpoints. Every request and response below is illustrative.
+              Integration planning guide · The content-catalog requests below are illustrative. The working astrology calculation endpoint is documented in section 5.
             </div>
             <h2>1. Request access</h2>
             <p>
@@ -200,11 +199,9 @@ Astrology availability and plan inclusion: undecided\nProduct: ${data.get('produ
               products. API key management and usage reporting are product capabilities described in
               the brief; neither has a live dashboard in this website.
             </p>
-            <h2>5. Configure astrology separately from content access</h2>
+            <h2>5. Calculate astrology with the same API key</h2>
             <p>
-              No astrology endpoints, calculation engine, or interpretive feed are implemented.
-              Connect the astrology service and confirm its endpoint contract, credit costs, and
-              add-on access before integration.{' '}
+              POST /v1/astrology/calculate accepts the same API key as the content endpoints. Send operation (positions or panchang), datetime (ISO with explicit UTC offset), and optional ayanamsaDegrees. It returns real results and uses one content request per successful calculation. The initial sidereal model is a labeled approximation. Houses, nodes, dashas, and interpretation are not included.{' '}
               <Link href="/astrology-api">Review astrology integration →</Link>
             </p>
             <p>

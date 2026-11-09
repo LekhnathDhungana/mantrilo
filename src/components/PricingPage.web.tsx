@@ -16,9 +16,7 @@ export default function PricingPage() {
           allowances. A customer product means an app or website covered by the plan.
         </p>
         <div className="notice">
-          Astrology is separate from the content plans below. Add-on billing and credit costs
-          require configuration. Requests prepare a draft; live account provisioning and checkout
-          are not connected.
+          Astrology is included in every plan below. Each calculation counts as one API request.
         </div>
       </section>
       <PricingTables />

@@ -6,3 +6,4 @@ dist/
 *.log
 *.tsbuildinfo
 expo-env.d.ts
+rewrite-review/

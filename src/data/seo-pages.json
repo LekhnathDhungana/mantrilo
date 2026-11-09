@@ -25,7 +25,7 @@
   },
   "/astrology-api": {
     "title": "Astrology API for Developers | Mantrilo",
-    "description": "Explore astrology integration for apps and websites with Mantrilo. Review service configuration, separate credit accounting, and API access requirements.",
+    "description": "Calculate planetary positions, rashis, nakshatras, and instant Panchang elements with Mantrilo’s server-side astrology API. Review methods, inputs, and sandbox access.",
     "label": "Astrology API",
     "indexable": true
   },

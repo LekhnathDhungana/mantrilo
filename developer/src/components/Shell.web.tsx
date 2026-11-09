@@ -4,15 +4,11 @@ import Brand from './Brand.web';
 import { useConsole } from './Session.web';
 import { mutate } from '../lib/api';
 export const navigation = [
-  ['/', '◫', 'Overview'],
+  ['/', '◫', 'Home'],
   ['/keys', '⌘', 'API keys'],
-  ['/explorer', '▤', 'Content explorer'],
-  ['/playground', '›_', 'API playground'],
-  ['/astrology', '✧', 'Astrology'],
-  ['/usage', '↗', 'Usage & logs'],
-  ['/billing', '▱', 'Billing & plans'],
-  ['/products', '▦', 'Products'],
-  ['/settings', '⚙', 'Settings'],
+  ['/docs', '›_', 'Docs'],
+  ['/library', '▤', 'Library'],
+  ['/billing', '▱', 'Usage & billing'],
 ] as const;
 export default function Shell() {
   const { session, loading, error, refresh } = useConsole(),
@@ -36,7 +32,7 @@ export default function Shell() {
         <Link href="/login">Return to sign in</Link>
       </div>
     );
-  if (!session) return <Redirect href="/login" />;
+  if (!session || !session.user.onboarded) return <Redirect href="/login" />;
   async function logout() {
     try {
       await mutate('/api/auth/logout', 'POST');
@@ -101,15 +97,15 @@ export default function Shell() {
           </div>
         )}
         <div className="sidebar-bottom">
-          <Link href="/docs" className="nav-item">
-            <span aria-hidden="true">↗</span>Integration guide
-          </Link>
           <div className="account">
             <span className="user-avatar">{session.user.email.charAt(0).toUpperCase()}</span>
             <div>
               <strong>{session.user.admin ? 'Administrator' : 'Developer'}</strong>
               <small>{session.user.email}</small>
             </div>
+            <Link href="/settings" className="signout" aria-label="Settings">
+              ⚙
+            </Link>
             <button className="signout" onClick={logout} title="Sign out" aria-label="Sign out">
               ↪
             </button>
@@ -127,7 +123,7 @@ export default function Shell() {
             Workspace <span className="slash">/</span>{' '}
             {pathname === '/admin'
               ? 'Administrator'
-              : navigation.find((n) => n[0] === pathname)?.[2] || 'Integration guide'}
+              : navigation.find((n) => n[0] === pathname)?.[2] || 'Settings'}
           </span>
           <div>
             <span className="environment-pill">
@@ -143,7 +139,7 @@ export default function Shell() {
           <div className="demo-banner">
             <b>LOCAL DEMO</b>
             <span>
-              Isolated sample data. Server-backed actions; no live API or billing. Resets on server
+              Local workspace data. Real astrology calculations; no billing. Resets on server
               restart.
             </span>
           </div>

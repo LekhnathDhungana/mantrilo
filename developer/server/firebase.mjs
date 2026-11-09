@@ -9,6 +9,10 @@ export function firebaseServices() {
     initializeApp({
       projectId,
       ...(process.env.FIREBASE_AUTH_EMULATOR_HOST ? {} : { credential: applicationDefault() }),
+      // Local user credentials can't sign sign-in tokens; this account signs them through IAM.
+      ...(process.env.MANTRILO_API_SIGNER
+        ? { serviceAccountId: process.env.MANTRILO_API_SIGNER }
+        : {}),
     });
   return { auth: getAuth(), db: getFirestore() };
 }
@@ -43,8 +47,11 @@ export class FirebaseSessions {
       if (user.disabled) return null;
       return {
         uid: decoded.uid,
-        email: user.email || '',
+        email: user.email || user.phoneNumber || '',
         admin: user.customClaims?.admin === true,
+        // A confirmed phone number proves ownership as well as a confirmed email does.
+        verified: user.emailVerified || Boolean(user.phoneNumber),
+        authTime: decoded.auth_time,
       };
     } catch {
       return null;
@@ -53,6 +60,26 @@ export class FirebaseSessions {
   async delete(value) {
     if (value) await this.db.doc(`consoleSessions/${hash(value)}`).delete();
   }
+  // A correct email code signs in, or creates the account on first use.
+  async signInToken(email) {
+    const user = await this.auth.getUserByEmail(email).catch((error) => {
+      if (error?.code === 'auth/user-not-found')
+        return this.auth.createUser({ email, emailVerified: true });
+      throw error;
+    });
+    insist(!user.disabled, 403, 'account_disabled', 'This account is disabled.');
+    if (!user.emailVerified) await this.auth.updateUser(user.uid, { emailVerified: true });
+    return this.auth.createCustomToken(user.uid);
+  }
+  // Lets the signed-in browser ask Firebase to send its verification email.
+  verificationToken(uid) {
+    return this.auth.createCustomToken(uid);
+  }
+  async deleteAccount(uid) {
+    const open = await this.db.collection('consoleSessions').where('uid', '==', uid).get();
+    await Promise.all(open.docs.map((doc) => doc.ref.delete()));
+    await this.auth.deleteUser(uid);
+  }
   async customerByEmail(email) {
     try {
       return await this.auth.getUserByEmail(email);
@@ -60,7 +87,7 @@ export class FirebaseSessions {
       throw new ApiError(
         404,
         'user_missing',
-        'Create the customer in Firebase Authentication first; public registration is disabled.',
+        'No account uses that email yet. Ask the customer to sign in once first.',
       );
     }
   }

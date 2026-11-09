@@ -1,104 +1,163 @@
 import { useState } from 'react';
 import { Link } from 'expo-router';
 import { useConsole } from '../Session.web';
-import { Badge, CopyButton, Empty, ErrorNotice, PageTitle } from '../ui.web';
+import { mutate } from '../../lib/api';
+import { Badge, CopyButton, Empty, ErrorNotice } from '../ui.web';
+
+type Endpoint = { label: string; path: string; list?: boolean; audio?: boolean };
+type Result = {
+  status: number;
+  ms: number;
+  requestId: string | null;
+  body: { nextCursor?: string | null };
+};
+
+const ENDPOINTS: Endpoint[] = [
+  { label: 'List shlokas', path: '/v1/shlokas', list: true },
+  { label: 'Get one shloka', path: '/v1/shlokas/{id}' },
+  { label: 'Get a shloka audio link', path: '/v1/shlokas/{id}/audio', audio: true },
+  { label: 'List mantras', path: '/v1/mantras', list: true },
+  { label: 'Get one mantra', path: '/v1/mantras/{id}' },
+];
+
+function buildPath(
+  endpoint: Endpoint,
+  { id, limit, deity, cursor }: { id: string; limit: string; deity: string; cursor?: string },
+) {
+  const query = new URLSearchParams();
+  if (endpoint.list) {
+    if (limit) query.set('limit', limit);
+    if (deity) query.set('deity', deity);
+    if (cursor) query.set('cursor', cursor);
+  }
+  if (endpoint.audio) query.set('format', 'json');
+  const path = endpoint.path.replace('{id}', encodeURIComponent(id) || 'YOUR_ID');
+  return query.size ? `${path}?${query}` : path;
+}
 
 export default function Playground() {
-  const { session, refresh } = useConsole();
-  const [type, setType] = useState('text'),
+  const { config, refresh } = useConsole();
+  const [index, setIndex] = useState(0),
+    [id, setId] = useState(''),
+    [limit, setLimit] = useState('5'),
+    [deity, setDeity] = useState(''),
     [key, setKey] = useState(''),
     [pending, setPending] = useState(false),
-    [result, setResult] = useState<{
-      status: number;
-      ms: number;
-      id: string;
-      body: unknown;
-    } | null>(null),
+    [result, setResult] = useState<Result | null>(null),
     [error, setError] = useState(''),
     [language, setLanguage] = useState('curl');
-  const origin = typeof window === 'undefined' ? 'CONSOLE_ORIGIN' : window.location.origin,
-    endpoint = `/api/demo/catalog?type=${type}`;
-  const curl = `curl '${origin}${endpoint}' \\\n  -H "Authorization: Bearer $MANTRILO_API_KEY"`;
-  const js = `const response = await fetch('${endpoint}', {\n  headers: { Authorization: 'Bearer YOUR_SANDBOX_KEY' }\n});\nconst data = await response.json();`;
-  async function run(event: React.SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
+  const endpoint = ENDPOINTS[index],
+    needsId = endpoint.path.includes('{id}'),
+    path = buildPath(endpoint, { id: id.trim(), limit, deity: deity.trim() }),
+    base = config?.apiUrl ?? '';
+  const curl = `curl '${base}${path}' \\\n  -H "Authorization: Bearer $MANTRILO_API_KEY"`;
+  const js = `// Run this on your server. Never ship the key in an app or browser.\nconst response = await fetch('${base}${path}', {\n  headers: { Authorization: \`Bearer \${process.env.MANTRILO_API_KEY}\` },\n});\nconst body = await response.json();`;
+  async function send(requestPath: string) {
     setPending(true);
     setError('');
-    const start = performance.now();
     try {
-      const response = await fetch(endpoint, {
-        headers: { Authorization: `Bearer ${key}` },
-        credentials: 'same-origin',
-        cache: 'no-store',
+      const { response } = await mutate<{ response: Result }>('/api/playground', 'POST', {
+        path: requestPath,
+        key: key.trim(),
       });
-      const body = await response.json();
-      setResult({
-        status: response.status,
-        ms: Math.round(performance.now() - start),
-        id: response.headers.get('X-Request-Id') || body.requestId,
-        body,
-      });
+      setResult(response);
       await refresh();
-    } catch {
-      setError(
-        'The request could not reach the console server. No calculation or successful response is simulated.',
-      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'The request could not be completed.');
     } finally {
       setPending(false);
     }
   }
+  const nextCursor = endpoint.list ? result?.body.nextCursor : null;
   return (
     <>
-      <PageTitle
-        eyebrow="DEVELOP & INSPECT"
-        title="API playground"
-        copy="Run an actual request against a supported endpoint and inspect its response."
-      />
-      {session?.mode !== 'demo' ? (
-        <Empty title="Production endpoints are not connected.">
-          Configure the real catalog contract and authentication before enabling a live playground.
-          No endpoint is invented here.
+      {!config?.apiUrl ? (
+        <Empty title="The API isn’t connected to this console.">
+          Set MANTRILO_API_URL on the console server to run requests from here.
         </Empty>
       ) : (
         <>
-          <div className="notice">
-            Local sandbox only. This implemented endpoint returns explicitly labeled fixtures and
-            records demo usage server-side. It is not the production Mantrilo content API.
-          </div>
           <div className="playground-grid">
             <section className="panel form-panel">
               <h2>Build a request</h2>
-              <form onSubmit={run}>
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void send(path);
+                }}
+              >
                 <label>
-                  Supported demo endpoint
-                  <select value={type} onChange={(e) => setType(e.target.value)}>
-                    <option value="text">GET · Text fixtures</option>
-                    <option value="audio">GET · Audio metadata fixtures</option>
-                    <option value="books">GET · Book fixtures</option>
+                  Endpoint
+                  <select
+                    value={index}
+                    onChange={(e) => {
+                      setIndex(Number(e.target.value));
+                      setResult(null);
+                    }}
+                  >
+                    {ENDPOINTS.map((item, i) => (
+                      <option key={item.path} value={i}>
+                        {item.label} · GET {item.path}
+                      </option>
+                    ))}
                   </select>
                 </label>
+                {needsId && (
+                  <label>
+                    ID
+                    <input
+                      value={id}
+                      onChange={(e) => setId(e.target.value)}
+                      placeholder="Copy an id from a list response"
+                      maxLength={200}
+                      required
+                    />
+                  </label>
+                )}
+                {endpoint.list && (
+                  <>
+                    <label>
+                      Limit (1–100)
+                      <input
+                        type="number"
+                        min={1}
+                        max={100}
+                        value={limit}
+                        onChange={(e) => setLimit(e.target.value)}
+                      />
+                    </label>
+                    <label>
+                      Deity (optional, exact match)
+                      <input
+                        value={deity}
+                        onChange={(e) => setDeity(e.target.value)}
+                        maxLength={60}
+                      />
+                    </label>
+                  </>
+                )}
                 <label>
-                  Sandbox API key
+                  API key
                   <input
                     type="password"
                     autoComplete="off"
                     value={key}
                     onChange={(e) => setKey(e.target.value)}
-                    placeholder="mtr_sbx_…"
+                    placeholder="mtr_sbx_… or mtr_live_…"
                     required
                   />
                 </label>
                 <p className="small muted">
-                  Paste a sandbox secret you created. It stays in this page’s memory.{' '}
-                  <Link href="/keys">Create a key →</Link>
+                  Paste a key from this workspace. It is sent through the console for this request
+                  only and is never stored. <Link href="/keys">Create a key →</Link>
                 </p>
                 <div className="cost-box">
-                  <span>SUCCESSFUL DEMO REQUEST COST</span>
+                  <span>SUCCESSFUL REQUEST COST</span>
                   <strong>1 content request</strong>
-                  <small>0 audio bytes · 0 astrology credits · Not billed</small>
+                  <small>Audio links also count the file size toward your audio allowance</small>
                 </div>
                 <button className="button" disabled={pending}>
-                  {pending ? 'Running request…' : 'Run sandbox request'} <span>↗</span>
+                  {pending ? 'Running request…' : 'Run request'} <span>↗</span>
                 </button>
               </form>
             </section>
@@ -120,10 +179,6 @@ export default function Playground() {
             </section>
           </div>
           <ErrorNotice message={error} />
-          <div className="notice">
-            Need astronomical calculations?{' '}
-            <Link href="/astrology">Run the astrology engine →</Link>
-          </div>
           <section className="panel response-panel">
             <div className="panel-heading">
               <h2>Response</h2>
@@ -131,13 +186,31 @@ export default function Playground() {
                 <div className="action-row">
                   <Badge tone={result.status < 400 ? 'green' : 'red'}>HTTP {result.status}</Badge>
                   <Badge>{result.ms} ms</Badge>
+                  {nextCursor && (
+                    <button
+                      className="button subtle"
+                      disabled={pending}
+                      onClick={() =>
+                        send(
+                          buildPath(endpoint, {
+                            id: id.trim(),
+                            limit,
+                            deity: deity.trim(),
+                            cursor: nextCursor,
+                          }),
+                        )
+                      }
+                    >
+                      Next page
+                    </button>
+                  )}
                 </div>
               )}
             </div>
             {result ? (
               <>
                 <p className="response-id">
-                  Request ID: <code>{result.id}</code>
+                  Request ID: <code>{result.requestId}</code>
                 </p>
                 <pre>
                   <code>{JSON.stringify(result.body, null, 2)}</code>
@@ -145,7 +218,7 @@ export default function Playground() {
               </>
             ) : (
               <Empty title="Ready when you are." icon="›_">
-                Choose a fixture endpoint, provide an active sandbox key, and run a request.
+                Choose an endpoint, paste a key, and run a request.
               </Empty>
             )}
           </section>

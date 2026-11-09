@@ -43,6 +43,7 @@ export default function PricingTables() {
                   ? p.products
                   : `${p.products} customer ${p.products === '1' ? 'product' : 'products'}`}
               </li>
+              <li>{p.astrology}</li>
               <li>{p.support}</li>
             </ul>
           </article>
@@ -78,6 +79,7 @@ export default function PricingTables() {
                 'Shastras & books',
                 ...plans.map((p) => (p.price ? 'Full available catalog' : 'Sample catalog')),
               ],
+              ['Astrology calculations', ...plans.map(() => 'Included')],
               ['Customer products', ...plans.map((p) => p.products)],
               ['Support', ...plans.map((p) => p.support)],
             ].map(([label, ...values]) => (
@@ -96,8 +98,7 @@ export default function PricingTables() {
         available mantras, shlokas, sacred audio, shastra books, and discovery features for
         commercial integration, subject to the{' '}
         <Link href="/license">documented content license</Link>. Audio allowances measure data
-        delivery, not storage. Astrology is managed separately from these content-plan allowances.
-        Its billing connection and endpoint credit costs require configuration.
+        delivery, not storage. Each astrology calculation counts as one API request.
       </p>
     </section>
   );

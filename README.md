@@ -27,7 +27,7 @@ Keep private API keys server-side, preferably in GCP Secret Manager. No secret i
 
 ## GCP preparation (not deployed)
 
-No existing GCP project or resources were found. `deployment/Dockerfile` builds the static export and serves it on port 8080 using unprivileged Nginx for Cloud Run. `deployment/nginx.conf` resolves clean URLs. Build with the repository as context:
+The website isn't deployed yet; the GCP project is `mantrilo`. `deployment/Dockerfile` builds the static export and serves it on port 8080 using unprivileged Nginx for Cloud Run. `deployment/nginx.conf` resolves clean URLs. Build with the repository as context:
 
 ```sh
 docker build -f deployment/Dockerfile -t mantrilo-web .
@@ -35,11 +35,11 @@ docker build -f deployment/Dockerfile -t mantrilo-web .
 docker run --rm -p 8080:8080 mantrilo-web
 ```
 
-After selecting a GCP project, region, and Artifact Registry repository, push the image there and deploy to Cloud Run using the project's existing access policy. Keep authentication required for a private preview; do not grant `allUsers` invoker access without explicit authorization. The container listens on Cloud Run's default port 8080. No cloud resource has been created or changed.
+After selecting a region and Artifact Registry repository, push the image there and deploy to Cloud Run using the project's existing access policy. Keep authentication required for a private preview; do not grant `allUsers` invoker access without explicit authorization. The container listens on Cloud Run's default port 8080.
 
 ## Connections required before launch
 
-Production catalog and verified titles; API endpoints and documentation; account/API-key provisioning; usage reporting; billing/checkout; verified contact or request service; final privacy policy, service terms, and content license. No fake checkout, audio playback, or submission success is implemented. Audio preview shows metadata only because no recording was supplied. Astrology is presented as a product capability; its live service connection and billing require configuration.
+Content license; billing/checkout; public docs for the `/v1` API; verified contact or request service; final privacy policy, service terms, and content license. No fake checkout, audio playback, or submission success is implemented. Audio preview shows metadata only because no recording was supplied. A working server-side astrology calculation engine is implemented in the separate Developer Console; paid billing remains unconfigured.
 
 ## Verification performed
 
@@ -56,7 +56,7 @@ See [the implementation audit, search-theme map, verification, decisions, and la
 
 Private/local builds default to noindex. Set `EXPO_PUBLIC_SITE_URL` to the verified HTTPS production origin and explicitly set `EXPO_PUBLIC_INDEXING_ENABLED=true` only for an authorized production build. Without a configured origin, canonical/structured-data URLs are omitted and the preview sitemap is empty. `npm run check:seo` verifies the default preview export. Keep Cloud Run previews authenticated; robots directives do not control access.
 
-Astrology is linked from the homepage and navigation without a planned badge. This preview still requires a connected service, documented operations, credit costs, and billing; the inquiry path only prepares a local draft. Existing content plans are unchanged.
+Astrology is linked from the homepage and navigation without a planned badge. The Developer Console provides real planetary positions and instant Panchang calculations with explicit methods, included in every plan at one content request per calculation. The marketing inquiry path only prepares a local draft. Existing content plans are unchanged.
 
 ## Separate Developer Console
 

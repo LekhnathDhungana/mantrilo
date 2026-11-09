@@ -3,5 +3,5 @@ export default function Page() {
   return <Screen page="overview" />;
 }
 export function generateMetadata() {
-  return { title: 'Overview | Mantrilo Console', robots: 'noindex,nofollow' };
+  return { title: 'Home | Mantrilo Console', robots: 'noindex,nofollow' };
 }

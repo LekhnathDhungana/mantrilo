@@ -10,6 +10,7 @@ import {
 } from '../server/astrology/engine.mjs';
 import { createConsoleServer, DemoSessions, seedDemo } from '../server/app.mjs';
 import { MemoryStore } from '../server/store.mjs';
+import { currentPeriod } from '../server/domain.mjs';
 
 // USNO equinox reference: https://aa.usno.navy.mil/api/seasons?year=2024
 const instant = '2024-03-20T03:06:00Z';
@@ -98,14 +99,13 @@ test('invalid calendar dates, ambiguous offsets, unsupported fields and invalid 
   assert.throws(() => calculate({ operation: 'horoscope', datetime: instant }));
   assert.throws(() => calculate({ operation: 'positions', datetime: instant, latitude: 27 }));
 });
-async function fixture(t, limit = 100) {
+async function fixture(t) {
   const store = new MemoryStore(),
     sessions = new DemoSessions();
   await seedDemo(store);
   const server = createConsoleServer({
     store,
     sessions,
-    astrologySandboxLimit: limit,
     appOrigin: 'http://localhost:4190',
   });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -140,11 +140,11 @@ async function fixture(t, limit = 100) {
   await call('/api/auth/demo', 'POST', { role: 'customer' });
   return { store, call, base };
 }
-test('session calculations consume only astrology credits and never log the requested date or result', async (t) => {
+test('session calculations use one content request and never log the requested date or result', async (t) => {
   const f = await fixture(t);
   const status = await f.call('/api/astrology');
   assert.equal(status.body.status, 'available');
-  assert.equal(status.body.canPurchase, false);
+  assert.equal(status.body.allowance, 1000);
   assert.equal(status.body.availableOperations.length, 2);
   const result = await f.call('/api/astrology/calculate', 'POST', {
     operation: 'panchang',
@@ -152,11 +152,10 @@ test('session calculations consume only astrology credits and never log the requ
   });
   assert.equal(result.status, 200);
   assert.equal(result.body.calculated, true);
-  assert.equal(result.body.usage.remaining, 99);
-  assert.equal(result.body.usage.billable, false);
+  assert.deepEqual(result.body.usage, { contentRequests: 1, remaining: 999 });
   const me = (await f.call('/api/me')).body;
-  assert.equal(me.usage.astrologyCredits, 1);
-  assert.equal(me.usage.contentRequests, 0);
+  assert.equal(me.usage.contentRequests, 1);
+  assert.equal(me.usage.endpoints['astrology.panchang'], 1);
   assert.equal(me.usage.audioBytes, 0);
   assert.equal(me.integrations.astrology, true);
   assert.ok(!JSON.stringify(me.workspace.logs).includes('2001-02-03'));
@@ -166,41 +165,26 @@ test('session calculations consume only astrology credits and never log the requ
     datetime: 'bad',
   });
   assert.equal(invalid.status, 400);
-  assert.equal((await f.call('/api/me')).body.usage.astrologyCredits, 1);
+  assert.equal((await f.call('/api/me')).body.usage.contentRequests, 1);
 });
-test('API-key calculations work without cookies/CSRF and revoked keys are rejected', async (t) => {
+test('calculations stop when the plan allowance is used up', async (t) => {
   const f = await fixture(t);
-  const created = await f.call('/api/keys', 'POST', {
-    name: 'Astrology integration',
-    environment: 'sandbox',
+  const { workspace } = (await f.call('/api/me')).body;
+  f.store.apiEvents.push({
+    workspaceId: workspace.id,
+    keyId: 'k',
+    endpoint: 'shlokas.list',
+    requests: 1000,
+    audioBytes: 0,
+    period: currentPeriod(),
+    at: new Date(),
   });
-  const request = () =>
-    fetch(f.base + '/api/v1/astrology/calculate', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${created.body.secret}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ operation: 'positions', datetime: instant }),
-    });
-  const response = await request();
-  assert.equal(response.status, 200);
-  assert.equal((await response.json()).data.planets.length, 7);
-  await f.call(`/api/keys/${created.body.key.id}`, 'DELETE');
-  assert.equal((await request()).status, 401);
-  assert.equal((await f.call('/api/me')).body.usage.astrologyCredits, 1);
-});
-test('parallel calculations cannot bypass the sandbox astrology credit limit', async (t) => {
-  const f = await fixture(t, 2);
-  const responses = await Promise.all(
-    Array.from({ length: 8 }, () =>
-      f.call('/api/astrology/calculate', 'POST', { operation: 'panchang', datetime: instant }),
-    ),
-  );
-  assert.equal(responses.filter((r) => r.status === 200).length, 2);
-  assert.equal(responses.filter((r) => r.status === 429).length, 6);
-  const me = (await f.call('/api/me')).body;
-  assert.equal(me.usage.astrologyCredits, 2);
-  assert.equal(me.usage.contentRequests, 0);
+  const over = await f.call('/api/astrology/calculate', 'POST', {
+    operation: 'panchang',
+    datetime: instant,
+  });
+  assert.equal(over.status, 429);
+  assert.equal(over.body.error.code, 'quota_exceeded');
   assert.equal((await f.call('/api/astrology')).body.balance, 0);
+  assert.equal((await f.call('/api/me')).body.usage.contentRequests, 1000);
 });

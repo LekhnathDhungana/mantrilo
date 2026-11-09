@@ -14,15 +14,21 @@ import {
   allowance,
   publicWorkspace,
   usage,
+  mergeUsage,
   currentPeriod,
   log,
+  addKey,
+  newApiKey,
   chargeRequest,
   accountingPolicy,
-  proposedAddons,
+  readJson as body,
 } from './domain.mjs';
 import { catalog } from './fixtures.mjs';
+import { readEmail, Throttle } from './email-codes.mjs';
+import { libraryItem, libraryPage } from './library.mjs';
 import { calculate, OPERATIONS, ENGINE_VERSION } from './astrology/engine.mjs';
-import { chargeCalculation, sandboxLimit } from './astrology/accounting.mjs';
+import { RATE_LIMITS, limitsFor } from '../api/usage.mjs';
+import { ENTITLED_STATUSES, PAID_PLANS, syncFromEvent, syncWorkspace } from './billing.mjs';
 
 function cookies(request) {
   return Object.fromEntries(
@@ -32,18 +38,15 @@ function cookies(request) {
       .filter((pair) => pair.length === 2),
   );
 }
-async function body(request) {
-  let raw = '';
+async function rawBody(request) {
+  const chunks = [];
+  let size = 0;
   for await (const chunk of request) {
-    raw += chunk;
-    insist(Buffer.byteLength(raw) < 16384, 413, 'request_too_large', 'Request is too large.');
+    size += chunk.length;
+    insist(size <= 1024 * 1024, 413, 'request_too_large', 'Request is too large.');
+    chunks.push(chunk);
   }
-  if (!raw) return {};
-  try {
-    return JSON.parse(raw);
-  } catch {
-    throw new ApiError(400, 'invalid_json', 'Expected JSON request body.');
-  }
+  return Buffer.concat(chunks);
 }
 export class DemoSessions {
   constructor() {
@@ -79,6 +82,10 @@ export async function seedDemo(store) {
     await store.putUser(uid, { workspaceId: `workspace_${uid}`, role: 'owner' });
   }
 }
+const RECENT_LOGIN_SECONDS = 10 * 60;
+// Only public API routes can be relayed, so the playground can't reach anything else.
+const PLAYGROUND_PATH =
+  /^\/v1(?:\/(?:shlokas|mantras)(?:\/[\w-]{1,200}(?:\/audio)?)?)?(?:\?[\w%=&.~+-]*)?$/;
 export function createConsoleServer({
   store,
   sessions,
@@ -86,8 +93,15 @@ export function createConsoleServer({
   appOrigin = 'http://localhost:4190',
   secureCookies = false,
   firebaseConfig = null,
+  emailCodes = null,
+  mailer = null,
+  apiUrl = null,
+  billing = null,
+  content = null,
+  phoneCodes = false,
+  trustProxy = false,
+  codeThrottle = new Throttle({ limit: 20, windowMs: 60 * 60 * 1000 }),
   staticRoot = path.resolve('dist'),
-  astrologySandboxLimit = sandboxLimit(),
 }) {
   const cookie = (name, value, maxAge) =>
     `${name}=${value}; HttpOnly; Path=/; SameSite=Strict; Max-Age=${maxAge}${secureCookies ? '; Secure' : ''}`;
@@ -124,7 +138,9 @@ export function createConsoleServer({
       if (route === '/healthz') return send(200, { ok: true });
       if (route.startsWith('/api/')) {
         const jar = cookies(request);
-        if (!['GET', 'HEAD'].includes(method) && route !== '/api/v1/astrology/calculate') {
+        // Stripe proves itself with a signature instead.
+        const browserOnly = route !== '/api/billing/webhook';
+        if (!['GET', 'HEAD'].includes(method) && browserOnly) {
           insist(
             request.headers.origin === appOrigin,
             403,
@@ -138,8 +154,34 @@ export function createConsoleServer({
             'Refresh the page and try again.',
           );
         }
+        if (route === '/api/billing/webhook' && method === 'POST') {
+          insist(
+            billing?.webhookSecret,
+            503,
+            'billing_unconfigured',
+            'Webhooks are not configured.',
+          );
+          const event = billing.parseEvent(
+            await rawBody(request),
+            request.headers['stripe-signature'],
+          );
+          try {
+            await syncFromEvent(event, { store, billing });
+          } catch (error) {
+            console.error(`Stripe event ${event.id} failed: ${error.message}`);
+            throw error; // A failed response makes Stripe retry.
+          }
+          return send(200, { received: true });
+        }
         if (route === '/api/auth/config' && method === 'GET')
-          return send(200, { mode, firebase: firebaseConfig, registration: false });
+          return send(200, {
+            mode,
+            firebase: firebaseConfig,
+            apiUrl,
+            registration: mode === 'firebase',
+            emailCodes: mode === 'firebase' && Boolean(emailCodes),
+            phoneCodes: mode === 'firebase' && phoneCodes,
+          });
         if (route === '/api/auth/csrf' && method === 'GET') {
           const token = secret();
           response.setHeader('Set-Cookie', cookie(csrfName, token, 8 * 3600));
@@ -188,6 +230,41 @@ export function createConsoleServer({
           response.setHeader('Set-Cookie', cookie(sessionName, token, 5 * 24 * 3600));
           return send(200, { ok: true });
         }
+        if (route === '/api/auth/email/request' && method === 'POST') {
+          insist(
+            mode === 'firebase' && emailCodes,
+            503,
+            'email_unavailable',
+            'Email sign-in is not configured yet.',
+          );
+          const client =
+            (trustProxy &&
+              String(request.headers['x-forwarded-for'] || '')
+                .split(',')[0]
+                .trim()) ||
+            request.socket.remoteAddress ||
+            'unknown';
+          insist(
+            codeThrottle.take(client),
+            429,
+            'too_many_requests',
+            'Too many codes requested. Try again later.',
+          );
+          await emailCodes.request(readEmail((await body(request)).email));
+          return send(200, { sent: true });
+        }
+        if (route === '/api/auth/email/verify' && method === 'POST') {
+          insist(
+            mode === 'firebase' && emailCodes,
+            503,
+            'email_unavailable',
+            'Email sign-in is not configured yet.',
+          );
+          const input = await body(request),
+            email = readEmail(input.email);
+          await emailCodes.verify(email, input.code);
+          return send(200, { token: await sessions.signInToken(email) });
+        }
         // The only executable catalog endpoints are explicitly local demo fixtures.
         if (route === '/api/demo/catalog' && method === 'GET') {
           insist(
@@ -224,47 +301,12 @@ export function createConsoleServer({
             usage: {
               contentRequests: 1,
               audioBytes: 0,
-              astrologyCredits: 0,
               billable: false,
               remaining:
                 allowance(getPlan((await store.getWorkspace(workspaceId)).plan)).requests -
                 result.meter.contentRequests,
             },
           });
-        }
-        if (route === '/api/v1/astrology/calculate' && method === 'POST') {
-          operation = '/api/v1/astrology/calculate';
-          const rawKey = (request.headers.authorization || '').replace(/^Bearer /, '');
-          insist(
-            rawKey.startsWith('mtr_sbx_'),
-            401,
-            'invalid_api_key',
-            'Provide an active sandbox API key.',
-          );
-          const keyHash = hash(rawKey),
-            index = await store.findKey(keyHash);
-          insist(index, 401, 'invalid_api_key', 'The API key is invalid or revoked.');
-          workspaceId = index.workspaceId;
-          const current = await store.getWorkspace(workspaceId);
-          insist(
-            current?.keys.some(
-              (key) =>
-                key.hash === keyHash && key.status === 'active' && key.environment === 'sandbox',
-            ),
-            401,
-            'invalid_api_key',
-            'The API key is invalid or revoked.',
-          );
-          const data = calculate(await body(request));
-          const cost = await store.transact(workspaceId, (w) =>
-            chargeCalculation(w, {
-              keyHash,
-              operation: data.operation,
-              requestId,
-              limit: astrologySandboxLimit,
-            }),
-          );
-          return send(200, { data, usage: cost, calculated: true });
         }
         actor = await sessions.get(jar[sessionName]);
         insist(actor, 401, 'session_required', 'Sign in to continue.');
@@ -273,7 +315,14 @@ export function createConsoleServer({
           response.setHeader('Set-Cookie', cookie(sessionName, '', 0));
           return send(200, { ok: true });
         }
-        const profile = await store.getUser(actor.uid);
+        let profile = await store.getUser(actor.uid);
+        // Signing in is signing up: a new account starts on its own Sandbox workspace.
+        if (!profile?.workspaceId && mode === 'firebase') {
+          const id = `workspace_${actor.uid}`;
+          await store.ensureWorkspace(id, actor.uid, 'My workspace');
+          await store.putUser(actor.uid, { workspaceId: id, role: 'owner' });
+          profile = await store.getUser(actor.uid);
+        }
         insist(
           profile?.workspaceId,
           403,
@@ -288,37 +337,92 @@ export function createConsoleServer({
           'workspace_denied',
           'Workspace access is not allowed.',
         );
+        const verified = mode === 'demo' || actor.verified === true;
+        const liveUsage = async (w = workspace) =>
+          mergeUsage(usage(w), await store.apiUsage(w.id, currentPeriod()));
         if (route === '/api/me' && method === 'GET')
           return send(200, {
-            user: { uid: actor.uid, email: actor.email, admin: actor.admin === true },
-            workspace: publicWorkspace(workspace),
+            user: {
+              uid: actor.uid,
+              email: actor.email,
+              admin: actor.admin === true,
+              verified,
+              name: profile.name || '',
+              onboarded: mode === 'demo' || Boolean(profile.onboardedAt),
+            },
+            workspace: publicWorkspace(workspace, await store.keyActivity(workspaceId)),
             mode,
             period: currentPeriod(),
-            usage: usage(workspace),
+            usage: await liveUsage(),
             plan: getPlan(workspace.plan),
             allowance: {
               ...allowance(getPlan(workspace.plan)),
-              astrologyCredits: astrologySandboxLimit,
+              ...limitsFor(getPlan(workspace.plan)),
             },
             accountingPolicy,
-            integrations: { catalog: false, astrology: true, billing: false, audio: false },
+            integrations: {
+              catalog: false,
+              astrology: true,
+              billing: Boolean(billing),
+              audio: false,
+            },
             billingPeriod: null,
           });
         if (route === '/api/config' && method === 'GET') {
-          const config = await store.getConfig();
           return send(200, {
             plans,
-            astrology: proposedAddons.map((addon) => ({
-              ...addon,
-              credits: config.credits[addon.id],
-              combined: plans.find((p) => p.name === addon.plan).price + addon.price,
-            })),
+            rateLimits: RATE_LIMITS,
             accountingPolicy,
           });
         }
         if (route === '/api/keys' && method === 'GET')
-          return send(200, { keys: publicWorkspace(workspace).keys });
+          return send(200, {
+            keys: publicWorkspace(workspace, await store.keyActivity(workspaceId)).keys,
+          });
+        // The API deliberately has no CORS, so the browser playground goes through this session.
+        if (route === '/api/playground' && method === 'POST') {
+          insist(apiUrl, 503, 'api_unconfigured', 'The content API is not connected here.');
+          const input = await body(request);
+          insist(
+            typeof input.path === 'string' && PLAYGROUND_PATH.test(input.path),
+            400,
+            'invalid_path',
+            'Choose a /v1 endpoint.',
+          );
+          insist(
+            typeof input.key === 'string' && workspace.keys.some((k) => k.hash === hash(input.key)),
+            403,
+            'key_not_in_workspace',
+            'Paste a key created in this workspace.',
+          );
+          const sent = performance.now();
+          let upstream, data;
+          try {
+            upstream = await fetch(apiUrl + input.path, {
+              redirect: 'manual',
+              headers: { Authorization: `Bearer ${input.key}` },
+              signal: AbortSignal.timeout(10_000),
+            });
+            data = await upstream.json();
+          } catch {
+            throw new ApiError(502, 'api_unreachable', 'The content API could not be reached.');
+          }
+          return send(200, {
+            response: {
+              status: upstream.status,
+              ms: Math.round(performance.now() - sent),
+              requestId: upstream.headers.get('x-request-id'),
+              body: data,
+            },
+          });
+        }
+        if (route === '/api/auth/verification-token' && method === 'POST') {
+          insist(mode === 'firebase', 409, 'firebase_required', 'Demo accounts are verified.');
+          insist(!verified, 409, 'already_verified', 'This account is already verified.');
+          return send(200, { token: await sessions.verificationToken(actor.uid) });
+        }
         if (route === '/api/keys' && method === 'POST') {
+          insist(verified, 403, 'email_unverified', 'Verify your email before creating API keys.');
           const input = await body(request),
             name = cleanText(input.name, 'Key name', 80),
             environment = input.environment;
@@ -328,7 +432,15 @@ export function createConsoleServer({
             'invalid_environment',
             'Choose sandbox or production.',
           );
-          const rawKey = `mtr_${environment === 'sandbox' ? 'sbx' : 'live'}_${secret()}`,
+          insist(
+            environment !== 'production' ||
+              mode === 'demo' ||
+              Date.now() / 1000 - actor.authTime < RECENT_LOGIN_SECONDS,
+            403,
+            'reauthentication_required',
+            'Sign in again to create a production key.',
+          );
+          const rawKey = newApiKey(environment),
             keyHash = hash(rawKey);
           const key = {
             id: randomUUID(),
@@ -347,19 +459,18 @@ export function createConsoleServer({
               'production_plan_required',
               'Production keys require an active paid content plan.',
             );
-            insist(
-              w.keys.length < 50,
-              409,
-              'key_capacity',
-              'The workspace key-record capacity has been reached. Contact your administrator.',
-            );
-            w.keys.push(key);
+            addKey(w, key);
             log(w, {
               type: 'key_created',
               message: `Created ${environment} key: ${name}`,
               status: 201,
             });
           });
+          // The key already exists, so a mail failure mustn't fail the request or show as an error.
+          if (environment === 'production' && mailer && actor.email.includes('@'))
+            await mailer
+              .sendKeyCreated(actor.email, key)
+              .catch((error) => console.error(`Key notice failed: ${error.message}`));
           const { hash: _hash, ...metadata } = key;
           return send(201, {
             key: metadata,
@@ -377,53 +488,71 @@ export function createConsoleServer({
           });
           return send(200, { ok: true });
         }
-        if (route === '/api/catalog' && method === 'GET') {
-          insist(
-            mode === 'demo',
-            503,
-            'catalog_unconfigured',
-            'Production catalog data is not configured.',
+        const libraryRoute = route.match(/^\/api\/library\/(\w+)(?:\/([\w-]{1,200}))?$/);
+        if (libraryRoute && method === 'GET') {
+          insist(content, 503, 'library_unavailable', 'The library is not connected here.');
+          const [, resource, id] = libraryRoute,
+            sampleOnly = !getPlan(workspace.plan).price;
+          return send(
+            200,
+            id
+              ? await libraryItem(content, resource, id, { sampleOnly })
+              : await libraryPage(content, resource, {
+                  cursor: url.searchParams.get('cursor'),
+                  sampleOnly,
+                }),
           );
-          const type = url.searchParams.get('type') || 'text';
-          insist(
-            Object.hasOwn(catalog, type),
-            400,
-            'invalid_type',
-            'Choose text, audio, or books.',
-          );
-          const query = (url.searchParams.get('q') || '').slice(0, 200).toLowerCase();
-          return send(200, {
-            data: catalog[type].filter((record) =>
-              JSON.stringify(record).toLowerCase().includes(query),
-            ),
-            demo: true,
-          });
         }
-        if (route === '/api/astrology' && method === 'GET')
+        if (route === '/api/astrology' && method === 'GET') {
+          const limit = limitsFor(getPlan(workspace.plan)).requests,
+            used = (await liveUsage()).contentRequests;
           return send(200, {
             status: 'available',
-            scope: 'sandbox',
             engineVersion: ENGINE_VERSION,
             availableOperations: OPERATIONS,
-            allowance: astrologySandboxLimit,
-            used: usage(workspace).astrologyCredits,
-            balance: Math.max(0, astrologySandboxLimit - usage(workspace).astrologyCredits),
-            creditCost: 1,
-            canPurchase: false,
-            notice:
-              'Real server-side calculations. One nonbillable sandbox astrology credit per successful calculation; content and audio meters are unaffected. Paid add-on purchases remain disabled.',
+            allowance: limit,
+            used,
+            balance: Math.max(0, limit - used),
+            requestCost: 1,
           });
+        }
         if (route === '/api/astrology/calculate' && method === 'POST') {
           operation = '/api/astrology/calculate';
           const data = calculate(await body(request));
-          const cost = await store.transact(workspaceId, (w) =>
-            chargeCalculation(w, {
-              operation: data.operation,
+          const limit = limitsFor(getPlan(workspace.plan)).requests,
+            used = (await liveUsage()).contentRequests;
+          insist(
+            used < limit,
+            429,
+            'quota_exceeded',
+            'The monthly request allowance for this plan has been reached.',
+          );
+          const at = new Date(),
+            endpoint = `astrology.${data.operation}`;
+          await store.recordApiUsage({
+            workspaceId,
+            keyId: 'console',
+            endpoint,
+            requests: 1,
+            audioBytes: 0,
+            period: currentPeriod(at),
+            at,
+          });
+          // Never include calculation inputs or results in general request logs.
+          await store.transact(workspaceId, (w) =>
+            log(w, {
+              type: 'request',
+              endpoint,
+              status: 200,
               requestId,
-              limit: astrologySandboxLimit,
+              cost: { contentRequests: 1, audioBytes: 0 },
             }),
           );
-          return send(200, { data, usage: cost, calculated: true });
+          return send(200, {
+            data,
+            usage: { contentRequests: 1, remaining: limit - used - 1 },
+            calculated: true,
+          });
         }
         if (route === '/api/usage' && method === 'GET') {
           const from = url.searchParams.get('from') || `${currentPeriod()}-01`,
@@ -441,8 +570,16 @@ export function createConsoleServer({
             'invalid_date_range',
             'Choose a valid range of up to 94 days.',
           );
-          const daily = Object.values(workspace.usage)
-            .flatMap((m) => Object.entries(m.daily))
+          const periods = [];
+          for (let month = new Date(`${from.slice(0, 7)}-01`); month <= new Date(to);) {
+            periods.push(month.toISOString().slice(0, 7));
+            month = new Date(Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + 1, 1));
+          }
+          const apiMeters = await Promise.all(
+            periods.map((period) => store.apiUsage(workspaceId, period)),
+          );
+          const merged = mergeUsage(...Object.values(workspace.usage), ...apiMeters);
+          const daily = Object.entries(merged.daily)
             .filter(([day]) => day >= from && day <= to)
             .map(([day, value]) => ({ day, ...value }))
             .sort((a, b) => a.day.localeCompare(b.day));
@@ -557,19 +694,103 @@ export function createConsoleServer({
             notice: 'Preferences saved. Email notification delivery is not configured.',
           });
         }
+        if (route === '/api/onboarding' && method === 'POST') {
+          const input = await body(request),
+            name = cleanText(input.name, 'Your name', 80),
+            workspaceName = cleanText(input.workspaceName, 'Workspace name', 80);
+          insist(
+            typeof input.emailNotifications === 'boolean',
+            400,
+            'invalid_preferences',
+            'Choose whether to receive usage alerts.',
+          );
+          await store.transact(workspaceId, (w) => {
+            w.name = workspaceName;
+            w.preferences = { ...w.preferences, emailNotifications: input.emailNotifications };
+          });
+          await store.putUser(actor.uid, {
+            ...profile,
+            name,
+            onboardedAt: new Date().toISOString(),
+          });
+          return send(200, { ok: true });
+        }
+        if (route === '/api/account/delete' && method === 'POST') {
+          insist(mode === 'firebase', 409, 'demo_only', 'Demo accounts reset on restart.');
+          insist(
+            actor.admin !== true,
+            403,
+            'admin_protected',
+            'Administrator accounts cannot be deleted here.',
+          );
+          insist(
+            (await body(request)).confirm === 'DELETE',
+            400,
+            'confirmation_required',
+            'Type DELETE to confirm.',
+          );
+          // Stop charging first, so a failure here leaves the account intact and retryable.
+          if (ENTITLED_STATUSES.has(workspace.billing?.status)) {
+            insist(billing, 503, 'billing_unconfigured', 'Billing is not configured.');
+            await billing.cancelSubscription(workspace.billing.subscriptionId);
+          }
+          await store.deleteWorkspace(workspaceId);
+          await sessions.deleteAccount(actor.uid);
+          response.setHeader('Set-Cookie', cookie(sessionName, '', 0));
+          return send(200, { ok: true });
+        }
         if (route === '/api/billing' && method === 'GET')
           return send(200, {
             plan: getPlan(workspace.plan),
-            addon: null,
             monthlyTotal: getPlan(workspace.plan).price,
             period: null,
             invoices: [],
-            renewalAt: null,
-            setupRequired: true,
-            provider: null,
-            notice:
-              'Subscription management is not configured. No checkout or entitlement upgrades are active.',
+            renewalAt: workspace.billing?.currentPeriodEnd ?? null,
+            setupRequired: !billing,
+            provider: billing ? 'stripe' : null,
+            purchasable: billing ? PAID_PLANS : [],
+            notice: billing
+              ? 'Payments are handled securely by Stripe.'
+              : 'Subscription management is not configured. No checkout or entitlement upgrades are active.',
           });
+        if (route === '/api/billing/checkout' && method === 'POST') {
+          insist(billing, 503, 'billing_unconfigured', 'Billing is not configured.');
+          insist(verified, 403, 'email_unverified', 'Verify your email before subscribing.');
+          const { plan } = await body(request);
+          insist(PAID_PLANS.includes(plan), 400, 'invalid_plan', 'Choose a paid plan.');
+          let customerId = workspace.billing?.customerId;
+          if (customerId)
+            insist(
+              !(await billing.hasLiveSubscription(customerId)),
+              409,
+              'already_subscribed',
+              'This workspace already has a subscription. Use Manage subscription to change it.',
+            );
+          else {
+            customerId = await billing.createCustomer(workspaceId, actor.email);
+            await store.transact(workspaceId, (w) => {
+              w.billing = { ...w.billing, customerId };
+            });
+          }
+          return send(200, {
+            url: await billing.checkoutUrl({ workspaceId, customerId, plan }),
+          });
+        }
+        if (route === '/api/billing/sync' && method === 'POST') {
+          insist(billing, 503, 'billing_unconfigured', 'Billing is not configured.');
+          await syncWorkspace(workspace, { store, billing });
+          return send(200, { ok: true });
+        }
+        if (route === '/api/billing/portal' && method === 'POST') {
+          insist(billing, 503, 'billing_unconfigured', 'Billing is not configured.');
+          insist(
+            workspace.billing?.customerId,
+            409,
+            'no_subscription',
+            'This workspace has no billing account yet.',
+          );
+          return send(200, { url: await billing.portalUrl(workspace.billing.customerId) });
+        }
         if (route.startsWith('/api/admin/')) {
           insist(
             actor.admin === true,
@@ -579,14 +800,16 @@ export function createConsoleServer({
           );
           if (route === '/api/admin/workspaces' && method === 'GET')
             return send(200, {
-              workspaces: (await store.listWorkspaces()).map((w) => ({
-                id: w.id,
-                name: w.name,
-                plan: w.plan,
-                createdAt: w.createdAt,
-                products: w.products.length,
-                usage: usage(w),
-              })),
+              workspaces: await Promise.all(
+                (await store.listWorkspaces()).map(async (w) => ({
+                  id: w.id,
+                  name: w.name,
+                  plan: w.plan,
+                  createdAt: w.createdAt,
+                  products: w.products.length,
+                  usage: await liveUsage(w),
+                })),
+              ),
               limit: 100,
             });
           if (route === '/api/admin/workspaces' && method === 'POST') {
@@ -604,31 +827,6 @@ export function createConsoleServer({
             await store.ensureWorkspace(id, user.uid, name);
             await store.putUser(user.uid, { workspaceId: id, role: 'owner' });
             return send(201, { ok: true });
-          }
-          if (route === '/api/admin/astrology' && method === 'GET')
-            return send(200, { config: await store.getConfig(), proposals: proposedAddons });
-          if (route === '/api/admin/astrology' && method === 'PATCH') {
-            const input = await body(request);
-            for (const addon of proposedAddons)
-              insist(
-                Number.isInteger(input.credits?.[addon.id]) &&
-                  input.credits[addon.id] > 0 &&
-                  input.credits[addon.id] <= 1e7,
-                400,
-                'invalid_credits',
-                'Proposed credit allowances must be positive whole numbers up to 10,000,000.',
-              );
-            await store.updateConfig({
-              credits: input.credits,
-              costsConfirmed: false,
-              billingConfigured: false,
-              updatedAt: new Date().toISOString(),
-              updatedBy: actor.uid,
-            });
-            return send(200, {
-              ok: true,
-              notice: 'Proposed allowances saved. Purchases remain disabled.',
-            });
           }
           throw new ApiError(404, 'not_found', 'Administrator operation not found.');
         }
@@ -683,7 +881,7 @@ export function createConsoleServer({
               status: error.status,
               code: error.code,
               requestId,
-              cost: { contentRequests: 0, audioBytes: 0, astrologyCredits: 0 },
+              cost: { contentRequests: 0, audioBytes: 0 },
               billable: false,
             }),
           );
