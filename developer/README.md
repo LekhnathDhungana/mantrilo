@@ -84,6 +84,8 @@ All console HTML and responses are noindex; robots.txt disallows crawling. Robot
 
 ## GCP deployment preparation (not deployed)
 
+Once billing is enabled on the `mantrilo` project, `deployment/deploy.sh` enables the services, creates the service accounts, builds both images with Cloud Build and deploys the API and console to Cloud Run. It always targets the `mantrilo` project, whatever the active `gcloud` project is, and is safe to run again. Store `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` and `RESEND_API_KEY` in Secret Manager as `stripe-secret-key`, `stripe-webhook-secret` and `resend-api-key`; the script attaches whichever exist. Cloud Run reserves `/healthz`, so check `/v1` instead.
+
 Build using the repository root so the shared plan file is included:
 
 ```sh
