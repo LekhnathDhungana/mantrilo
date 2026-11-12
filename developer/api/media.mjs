@@ -28,6 +28,9 @@ export class StorageMedia {
       .getSignedUrl({ version: 'v4', action: 'read', expires });
     return { url, expiresAt: new Date(expires).toISOString() };
   }
+  open(path, range) {
+    return this.bucket.file(path).createReadStream(range);
+  }
 }
 
 export class MemoryMedia {

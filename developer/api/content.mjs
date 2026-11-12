@@ -5,27 +5,28 @@ import { FieldPath } from 'firebase-admin/firestore';
 export const SANDBOX_SAMPLE_SIZE = 5;
 
 const text = (value) => (typeof value === 'string' && value.trim() ? value.trim() : null);
-const list = (value) => (Array.isArray(value) ? value.filter((v) => text(v)).map(text) : []);
 
 // Public response shapes. Internal Firestore field names and storage paths never leave the API.
-function shlokaSummary(doc) {
+function mantraSummary(doc) {
   return {
     id: doc.id,
     title: text(doc.title),
     deity: text(doc.deityKey) ? { id: doc.deityKey, name: text(doc.deity) } : null,
     category: text(doc.category),
     source: text(doc.source),
-    description: text(doc.description),
+    // The public description is the reviewed SEO paragraph. The longer general `description`
+    // stays internal, and a record without an SEO paragraph returns null like any missing field.
+    description: text(doc.seoDescription),
     verseCount: Array.isArray(doc.shlokas) ? doc.shlokas.length : Number(doc.verseCount) || 0,
     audio:
       doc.hasAudio && text(doc.audioPath)
-        ? { href: `/v1/shlokas/${encodeURIComponent(doc.id)}/audio` }
+        ? { href: `/v1/mantras/${encodeURIComponent(doc.id)}/audio` }
         : null,
   };
 }
-function shlokaDetail(doc) {
+function mantraDetail(doc) {
   return {
-    ...shlokaSummary(doc),
+    ...mantraSummary(doc),
     verses: (doc.shlokas || []).map((verse) => ({
       number: Number.isFinite(verse.shlokaNumber) ? verse.shlokaNumber : null,
       title: text(verse.title),
@@ -39,49 +40,15 @@ function shlokaDetail(doc) {
     })),
   };
 }
-function mantraSummary(doc) {
-  return {
-    id: doc.id,
-    title: text(doc.title),
-    deities: list(doc.deity),
-    tags: list(doc.tags),
-    description: text(doc.description),
-    language: text(doc.language),
-  };
-}
-function byLanguage(doc, prefix) {
-  const out = {};
-  for (const [field, value] of Object.entries(doc)) {
-    const match = field.match(new RegExp(`^${prefix}_([a-z]{2,3})$`));
-    if (match && text(value)) out[match[1]] = text(value);
-  }
-  return out;
-}
-function mantraDetail(doc) {
-  return {
-    ...mantraSummary(doc),
-    text: text(doc.originalLanguage),
-    transliterations: byLanguage(doc, 'transliteration'),
-    translations: byLanguage(doc, 'translation'),
-    source: text(doc.source),
-    citation: text(doc.citation),
-  };
-}
-
+// Mantras are stored in the `shlokam` collection (its verses in a `shlokas` field); those names
+// are internal and never appear in responses.
 export const RESOURCES = {
-  shlokas: {
-    collection: 'shlokam',
-    summary: shlokaSummary,
-    detail: shlokaDetail,
-    matchesDeity: (doc, deity) => doc.deityKey === deity,
-    deityQuery: (query, deity) => query.where('deityKey', '==', deity),
-  },
   mantras: {
-    collection: 'mantra',
+    collection: 'shlokam',
     summary: mantraSummary,
     detail: mantraDetail,
-    matchesDeity: (doc, deity) => list(doc.deity).includes(deity),
-    deityQuery: (query, deity) => query.where('deity', 'array-contains', deity),
+    matchesDeity: (doc, deity) => doc.deityKey === deity,
+    deityQuery: (query, deity) => query.where('deityKey', '==', deity),
   },
 };
 

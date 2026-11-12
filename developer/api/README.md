@@ -3,24 +3,66 @@
 Read-only content API for B2B customers, served separately from the console. Every request needs a
 key created in the Developer Console: `Authorization: Bearer mtr_live_…` (or `mtr_sbx_…`).
 
-| Endpoint | Returns |
-| --- | --- |
-| `GET /v1` | API info (no key needed) |
-| `GET /v1/shlokas?limit=&cursor=&deity=` | Shloka collections, 1–100 per page, cursor pagination |
-| `GET /v1/shlokas/{id}` | One collection with verses, transliteration, translation, word meanings |
-| `GET /v1/shlokas/{id}/audio` | `302` to a signed link valid 15 minutes (`?format=json` returns the link) |
-| `GET /v1/mantras?limit=&cursor=&deity=` | Mantras |
-| `GET /v1/mantras/{id}` | One mantra with text, transliterations and translations by language |
+| Endpoint                                        | Returns                                                                           |
+| ----------------------------------------------- | --------------------------------------------------------------------------------- |
+| `GET /v1`                                       | API info (no key needed)                                                          |
+| `GET /v1/mantras?limit=&cursor=&deity=`         | Mantras, filtered by deity id                                                     |
+| `GET /v1/mantras/{id}`                          | One mantra with its verses: Sanskrit, transliteration, translation, word meanings |
+| `GET /v1/mantras/{id}/audio`                    | A 15-minute signed recording link (`?format=json` for JSON)                       |
+| `GET /v1/books?cursor=`                         | Book catalog, up to 24 titles per page                                            |
+| `GET /v1/books/{id}`                            | Book metadata and chapter index                                                   |
+| `GET /v1/books/{id}/chapters/{chapter}?offset=` | Chapter metadata and up to 30 verses per page                                     |
+| `GET /v1/astrology`                             | Lists enabled astrology operations and available example inputs                   |
+| `POST /v1/astrology/calculate`                  | Charts, Panchang, Guna Milan, chart images, place search and planetary positions  |
+
+Pass the catalog's `nextCursor` as `cursor`, and a chapter's `data.nextOffset` as `offset`.
+`/v1/shlokas` is the former name of `/v1/mantras` and still answers the same way, so existing
+integrations keep working. Mantras are stored in the `shlokam` Firestore collection.
+
+## Astrology
+
+Send a JSON body with an `operation`. Each successful request uses one content request.
+
+| Operation               | Inputs                                                                                                                           |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `chart`                 | `birth`, optional `divisions` (default `[1,9]`), `dashaLevels` (0–3), and `referenceDate` (required when Dasha depth is nonzero) |
+| `daily-panchang`        | `date`, `latitude`, `longitude`, `timezone`                                                                                      |
+| `match`                 | `person1` and `person2`, each a birth object                                                                                     |
+| `chart-image`           | `birth`, optional `divisions` and `layout` (`north`, `south` or `east`). Returns a PNG as `data.imageBase64`.                    |
+| `places`                | `query`, optional `country` (uppercase two-letter code) and `limit` (1–10)                                                       |
+| `positions`, `panchang` | `datetime` and optional `ayanamsaDegrees`                                                                                        |
+
+For Western, numerology, and additional Vedic operations, use the operation ID from
+`GET /v1/astrology` and send its input under `parameters`:
+
+```json
+{
+  "operation": "numerology-profile",
+  "parameters": {
+    "method": { "system": "pythagorean" },
+    "subject": { "birth_date": "1992-07-16" },
+    "date_context": { "reference_date": "2026-11-12" }
+  }
+}
+```
+
+Calculation data comes back in `data.result`. Image operations return `data.imageBase64`
+and `data.contentType`. The Developer Console groups operations by category and supplies
+sample inputs where available.
+
+A birth object contains `datetime` with an explicit UTC offset and seconds set to 00,
+`latitude`, `longitude`, and an IANA `timezone`. Dates use YYYY-MM-DD. Requests that fall
+in a repeated local hour are rejected. The console’s Docs → Astrology tab has runnable examples.
 
 ## How a request is handled
 
 1. **Key** — hashed (SHA-256) and looked up in `apiKeys/{hash}`, which the console writes when keys
-   are created or revoked. Cached 60 s, so a revoked key stops within a minute. Production keys need
-   a paid plan. New keys end in a checksum, so made-up keys are refused without a read. After ten
+   are created or revoked. Cached 60 s, so a revoked key stops within a minute. Live keys need a
+   paid plan. New keys end in a checksum, so made-up keys are refused without a read. After ten
    bad keys from one IP, that IP can't trigger lookups until its allowance refills. Accepting keys
    without a checksum is only for those issued before it existed.
 2. **Rate limit** — per workspace and environment, by plan (`RATE_LIMITS` in `usage.mjs`), so extra
-   keys don't add capacity; sandbox keys always get the Sandbox rate. In memory per instance. Client
+   keys don't add capacity; sandbox keys always get the Free rate. In memory per instance. Client
    IPs come from the last `X-Forwarded-For` entry, which assumes no load balancer in front of Cloud Run.
 3. **Allowance** — monthly requests and audio bytes from `shared/content-plans.json`. Usage is
    written as increments to `apiUsage/{workspace}_{YYYY-MM}_{0-9}` (sharded, no transactions) and
@@ -29,7 +71,8 @@ key created in the Developer Console: `Authorization: Bearer mtr_live_…` (or `
    Overview and Usage screens read these same documents.
 4. **Content** — read from Firestore with server credentials (client rules stay deny-all) and
    mapped to the public shape in `content.mjs`. Storage paths and internal fields are never returned.
-   Sandbox keys see the first 5 items of each resource.
+   Sandbox keys get a small sample of text resources. For books, they see the first three verses
+   of the first chapter of each sample title. Live keys can read the published catalog.
 5. **Audio** — the file size is charged when the link is issued. The bucket stays private.
 
 Only successful responses are charged.
@@ -56,3 +99,7 @@ Runtime service account `mantrilo-api@mantrilo.iam.gserviceaccount.com` needs:
 `roles/datastore.user` (project), `roles/storage.objectViewer` on `gs://mantrilo-media`, and
 `roles/iam.serviceAccountTokenCreator` on itself (to sign links). Build with
 `deployment/api.Dockerfile`, set `FIREBASE_PROJECT_ID=mantrilo`, and map `api.mantrilo.com`.
+
+Set `MANTRILO_ASTROLOGY_API_KEY` on the API and console servers to enable the location-based
+operations. The deployment script binds the `mantrilo-astrology-api-key` Secret Manager secret
+to both services when it exists.

@@ -125,7 +125,7 @@ function AdminControls() {
             </li>
             <li>
               <span>Astrology engine</span>
-              <Badge tone="green">Sandbox available</Badge>
+              <Badge tone="green">Available</Badge>
             </li>
           </ul>
           <Link href="/billing" className="text-link">
@@ -149,7 +149,7 @@ function AdminControls() {
             <input name="name" maxLength={80} required disabled={session?.mode === 'demo'} />
           </label>
           <button className="button" disabled={pending || session?.mode === 'demo'}>
-            Assign Sandbox workspace
+            Assign Free workspace
           </button>
         </form>
         {session?.mode === 'demo' && (

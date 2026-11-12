@@ -178,7 +178,7 @@ export default function AuthFlow() {
         <h2>{creating ? 'Create your account.' : 'Sign in to your console.'}</h2>
         <p>
           {creating
-            ? 'New accounts start free in the Sandbox.'
+            ? 'New accounts start free with 500 API calls a month and a ready-to-use key.'
             : 'Welcome back. Enter your email and password.'}
         </p>
         {notices}
@@ -368,7 +368,7 @@ export default function AuthFlow() {
     <>
       <div className="eyebrow">WELCOME TO MANTRILO</div>
       <h2>Get started.</h2>
-      <p>Sign in or create your account. New accounts start free in the Sandbox.</p>
+      <p>Sign in or create your account. New accounts start free with 500 API calls a month.</p>
       {notices}
       <div className="auth-options">
         <button

@@ -4,11 +4,14 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { Storage } from '@google-cloud/storage';
 import { GoogleAuth, Impersonated } from 'google-auth-library';
 import { FirestoreStore } from '../server/store.mjs';
+import { billingModeFrom } from '../server/domain.mjs';
 import { KeyResolver } from './keys.mjs';
 import { FirestoreContent } from './content.mjs';
 import { StorageMedia } from './media.mjs';
 import { FirestoreUsageSink, UsageMeter } from './usage.mjs';
 import { createApiServer } from './server.mjs';
+import { FirestorePustak } from '../server/pustak.mjs';
+import { createAstrologyService } from '../server/astrology/service.mjs';
 
 const projectId = process.env.FIREBASE_PROJECT_ID;
 const bucketName = process.env.MANTRILO_MEDIA_BUCKET || 'mantrilo-media';
@@ -38,10 +41,17 @@ try {
     bucketName,
   );
 
-  const store = new FirestoreStore(db);
+  const store = new FirestoreStore(db),
+    billingMode = billingModeFrom(process.env);
   const server = createApiServer({
-    keys: new KeyResolver(store),
+    keys: new KeyResolver(store, { billingMode }),
+    billingMode,
     content: new FirestoreContent(db),
+    books: new FirestorePustak(db),
+    astrologyService: createAstrologyService({
+      key: process.env.MANTRILO_ASTROLOGY_API_KEY,
+      limited: (process.env.MANTRILO_ASTROLOGY_LIMITED || '').split(',').filter(Boolean),
+    }),
     media: new StorageMedia(bucket),
     meter: new UsageMeter(new FirestoreUsageSink(db), { keyActivity: store }),
     trustProxy: onCloudRun,

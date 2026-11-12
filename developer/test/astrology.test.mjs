@@ -144,7 +144,7 @@ test('session calculations use one content request and never log the requested d
   const f = await fixture(t);
   const status = await f.call('/api/astrology');
   assert.equal(status.body.status, 'available');
-  assert.equal(status.body.allowance, 1000);
+  assert.equal(status.body.allowance, 500);
   assert.equal(status.body.availableOperations.length, 2);
   const result = await f.call('/api/astrology/calculate', 'POST', {
     operation: 'panchang',
@@ -152,7 +152,7 @@ test('session calculations use one content request and never log the requested d
   });
   assert.equal(result.status, 200);
   assert.equal(result.body.calculated, true);
-  assert.deepEqual(result.body.usage, { contentRequests: 1, remaining: 999 });
+  assert.deepEqual(result.body.usage, { contentRequests: 1, remaining: 499 });
   const me = (await f.call('/api/me')).body;
   assert.equal(me.usage.contentRequests, 1);
   assert.equal(me.usage.endpoints['astrology.panchang'], 1);
@@ -173,8 +173,8 @@ test('calculations stop when the plan allowance is used up', async (t) => {
   f.store.apiEvents.push({
     workspaceId: workspace.id,
     keyId: 'k',
-    endpoint: 'shlokas.list',
-    requests: 1000,
+    endpoint: 'mantras.list',
+    requests: 500,
     audioBytes: 0,
     period: currentPeriod(),
     at: new Date(),
@@ -186,5 +186,5 @@ test('calculations stop when the plan allowance is used up', async (t) => {
   assert.equal(over.status, 429);
   assert.equal(over.body.error.code, 'quota_exceeded');
   assert.equal((await f.call('/api/astrology')).body.balance, 0);
-  assert.equal((await f.call('/api/me')).body.usage.contentRequests, 1000);
+  assert.equal((await f.call('/api/me')).body.usage.contentRequests, 500);
 });

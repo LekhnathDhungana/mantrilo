@@ -22,6 +22,6 @@ export function pageMetadata(path: string): Metadata {
       url: canonical,
     },
     twitter: { card: 'summary', title: page.title, description: page.description },
-    other: { 'theme-color': '#faf8f2' },
+    other: { 'theme-color': '#FFFBF5' },
   };
 }

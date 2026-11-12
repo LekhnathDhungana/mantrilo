@@ -1,74 +1,119 @@
 import { Link } from 'expo-router';
-import PageShell from './PageShell.web';
+import { Arrow, CtaBand, KeyButton, PageHero, SiteFrame } from './site/Chrome.web';
+import { CodePanel } from './site/Code.web';
 import { productPages, type ProductSlug } from '../data/products';
-import { samples } from '../data/samples';
+import { contentItems, guideHref } from '../data/library';
+import { seoPages } from '../data/site';
+
+// Mantra, audio and books overviews. The example on each page is the Library item it links to.
+const ITEM: Record<ProductSlug, { item: string; guide: string; library: string }> = {
+  'mantra-api': {
+    item: contentItems.find((i) => i.type === 'Mantra')!.id,
+    guide: 'search-mantras',
+    library: '/library?area=mantras',
+  },
+  'sacred-audio-api': { item: 'recording', guide: 'sacred-audio', library: '/library?area=audio' },
+  'shastra-books-api': {
+    item: 'collection-upanishads',
+    guide: 'upanishads',
+    library: '/library?area=books',
+  },
+};
+
+const RELATED: [string, string][] = [
+  ['/mantra-api', 'Mantra API'],
+  ['/sacred-audio-api', 'Sacred audio API'],
+  ['/shastra-books-api', 'Books API'],
+  ['/astrology-api', 'Astrology API'],
+];
+
 export default function ProductPage({ slug }: { slug: ProductSlug }) {
   const page = productPages[slug];
+  const link = ITEM[slug];
+  const item = contentItems.find((i) => i.id === link.item)!;
   return (
-    <PageShell path={`/${slug}`}>
-      <section className="wrap product-hero">
-        <div className="eyebrow">{page.label} / FOR APPS & WEBSITES</div>
-        <h1>{page.title}</h1>
-        <p className="product-intro">{page.intro}</p>
-        <div className="hero-actions">
-          <Link className="button" href="/access">
-            Prepare an access request ↗
-          </Link>
-          <Link className="text-link" href="/docs">
-            Integration planning guide →
-          </Link>
-        </div>
-        <div className="notice">{page.status}</div>
-      </section>
-      <section className="wrap product-detail">
-        <div className="product-copy">
+    <SiteFrame path={`/${slug}`}>
+      <PageHero
+        crumb={seoPages[`/${slug}`]?.label}
+        eyebrow={seoPages[`/${slug}`]?.label ?? 'API'}
+        title={page.title}
+        lede={page.intro}
+        actions={
+          <>
+            <KeyButton />
+            <Link href={guideHref(link.guide)} className="mh-btn mh-btn-ghost">
+              Implementation guide <Arrow />
+            </Link>
+          </>
+        }
+        aside={
+          <div className="mh-stack">
+            <CodePanel title={item.path} method={item.method} code={item.request} />
+            <CodePanel title={page.exampleTitle} status="200 OK" json={item.response} />
+          </div>
+        }
+      >
+        <p className="mh-hero-note">{page.status}</p>
+      </PageHero>
+      <section className="mh-section-sm">
+        <div className="mh-wrap mh-cards-2">
           {page.sections.map((s) => (
-            <section key={s.title}>
-              <h2>{s.title}</h2>
+            <article key={s.title} className="mh-card mh-card-pad">
+              <h3>{s.title}</h3>
               <p>{s.copy}</p>
-            </section>
+            </article>
           ))}
         </div>
-        <aside className="product-example">
-          <div className="eyebrow">INTEGRATION EXAMPLE</div>
-          <h2>{page.exampleTitle}</h2>
-          <p>
-            Illustrative field names and placeholder values. Confirm production endpoints and
-            schemas before building.
-          </p>
-          <pre>
-            <code>{JSON.stringify(samples[page.sample], null, 2)}</code>
-          </pre>
-          <h3>Example application workflow</h3>
-          <ol>
-            {page.workflow.map((step) => (
-              <li key={step}>{step}</li>
-            ))}
-          </ol>
-          <Link className="text-link" href="/license">
-            Review content license status →
-          </Link>
-        </aside>
       </section>
-      <section className="wrap related-section">
-        <h2>Plan the rest of your integration.</h2>
-        <div className="related-links">
-          {Object.entries(productPages)
-            .filter(([key]) => key !== slug)
-            .map(([key, value]) => (
-              <Link key={key} href={`/${key}`}>
-                {value.label} ↗
+      <section className="mh-section-sm">
+        <div className="mh-wrap mh-split">
+          <div>
+            <h2>How an integration flows</h2>
+            <ol className="mh-steps">
+              {page.workflow.map((step) => (
+                <li key={step}>{step}</li>
+              ))}
+            </ol>
+          </div>
+          <div className="mh-stack">
+            <Link href={link.library} className="mh-card mh-card-pad mh-card-link">
+              <h3>Browse it in the Library</h3>
+              <p>Every item with its request and a representative response.</p>
+              <span>
+                Open the Library <Arrow />
+              </span>
+            </Link>
+            <Link href={item.docs} className="mh-card mh-card-pad mh-card-link">
+              <h3>Endpoint reference</h3>
+              <p>Parameters, request and response for {item.path.replace(/\?.*$/, '')}.</p>
+              <span>
+                Read the docs <Arrow />
+              </span>
+            </Link>
+          </div>
+        </div>
+      </section>
+      <section className="mh-section-sm">
+        <div className="mh-wrap">
+          <nav className="mh-chips" aria-label="Other APIs">
+            {RELATED.filter(([href]) => href !== `/${slug}`).map(([href, label]) => (
+              <Link key={href} href={href} className="mh-chip">
+                {label}
               </Link>
             ))}
-          <Link href="/astrology-api">ASTROLOGY API ↗</Link>
-          <Link href="/pricing">COMPARE MONTHLY PLANS ↗</Link>
+            <Link href="/pricing" className="mh-chip">
+              Pricing
+            </Link>
+            <Link href="/license" className="mh-chip">
+              Content license
+            </Link>
+          </nav>
         </div>
-        <p>
-          Existing content plans cover available mantras, shlokas, sacred audio, shastra books, and
-          discovery, subject to the documented content license. Astrology calculations are
-          included too, and each counts as one API request.
-        </p>
       </section>
-    </PageShell>
+      <CtaBand
+        title="Try it with a sandbox key."
+        copy="Every account starts with sample content, so you can build before you subscribe."
+      />
+    </SiteFrame>
   );
 }

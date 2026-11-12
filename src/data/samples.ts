@@ -1,21 +1,28 @@
-// Deliberately illustrative schema fixtures, separate from any production catalog.
+// Placeholder values only. Publish a real catalog item here once the rights to its text,
+// translation, and recording are confirmed. Book examples live in src/data/examples.ts.
 export const samples = {
   mantra: {
-    id: 'sample_mantra',
-    type: 'mantra',
-    original_text: '[Original text]',
-    transliteration: '[Transliteration]',
-    translation: '[Translation, where available]',
-    meaning: '[Meaning, where available]',
-    source_reference: null,
-    audio_id: 'sample_audio',
-  },
-  audio: {
-    id: 'sample_audio',
-    content_id: 'sample_mantra',
-    type: 'audio',
-    recording_url: null,
-    note: 'No sample recording is connected.',
+    data: {
+      id: 'sample_mantra',
+      title: '[Mantra title]',
+      deity: { id: 'sample_deity', name: '[Deity name]' },
+      category: '[Category]',
+      source: '[Source name]',
+      description: '[Short description]',
+      verseCount: 1,
+      audio: { href: '/v1/mantras/sample_mantra/audio' },
+      verses: [
+        {
+          number: 1,
+          title: '[Verse title]',
+          sanskrit: '[Sanskrit verse]',
+          transliteration: '[Transliteration]',
+          translation: '[Translation]',
+          wordMeanings: [{ word: '[Word]', meaning: '[Meaning]' }],
+        },
+      ],
+    },
+    requestId: 'sample_request',
   },
   book: {
     id: 'sample_book',
@@ -32,5 +39,4 @@ export const samples = {
   },
 };
 export type SampleType = keyof typeof samples;
-export const exampleRequest =
-  'curl "$MANTRILO_API_BASE_URL/v1/catalog?type=shastra" \\\n  -H "Authorization: Bearer $MANTRILO_API_KEY"';
+export { exampleRequest } from './api-reference';

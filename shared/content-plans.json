@@ -1,8 +1,8 @@
 [
   {
-    "name": "Sandbox",
+    "name": "Free",
     "price": 0,
-    "requests": "1,000",
+    "requests": "500",
     "audio": "Sample audio only",
     "catalog": "Sample catalog for testing",
     "astrology": "Astrology calculations included",
@@ -11,7 +11,7 @@
   },
   {
     "name": "Starter",
-    "price": 49,
+    "price": 49.99,
     "requests": "50,000",
     "audio": "10 GB",
     "catalog": "Full available catalog",

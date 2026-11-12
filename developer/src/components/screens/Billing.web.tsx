@@ -2,14 +2,15 @@ import { useCallback, useEffect, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { useConsole } from '../Session.web';
 import { mutate } from '../../lib/api';
+import { VerifyEmail } from '../Account.web';
 import UsageDetails from './Usage.web';
 import {
-  Empty,
+  Badge,
   ErrorNotice,
   formatBytes,
   formatDate,
+  formatResetDate,
   Loading,
-  Meter,
   PageTitle,
   useLoad,
 } from '../ui.web';
@@ -17,15 +18,9 @@ import type { Plan } from '../../lib/types';
 
 export default function Billing() {
   const { session, refresh } = useConsole();
-  const { checkout, view: requestedView } = useLocalSearchParams<{
-    checkout?: string;
-    view?: string;
-  }>();
-  const [view, setView] = useState(requestedView === 'plans' || checkout ? 'plans' : 'usage');
+  const { checkout } = useLocalSearchParams<{ checkout?: string }>();
   const config = useLoad<{ plans: Plan[] }>('/api/config'),
-    billing = useLoad<{ monthlyTotal: number; notice: string; purchasable: string[] }>(
-      '/api/billing',
-    );
+    billing = useLoad<{ notice: string; purchasable: string[] }>('/api/billing');
   const [pending, setPending] = useState(false),
     [actionError, setActionError] = useState('');
   const record = session?.workspace.billing,
@@ -67,19 +62,71 @@ export default function Billing() {
     }
   }
   const openPortal = () => goToStripe('/api/billing/portal');
-  const subscriptionSummary = record?.cancelsAt
-    ? `Ends ${formatDate(record.cancelsAt)}`
-    : record?.currentPeriodEnd
-      ? `Renews ${formatDate(record.currentPeriodEnd)}`
-      : 'Subscription active';
+  const current = session.plan,
+    used = session.usage.contentRequests,
+    quota = session.allowance.requests,
+    percent = quota ? Math.min(100, (used / quota) * 100) : 0,
+    paid = current.price > 0,
+    sandboxUsed = session.usageByLane?.sandbox.contentRequests ?? 0;
+  const subscriptionSummary =
+    session.mode === 'demo'
+      ? 'Local demo · no payments'
+      : record?.cancelsAt
+        ? `Ends ${formatDate(record.cancelsAt)}`
+        : subscribed && record?.currentPeriodEnd
+          ? `Renews ${formatDate(record.currentPeriodEnd)}`
+          : current.price
+            ? 'Subscription active'
+            : 'Free plan · no card needed';
+  function planAction(plan: Plan) {
+    if (plan.name === current.name)
+      return (
+        <button className="button outline" disabled>
+          Current plan
+        </button>
+      );
+    if (!plan.price)
+      return subscribed ? (
+        <button className="button subtle" disabled={pending} onClick={openPortal}>
+          Cancel in Stripe
+        </button>
+      ) : null;
+    if (!connected)
+      return (
+        <button className="button outline" disabled>
+          Billing not set up
+        </button>
+      );
+    if (subscribed)
+      return (
+        <button className="button outline" disabled={pending} onClick={openPortal}>
+          {plan.price > current.price ? 'Upgrade' : 'Switch'}
+        </button>
+      );
+    return (
+      <button
+        className="button"
+        disabled={pending || !session?.user.verified || !purchasable.includes(plan.name)}
+        onClick={() => goToStripe('/api/billing/checkout', { plan: plan.name })}
+      >
+        Upgrade to {plan.name}
+      </button>
+    );
+  }
   return (
     <>
       <PageTitle
-        eyebrow="YOUR PLAN"
+        eyebrow="PLANS & USAGE"
         title="Usage & billing"
-        copy="See what you’ve used and manage your plan."
+        copy="Start free with a sandbox key. Subscribe for a live key, the full catalog and more calls."
       />
       <ErrorNotice message={config.error || billing.error || actionError} />
+      {session.billingMode === 'test' && (
+        <div className="notice" role="status">
+          Test mode: checkout uses the Stripe sandbox and test cards. Plans bought here unlock this
+          console only, never production.
+        </div>
+      )}
       {awaitingWebhook && (
         <div className="notice" role="status">
           Thanks for subscribing. Your plan will update here as soon as Stripe confirms the payment.
@@ -93,151 +140,101 @@ export default function Billing() {
           </button>
         </div>
       )}
-      <div className="billing-summary panel">
+      {connected && !subscribed && <VerifyEmail reason="before you upgrade" />}
+      <div className="section-title usage-title">
+        <h2>Usage</h2>
+        <span>Resets {formatResetDate(session.resetsAt)}</span>
+      </div>
+      <section className="panel usage-summary">
         <div>
-          <span className="eyebrow">CURRENT WORKSPACE PLAN</span>
-          <h2>{session.plan.name}</h2>
-          <p>
-            {session.mode === 'demo'
-              ? 'Local demo plan · No subscription or payment'
-              : subscribed
-                ? subscriptionSummary
-                : connected
-                  ? 'Free plan · Upgrade whenever you’re ready'
-                  : 'Server-assigned plan · Billing provider not connected'}
+          <span className="metric-label">
+            {paid ? 'Live requests this month' : 'Sandbox requests this month'}
+          </span>
+          <div className="metric-value">
+            {used.toLocaleString()}
+            <span> / {quota.toLocaleString()} calls</span>
+          </div>
+          <div
+            className={`meter-track ${percent >= 90 ? 'high' : ''}`}
+            role="progressbar"
+            aria-label="API calls used this month"
+            aria-valuenow={used}
+            aria-valuemin={0}
+            aria-valuemax={Math.max(1, quota, used)}
+          >
+            <i style={{ width: `${percent}%` }} />
+          </div>
+          <p className="small muted">
+            <strong>{Math.max(0, quota - used).toLocaleString()} left</strong> of{' '}
+            {quota.toLocaleString()} included on {current.name}. Resets{' '}
+            {formatResetDate(session.resetsAt)}.
           </p>
-          {connected && record?.customerId && (
-            <button className="button subtle" disabled={pending} onClick={openPortal}>
-              Manage subscription
-            </button>
+          {paid && (
+            <p className="small muted">
+              Sandbox: {sandboxUsed.toLocaleString()} / {quota.toLocaleString()} calls, counted
+              separately.
+            </p>
           )}
         </div>
-        <dl>
-          <div>
-            <dt>Content plan</dt>
-            <dd>${session.plan.price}/month</dd>
+        <div>
+          <span className="metric-label">Audio delivered</span>
+          <div className="metric-value small-value">
+            {formatBytes(session.usage.audioBytes)}
+            <span>
+              {' '}
+              / {current.price ? formatBytes(session.allowance.audioBytes) : 'sample audio only'}
+            </span>
           </div>
-          <div className="total">
-            <dt>Monthly total</dt>
-            <dd>${billing.data?.monthlyTotal ?? session.plan.price}/month</dd>
-          </div>
-        </dl>
-      </div>
-      <div className="metrics two">
-        <Meter
-          label="Content requests"
-          value={session.usage.contentRequests}
-          limit={session.allowance.requests}
-          note="API requests and astrology calculations"
-        />
-        <Meter
-          label="Audio delivered"
-          value={session.usage.audioBytes}
-          limit={session.allowance.audioBytes}
-          displayLimit={
-            session.allowance.audioBytes
-              ? formatBytes(session.allowance.audioBytes)
-              : 'Samples only'
-          }
-          note="Data delivered, not storage"
-        />
-      </div>
-      <div className="segmented tab-row" role="group" aria-label="Usage or plans">
-        <button aria-pressed={view === 'usage'} onClick={() => setView('usage')}>
-          Usage
-        </button>
-        <button aria-pressed={view === 'plans'} onClick={() => setView('plans')}>
-          Plans & invoices
-        </button>
-      </div>
-      {view === 'usage' ? (
-        <UsageDetails />
-      ) : (
-        <>
-          <div className="notice">
-            {billing.data?.notice ||
-              'Billing configuration is required. No payments or entitlement upgrades are enabled.'}
-          </div>
-          <div className="section-title">
-            <h2>Monthly content plans</h2>
-            <span>All allowances reset monthly</span>
-          </div>
-          {config.loading ? (
-            <Loading />
-          ) : (
-            <div className="plan-grid">
-              {config.data?.plans.map((plan) => (
-                <article
-                  className={`plan-card ${plan.name === session.plan.name ? 'current' : ''}`}
-                  key={plan.name}
-                >
-                  <h3>{plan.name}</h3>
-                  <div className="plan-price">
-                    {plan.price ? `$${plan.price}` : 'Free'}
-                    <small>{plan.price ? '/ month' : 'Sandbox'}</small>
-                  </div>
-                  <ul>
-                    <li>{plan.requests} content requests</li>
-                    <li>
-                      {plan.audio}
-                      {plan.price ? ' audio delivery' : ''}
-                    </li>
-                    <li>{plan.catalog}</li>
-                    <li>{plan.astrology}</li>
-                    <li>
-                      {plan.products} {plan.price ? 'customer products' : ''}
-                    </li>
-                    <li>{plan.support}</li>
-                  </ul>
-                  {plan.name === session.plan.name ? (
-                    <button className="button outline" disabled>
-                      Current workspace plan
-                    </button>
-                  ) : !connected ? (
-                    <button className="button outline" disabled>
-                      Billing setup required
-                    </button>
-                  ) : subscribed ? (
-                    <button className="button outline" disabled={pending} onClick={openPortal}>
-                      Change plan
-                    </button>
-                  ) : (
-                    <button
-                      className="button"
-                      disabled={pending || !purchasable.includes(plan.name)}
-                      onClick={() => goToStripe('/api/billing/checkout', { plan: plan.name })}
-                    >
-                      Subscribe
-                    </button>
-                  )}
-                </article>
-              ))}
-            </div>
+        </div>
+      </section>
+      <UsageDetails />
+      <div className="section-title">
+        <h2>Plans</h2>
+        <span>
+          {current.name} · {subscriptionSummary}
+          {connected && customerId && (
+            <>
+              {' · '}
+              <button className="text-button" disabled={pending} onClick={openPortal}>
+                Manage subscription & invoices
+              </button>
+            </>
           )}
-          <p className="footnote">
-            Paid content plans include the full available catalog of mantras, shlokas, sacred audio,
-            shastras/books, and discovery, subject to the documented content license. A customer
-            product is an app or website. Audio allowances measure data delivery, not storage.
-          </p>
-          <section className="panel">
-            <div className="panel-heading">
-              <h2>Invoices</h2>
-            </div>
-            {connected && record?.customerId ? (
-              <p>
-                View and download invoices in Stripe.{' '}
-                <button className="text-button" disabled={pending} onClick={openPortal}>
-                  Open invoices
-                </button>
-              </p>
-            ) : (
-              <Empty title="No invoices yet.">
-                Invoices will be available here after your first payment.
-              </Empty>
-            )}
-          </section>
-        </>
+        </span>
+      </div>
+      {config.loading ? (
+        <Loading />
+      ) : (
+        <div className="plan-grid">
+          {config.data?.plans.map((plan) => (
+            <article
+              className={`plan-card ${plan.name === current.name ? 'current' : ''}`}
+              key={plan.name}
+            >
+              <h3>
+                {plan.name} {plan.name === current.name && <Badge tone="saffron">Your plan</Badge>}
+              </h3>
+              <div className="plan-price">
+                ${plan.price}
+                <small>{plan.price ? '/ month' : 'Forever, no card needed'}</small>
+              </div>
+              <ul>
+                <li>
+                  <strong>{plan.requests} calls</strong> a month
+                </li>
+                <li>
+                  {plan.audio}
+                  {plan.price ? ' audio delivery' : ''}
+                </li>
+                <li>{plan.catalog}</li>
+                <li>{plan.support}</li>
+              </ul>
+              {planAction(plan)}
+            </article>
+          ))}
+        </div>
       )}
+      {!connected && billing.data?.notice && <p className="footnote">{billing.data.notice}</p>}
     </>
   );
 }

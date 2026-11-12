@@ -2,169 +2,156 @@ import { useState } from 'react';
 import { Link } from 'expo-router';
 import { useConsole } from '../Session.web';
 import { mutate } from '../../lib/api';
-import { Badge, CopyButton, ErrorNotice, formatBytes, Meter, PageTitle } from '../ui.web';
+import { ApiKeyCard, primaryKey, UsageCard } from '../Account.web';
+import { CopyButton, ErrorNotice, formatResetDate, PageTitle } from '../ui.web';
+import { environmentLabel } from '../Shell.web';
+import type { Session } from '../../lib/types';
 
-const FIRST_REQUEST = '/v1/shlokas?limit=5';
+const FIRST_REQUEST = '/v1/mantras?limit=5';
+
+// Environment, plan, usage and the one next step, at a glance.
+function StatusStrip({ s, worked }: { s: Session; worked: boolean }) {
+  const used = s.usage.contentRequests,
+    total = s.allowance.requests,
+    remaining = Math.max(0, total - used),
+    share = total ? Math.min(100, (used / total) * 100) : 0;
+  const next = !worked
+    ? { label: 'Run your first request', href: '#first-request' }
+    : !s.plan.price
+      ? { label: 'Upgrade for a live key', href: '/billing' }
+      : remaining < total * 0.1
+        ? { label: 'Raise your allowance', href: '/billing' }
+        : { label: 'Open the API Explorer', href: '/docs?tab=try' };
+  return (
+    <section className="status-strip" aria-label="Workspace status">
+      <div>
+        <span>Environment</span>
+        <strong>
+          <i className={s.usageLane === 'sandbox' ? 'dot sandbox' : 'dot live'} />
+          {environmentLabel(s.usageLane)}
+        </strong>
+        <small>{s.plan.price ? 'Sandbox and live keys' : 'Sample content only'}</small>
+      </div>
+      <div>
+        <span>Plan</span>
+        <strong>{s.plan.name}</strong>
+        <small>{s.plan.price ? `$${s.plan.price} a month` : 'Free'}</small>
+      </div>
+      <div>
+        <span>Requests this month</span>
+        <strong>
+          {used.toLocaleString()} <em>/ {total.toLocaleString()}</em>
+        </strong>
+        <span className="strip-meter" aria-hidden="true">
+          <i style={{ width: `${share}%` }} />
+        </span>
+        <small>
+          {remaining.toLocaleString()} left · resets {formatResetDate(s.resetsAt)}
+        </small>
+      </div>
+      <div className="strip-next">
+        <span>Next step</span>
+        {next.href.startsWith('#') ? (
+          <a className="button small-button" href={next.href}>
+            {next.label} →
+          </a>
+        ) : (
+          <Link className="button small-button" href={next.href}>
+            {next.label} →
+          </Link>
+        )}
+      </div>
+    </section>
+  );
+}
 
 export default function Overview() {
   const { session, config, refresh } = useConsole();
-  const [secret, setSecret] = useState(''),
-    [status, setStatus] = useState<number | null>(null),
+  const [status, setStatus] = useState<number | null>(null),
     [pending, setPending] = useState(false),
     [error, setError] = useState('');
   if (!session) return null;
   const s = session,
-    hasKey = s.workspace.keys.some((key) => key.status === 'active'),
+    // Try the request with the live key once there is one, otherwise the sandbox key.
+    key = primaryKey(s, 'production') ?? primaryKey(s, 'sandbox'),
     worked =
-      status === 200 ||
-      s.usage.contentRequests > 0 ||
-      s.workspace.keys.some((key) => key.lastUsedAt),
-    setupDone = worked && !secret,
+      status === 200 || s.usage.contentRequests > 0 || s.workspace.keys.some((k) => k.lastUsedAt),
     base = config?.apiUrl ?? 'https://api.mantrilo.com',
-    request = `curl '${base}${FIRST_REQUEST}' \\\n  -H "Authorization: Bearer ${secret || '$MANTRILO_API_KEY'}"`;
-  async function act(work: () => Promise<void>, failure: string) {
+    request = `curl '${base}${FIRST_REQUEST}' \\\n  -H "Authorization: Bearer $MANTRILO_API_KEY"`;
+  async function runRequest() {
+    if (!key?.secret) return;
     setPending(true);
     setError('');
     try {
-      await work();
+      const { response } = await mutate<{ response: { status: number } }>(
+        '/api/playground',
+        'POST',
+        { path: FIRST_REQUEST, key: key.secret },
+      );
+      setStatus(response.status);
       await refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : failure);
+      setError(e instanceof Error ? e.message : 'The request could not be completed.');
     } finally {
       setPending(false);
     }
   }
-  const createKey = () =>
-    act(async () => {
-      const created = await mutate<{ secret: string }>('/api/keys', 'POST', {
-        name: 'My first key',
-        environment: 'sandbox',
-      });
-      setSecret(created.secret);
-    }, 'The key could not be created.');
-  const runRequest = () =>
-    act(async () => {
-      const { response } = await mutate<{ response: { status: number } }>(
-        '/api/playground',
-        'POST',
-        { path: FIRST_REQUEST, key: secret },
-      );
-      setStatus(response.status);
-    }, 'The request could not be completed.');
   return (
     <>
       <PageTitle
         eyebrow={s.workspace.name.toUpperCase()}
-        title={setupDone ? 'You’re connected.' : 'Connect in three steps.'}
+        title={worked ? 'You’re connected.' : 'Your sandbox key is ready.'}
         copy={
-          setupDone
-            ? 'Your integration at a glance.'
-            : 'Mantras, shlokas, sacred audio and astrology through one API key.'
+          s.plan.price
+            ? 'Build with your sandbox key and ship with your live key.'
+            : `Every account starts with a sandbox key and ${s.allowance.requests.toLocaleString()} free calls a month on sample content. Subscribe for a live key and the full catalog.`
         }
       />
+      <StatusStrip s={s} worked={worked} />
       <ErrorNotice message={error} />
-      {!setupDone && (
-        <ol className="panel setup-steps">
-          <li className={hasKey || secret ? 'done' : ''}>
-            <span aria-hidden="true">{hasKey || secret ? '✓' : '1'}</span>
-            <div>
-              <h2>Create your key</h2>
-              {secret ? (
-                <>
-                  <p>Copy it now. It’s only shown once, so keep it somewhere safe.</p>
-                  <pre>
-                    <code>{secret}</code>
-                  </pre>
-                  <CopyButton text={secret} />
-                </>
-              ) : hasKey ? (
-                <p>
-                  You have a key. <Link href="/keys">Manage keys →</Link>
-                </p>
-              ) : !s.user.verified ? (
-                <p>
-                  Verify your email first. <Link href="/keys">Verify email →</Link>
-                </p>
-              ) : (
-                <>
-                  <p>A free sandbox key is enough to start.</p>
-                  <button className="button" disabled={pending} onClick={createKey}>
-                    {pending ? 'Creating…' : 'Create key'}
-                  </button>
-                </>
-              )}
-            </div>
-          </li>
-          <li className={worked ? 'done' : ''}>
-            <span aria-hidden="true">{worked ? '✓' : '2'}</span>
-            <div>
-              <h2>Make a request</h2>
-              <p>Run this from your server or terminal.</p>
-              <pre>
-                <code>{request}</code>
-              </pre>
-              <div className="action-row">
-                <CopyButton text={request} />
-                {secret && config?.apiUrl && (
-                  <button className="button subtle" disabled={pending} onClick={runRequest}>
-                    {pending ? 'Running…' : 'Run it here'}
-                  </button>
-                )}
-              </div>
-              {!config?.apiUrl && (
-                <p className="small muted">The API isn’t connected to this console yet.</p>
-              )}
-              {status !== null && status !== 200 && (
-                <p className="error-text" role="alert">
-                  The request returned HTTP {status}.
-                </p>
-              )}
-            </div>
-          </li>
-          <li className={worked ? 'done' : ''}>
-            <span aria-hidden="true">{worked ? '✓' : '3'}</span>
-            <div>
-              <h2>You’re live</h2>
-              {worked ? (
-                <p>
-                  Your first request worked. See what else you can do in the{' '}
-                  <Link href="/docs">docs</Link> or browse the <Link href="/library">library</Link>.
-                </p>
-              ) : (
-                <p>Your first successful request completes this step.</p>
-              )}
-            </div>
-          </li>
-        </ol>
-      )}
-      <div className="plan-strip">
-        <div>
-          <span className="strip-label">YOUR PLAN</span>
-          <strong>
-            {s.plan.name} <Badge>{s.plan.price ? `$${s.plan.price}/month` : 'Free'}</Badge>
-          </strong>
+      <div className="overview-grid">
+        <ApiKeyCard />
+        <UsageCard />
+      </div>
+      <section className="panel" id="first-request">
+        <div className="panel-heading">
+          <h2>{worked ? 'Make another request' : 'Make your first request'}</h2>
+          <Link href="/docs?tab=try" className="text-link">
+            API Explorer →
+          </Link>
         </div>
-        <Link href="/billing?view=plans" className="text-link">
-          Change plan ↗
-        </Link>
-      </div>
-      <div className="metrics two">
-        <Meter
-          label="Content requests"
-          value={s.usage.contentRequests}
-          limit={s.allowance.requests}
-          note="Resets on the 1st of each month"
-        />
-        <Meter
-          label="Audio delivered"
-          value={s.usage.audioBytes}
-          limit={s.allowance.audioBytes}
-          displayLimit={
-            s.allowance.audioBytes ? formatBytes(s.allowance.audioBytes) : 'Samples only'
-          }
-          note="Data delivered, not storage"
-        />
-      </div>
+        <div className="account-card-body">
+          <p>Set MANTRILO_API_KEY to your key, then run this from your server or terminal.</p>
+          <pre>
+            <code>{request}</code>
+          </pre>
+          <div className="action-row">
+            <CopyButton text={request} />
+            {key?.secret && config?.apiUrl && (
+              <button
+                className="button subtle small-button"
+                disabled={pending}
+                onClick={runRequest}
+              >
+                {pending ? 'Running…' : 'Run it here'}
+              </button>
+            )}
+          </div>
+          {!config?.apiUrl && (
+            <p className="small muted">The API isn’t connected to this console yet.</p>
+          )}
+          {status !== null &&
+            (status === 200 ? (
+              <p className="small" role="status">
+                It worked. Browse what you can fetch in the <Link href="/library">library</Link>.
+              </p>
+            ) : (
+              <p className="error-text" role="alert">
+                The request returned HTTP {status}.
+              </p>
+            ))}
+        </div>
+      </section>
     </>
   );
 }

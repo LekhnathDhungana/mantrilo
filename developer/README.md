@@ -19,15 +19,16 @@ The Node server serves the exported app and same-origin `/api` routes together. 
 ## Working functionality
 
 - Protected console routes with a loading state and login redirection. Backend authorization is independent of browser navigation.
-- Named API key creation; 256-bit random secrets shown once; SHA-256 hashes stored privately; masked prefixes thereafter; creation/last-used times; sandbox/production distinction; revocation; workspace isolation.
+- Keys are issued automatically, with no create step: every workspace gets a sandbox key (`mtr_sbx_`, sample catalog only) on first sign-in, and a live key (`mtr_live_`, full catalog) once it has a paid plan. Existing workspaces are migrated the same way and keep their older keys until revoked. 256-bit random secrets, looked up by SHA-256 hash; the console can show, copy and regenerate each key. A live key is refused (`plan_inactive`) while the workspace has no paid plan. Workspace isolation.
+- Free tier by default: 500 API calls a month. Starter, Growth and Business raise the quota and add the live key.
 - Server-enforced product registration and plan limits; workspace name, notification preferences, and usage thresholds persist in the selected backend.
 - A Library that shows the real catalog in Firebase mode and placeholder records in demo mode. Free plans see the sample; browsing is not metered.
-- An actually implemented **local-only** `GET /api/demo/catalog?type=text|audio|books`, authenticated by a sandbox API key. The playground shows real HTTP status, elapsed client time, request ID, body, and usage cost. This is not a claimed production content endpoint.
+- An actually implemented **local-only** `GET /api/demo/catalog?type=text|audio|books`, authenticated by the workspace sandbox key. The playground shows real HTTP status, elapsed client time, request ID, body, and usage cost. This is not a claimed production content endpoint.
 - Atomic backend demo metering and counters for content requests (astrology calculations included) and delivered audio bytes. Demo counters start at zero. Date-filtered daily charts and endpoint totals use server records; recent activity retains the latest 200 events.
 - Exact content plans, each including astrology calculations.
 - Administrator-only workspace listing/provisioning. Every privileged request checks the authenticated server-side role. Customers cannot invoke these operations.
 
-Anyone can sign up from `/login`. A new account starts on its own Sandbox workspace and never receives a paid plan automatically.
+Anyone can sign up from `/login`. A new account starts on its own Free workspace (500 calls a month, sandbox key ready) and never receives a paid plan automatically.
 
 ## Sign-in (web only)
 
@@ -53,7 +54,7 @@ The fixed initial administrator is **bebaslekhnath@gmail.com**. Supply `MANTRILO
 npm run bootstrap:admin
 ```
 
-The idempotent server-side command creates the account only when missing, requires a password of at least 12 characters for creation, preserves other existing custom claims, grants the admin claim, and creates a Sandbox workspace/profile if missing. It **never resets an existing account’s password**. Bootstrap output does not print the password or generated credentials. Sign in again after bootstrap to refresh account access.
+The idempotent server-side command creates the account only when missing, requires a password of at least 12 characters for creation, preserves other existing custom claims, grants the admin claim, and creates a Free workspace/profile if missing. It **never resets an existing account’s password**. Bootstrap output does not print the password or generated credentials. Sign in again after bootstrap to refresh account access.
 
 The command was tested with a fake Auth adapter; **no actual Firebase administrator account was created**, because project configuration and the securely supplied password are not available.
 
@@ -96,7 +97,7 @@ The container runs as the non-root `node` user, defaults to Firebase mode, and l
 
 ## Stripe billing
 
-Customers subscribe through Stripe Checkout and manage plans, cards and invoices in the Customer Portal. A plan only changes from Stripe's own records (`server/billing.mjs`): the Billing page asks Stripe about the customer saved on the workspace, and a signed webhook does the same in the background. A subscription keeps its plan while `past_due`, and returns to Sandbox when it ends. Deleting an account cancels its subscription immediately.
+Customers subscribe through Stripe Checkout and manage plans, cards and invoices in the Customer Portal. A plan only changes from Stripe's own records (`server/billing.mjs`): the Billing page asks Stripe about the customer saved on the workspace, and a signed webhook does the same in the background. A subscription keeps its plan while `past_due`, and returns to Free when it ends. Deleting an account cancels its subscription immediately.
 
 **Without a webhook, a cancellation or failed renewal only takes effect when the customer next opens Billing, so their production keys keep working until then. Add the webhook before relying on this with real customers.**
 
@@ -109,7 +110,7 @@ To test locally, run `stripe listen --forward-to localhost:4190/api/billing/webh
 ## Still requiring configuration or implementation
 
 1. The production authorized domain and the initial administrator bootstrap.
-2. The content license, and `/v1` endpoints for books.
+2. Confirm title and edition rights for public API distribution of books.
 3. Setting `MANTRILO_API_URL` on the console, so Home and Docs can run real requests.
 4. Detailed astrology scope beyond the implemented planetary positions and instant Panchang engine, and an exact ayanamsa model if required.
 5. Notification/email delivery worker. Preferences and thresholds save correctly but do not send usage alerts yet.

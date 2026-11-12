@@ -9,20 +9,22 @@ export default function InfoPage({ page }: { page: string }) {
       </Link>
       <Text style={styles.title}>
         {page === 'docs'
-          ? 'Integration guide'
-          : page === 'access'
-            ? 'Request access'
-            : page === 'license'
-              ? 'Content license status'
-              : page === 'privacy'
-                ? 'Privacy & data'
-                : 'Website terms status'}
+          ? 'API documentation'
+          : page === 'implementation'
+            ? 'Implementation guides'
+            : page === 'access'
+              ? 'Request access'
+              : page === 'license'
+                ? 'Content license status'
+                : page === 'privacy'
+                  ? 'Privacy & data'
+                  : 'Website terms status'}
       </Text>
       <Text style={styles.body}>
         {page === 'access'
-          ? 'Access requests and astrology inquiries are not connected to a submission service. Astrology service access requires configuration in this preview. Use the website in a browser to prepare a local request draft. No account or purchase is created.'
-          : page === 'docs'
-            ? 'Production API endpoints and documentation are not connected. Keep all API keys on your server. Review catalog coverage, monthly allowances, and the content license before integration.'
+          ? 'Open the website in a browser to request API access. No account or purchase is created here.'
+          : page === 'docs' || page === 'implementation'
+            ? 'Open the website in a browser for the full API documentation. Keep all API keys on your server.'
             : page === 'license'
               ? 'Content license documentation has not been supplied. Paid plans include available content for commercial integration subject to the documented content license. This page does not grant content rights.'
               : page === 'privacy'

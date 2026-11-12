@@ -4,7 +4,12 @@ import { firebaseServices, FirebaseSessions } from './firebase.mjs';
 import { createMailer, EmailCodes } from './email-codes.mjs';
 import { demoContent, startDemoApi } from '../api/demo.mjs';
 import { FirestoreContent } from '../api/content.mjs';
+import { Storage } from '@google-cloud/storage';
+import { StorageMedia } from '../api/media.mjs';
 import { createBilling } from './billing.mjs';
+import { billingModeFrom } from './domain.mjs';
+import { demoPustak, FirestorePustak } from './pustak.mjs';
+import { createAstrologyService } from './astrology/service.mjs';
 const mode =
   process.env.MANTRILO_MODE || (process.env.NODE_ENV === 'production' ? 'firebase' : 'demo');
 const port = Number(process.env.PORT || 4190);
@@ -28,17 +33,30 @@ try {
   let store,
     sessions,
     content,
+    media,
+    books,
     apiUrl = process.env.MANTRILO_API_URL?.replace(/\/+$/, '') || null;
+  const astrologyService = createAstrologyService({
+    key: process.env.MANTRILO_ASTROLOGY_API_KEY,
+    limited: (process.env.MANTRILO_ASTROLOGY_LIMITED || '').split(',').filter(Boolean),
+  });
   if (mode === 'demo') {
     store = new MemoryStore();
     sessions = new DemoSessions();
     await seedDemo(store);
     content = demoContent();
-    apiUrl = await startDemoApi(store, port + 100);
+    books = demoPustak;
+    apiUrl = await startDemoApi(store, port + 100, astrologyService);
   } else {
     const { auth, db } = firebaseServices();
     store = new FirestoreStore(db);
     content = new FirestoreContent(db);
+    media = new StorageMedia(
+      new Storage({ projectId: process.env.FIREBASE_PROJECT_ID }).bucket(
+        process.env.MANTRILO_MEDIA_BUCKET || 'mantrilo-media',
+      ),
+    );
+    books = new FirestorePustak(db);
     sessions = new FirebaseSessions(auth, db);
   }
   const firebaseConfig =
@@ -51,6 +69,22 @@ try {
           authEmulatorHost: process.env.FIREBASE_AUTH_EMULATOR_HOST || null,
         }
       : null;
+  // Which Stripe mode's plans this console reads and sells. The secret key must match it.
+  const billingMode = billingModeFrom(process.env);
+  let billing = mode === 'firebase' ? createBilling(process.env, appOrigin) : null;
+  if (billing && billing.mode !== billingMode) {
+    console.error(
+      `Billing is off: MANTRILO_BILLING_MODE is ${billingMode} but STRIPE_SECRET_KEY is a ${billing.mode}-mode key.`,
+    );
+    billing = null;
+  }
+  if (billing)
+    billing
+      .verifyPrices()
+      .then((problems) =>
+        problems.forEach((problem) => console.error(`Stripe price check: ${problem}`)),
+      )
+      .catch(() => undefined);
   const server = createConsoleServer({
     store,
     sessions,
@@ -63,7 +97,11 @@ try {
     mailer: mode === 'firebase' ? createMailer() : null,
     apiUrl,
     content,
-    billing: mode === 'firebase' ? createBilling(process.env, appOrigin) : null,
+    media,
+    books,
+    astrologyService,
+    billing,
+    billingMode,
     phoneCodes: process.env.MANTRILO_PHONE_AUTH === 'true',
     trustProxy: Boolean(process.env.K_SERVICE),
   });

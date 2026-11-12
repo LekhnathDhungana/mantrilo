@@ -1,5 +1,13 @@
 import Stripe from 'stripe';
-import { ApiError, log } from './domain.mjs';
+import {
+  ApiError,
+  FREE_PLAN,
+  billingFor,
+  getPlan,
+  log,
+  planFor,
+  setEntitlement,
+} from './domain.mjs';
 
 // past_due keeps access while Stripe retries the card; its retry settings decide when it ends.
 export const ENTITLED_STATUSES = new Set(['active', 'trialing', 'past_due']);
@@ -11,10 +19,37 @@ function priceVariable(plan) {
   return `STRIPE_PRICE_${plan.toUpperCase()}`;
 }
 const isoDate = (seconds) => (seconds ? new Date(seconds * 1000).toISOString() : null);
+// sk_test_/rk_test_ keys belong to a sandbox or test mode; sk_live_/rk_live_ to live mode.
+export const stripeModeOf = (secretKey) => (/^[sr]k_live_/.test(secretKey) ? 'live' : 'test');
 
 export class StripeBilling {
-  constructor({ stripe, webhookSecret, prices, appOrigin }) {
-    Object.assign(this, { stripe, webhookSecret, prices, appOrigin });
+  constructor({ stripe, webhookSecret, prices, appOrigin, mode = 'live' }) {
+    Object.assign(this, { stripe, webhookSecret, prices, appOrigin, mode });
+  }
+  // Checks each configured price against shared/content-plans.json: it must exist, be active,
+  // recur monthly in USD, and cost what the plan says. Returns a list of problems (empty if none).
+  async verifyPrices() {
+    const problems = [];
+    for (const [name, id] of Object.entries(this.prices)) {
+      const expected = Math.round(getPlan(name).price * 100);
+      try {
+        const price = await this.stripe.prices.retrieve(id);
+        if (!price.active) problems.push(`${name}: price ${id} is archived`);
+        if (price.livemode !== (this.mode === 'live'))
+          problems.push(`${name}: price ${id} is not a ${this.mode}-mode price`);
+        if (price.currency !== 'usd')
+          problems.push(`${name}: billed in ${price.currency}, not usd`);
+        if (price.recurring?.interval !== 'month' || price.recurring?.interval_count !== 1)
+          problems.push(`${name}: not a monthly subscription price`);
+        if (price.unit_amount !== expected)
+          problems.push(
+            `${name}: Stripe charges $${(price.unit_amount / 100).toFixed(2)}, plans list $${(expected / 100).toFixed(2)}`,
+          );
+      } catch (error) {
+        problems.push(`${name}: price ${id} could not be read (${error.message})`);
+      }
+    }
+    return problems;
   }
   planFor(priceId) {
     return Object.keys(this.prices).find((plan) => this.prices[plan] === priceId) || null;
@@ -89,34 +124,42 @@ export function createBilling(env, appOrigin) {
     webhookSecret: env.STRIPE_WEBHOOK_SECRET || null,
     prices: Object.fromEntries(PAID_PLANS.map((plan) => [plan, env[priceVariable(plan)]])),
     appOrigin,
+    mode: stripeModeOf(env.STRIPE_SECRET_KEY),
   });
 }
 
-export function applySubscription(workspace, subscription, planFor) {
+// Writes the subscription into the entitlement fields for `mode` only. A subscription from the
+// other Stripe mode is ignored, so test payments never unlock live access and vice versa.
+// Applying the same subscription state twice changes nothing and logs nothing.
+export function applySubscription(workspace, subscription, priceToPlan, mode = 'live') {
+  if (subscription.livemode !== undefined && subscription.livemode !== (mode === 'live')) return;
   const { status, id } = subscription,
-    entitled = ENTITLED_STATUSES.has(status);
+    entitled = ENTITLED_STATUSES.has(status),
+    current = billingFor(workspace, mode);
   if (!entitled && !ENDED_STATUSES.has(status)) return; // Not paid yet, so nothing changes.
   // An old subscription ending must not cancel access from a newer one.
-  if (!entitled && workspace.billing?.subscriptionId && workspace.billing.subscriptionId !== id)
-    return;
+  if (!entitled && current?.subscriptionId && current.subscriptionId !== id) return;
   const item = subscription.items.data[0],
-    plan = entitled ? planFor(item?.price.id) : 'Sandbox';
+    plan = entitled ? priceToPlan(item?.price.id) : FREE_PLAN;
   // Thrown so Stripe retries once the missing price is configured.
   if (!plan) throw new Error(`Subscription ${id} uses an unconfigured price.`);
   const { customer } = subscription,
-    previous = workspace.plan;
-  workspace.billing = {
-    customerId: typeof customer === 'string' ? customer : customer.id,
-    subscriptionId: id,
-    status,
-    currentPeriodEnd: isoDate(item?.current_period_end),
-    cancelsAt: isoDate(subscription.cancel_at),
-  };
-  workspace.plan = plan;
+    previous = planFor(workspace, mode).name;
+  setEntitlement(workspace, mode, {
+    plan,
+    billing: {
+      customerId: typeof customer === 'string' ? customer : customer.id,
+      subscriptionId: id,
+      status,
+      currentPeriodEnd: isoDate(item?.current_period_end),
+      cancelsAt: isoDate(subscription.cancel_at),
+      livemode: mode === 'live',
+    },
+  });
   if (previous !== plan)
     log(workspace, {
       type: 'billing',
-      message: `Plan changed: ${previous} to ${plan}`,
+      message: `${mode === 'test' ? 'Test mode: plan' : 'Plan'} changed: ${previous} to ${plan}`,
       status: 200,
     });
 }
@@ -131,30 +174,33 @@ function subscriptionIdFrom(event) {
 // Always reads the subscription's current state from Stripe, so events that arrive twice or out
 // of order can't leave a workspace on the wrong plan.
 export async function syncFromEvent(event, { store, billing }) {
+  // Events from the other Stripe mode (a shared webhook endpoint, say) are not ours to apply.
+  if (event.livemode !== undefined && event.livemode !== (billing.mode === 'live')) return;
   const id = subscriptionIdFrom(event);
   if (!id) return;
   const subscription = await billing.retrieveSubscription(id),
     workspaceId = subscription.metadata?.workspaceId; // Absent on your other Stripe products.
   if (!workspaceId || !(await store.getWorkspace(workspaceId))) return;
   await store.transact(workspaceId, (workspace) =>
-    applySubscription(workspace, subscription, (priceId) => billing.planFor(priceId)),
+    applySubscription(workspace, subscription, (priceId) => billing.planFor(priceId), billing.mode),
   );
 }
 
 // Brings a workspace up to date from Stripe, using the customer saved on the workspace. It takes
 // nothing from the browser, so a customer can only ever activate what Stripe says they paid for.
 export async function syncWorkspace(workspace, { store, billing }) {
-  const customerId = workspace.billing?.customerId;
+  const record = billingFor(workspace, billing.mode),
+    customerId = record?.customerId;
   if (!customerId) return;
   const subscriptions = (await billing.listSubscriptions(customerId)).filter(
     (subscription) => subscription.metadata?.workspaceId === workspace.id,
   );
   const current =
     subscriptions.find((subscription) => ENTITLED_STATUSES.has(subscription.status)) ||
-    subscriptions.find((subscription) => subscription.id === workspace.billing.subscriptionId) ||
+    subscriptions.find((subscription) => subscription.id === record.subscriptionId) ||
     subscriptions[0];
   if (!current) return;
   await store.transact(workspace.id, (w) =>
-    applySubscription(w, current, (priceId) => billing.planFor(priceId)),
+    applySubscription(w, current, (priceId) => billing.planFor(priceId), billing.mode),
   );
 }

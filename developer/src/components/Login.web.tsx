@@ -51,7 +51,7 @@ export default function Login() {
           </p>
           <div className="login-categories">
             <span>
-              ॐ <b>Mantras & shlokas</b>
+              ॐ <b>Mantras</b>
             </span>
             <span>
               ≋ <b>Sacred audio</b>

@@ -5,7 +5,7 @@ export default function Seo({ path, notFound = false }: { path: string; notFound
   const page = seoPages[path] || {
     title: 'Page Not Found | Mantrilo',
     description:
-      'This Mantrilo page could not be found. Explore the content API overview, product pages, or integration guide.',
+      'This Mantrilo page could not be found. Explore the content API overview, product pages, or API documentation.',
     label: 'Page not found',
     indexable: false,
   };

@@ -1,242 +1,155 @@
 import { useState } from 'react';
-import { router } from 'expo-router';
 import { useConsole } from '../Session.web';
-import { ConsoleError, mutate } from '../../lib/api';
-import { Badge, CopyButton, Empty, ErrorNotice, formatDate, PageTitle } from '../ui.web';
-import type { KeyRecord } from '../../lib/types';
+import { mutate } from '../../lib/api';
+import { ApiKeyCard, EnvTag, keyEnvironment, primaryKey, type Environment } from '../Account.web';
+import { ErrorNotice, formatDate, PageTitle } from '../ui.web';
 
 export default function Keys() {
-  const { session, config, refresh } = useConsole();
-  const [open, setOpen] = useState(false),
-    [pending, setPending] = useState(false),
+  const { session, refresh } = useConsole();
+  const [pending, setPending] = useState(false),
     [error, setError] = useState(''),
-    [newSecret, setNewSecret] = useState(''),
-    [revokeId, setRevokeId] = useState(''),
-    [needsLogin, setNeedsLogin] = useState(false),
-    [verificationSent, setVerificationSent] = useState(false);
+    [confirmRotate, setConfirmRotate] = useState<Environment | null>(null),
+    [revokeId, setRevokeId] = useState('');
   if (!session) return null;
-  async function create(event: React.SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
+  const current = [primaryKey(session, 'sandbox'), primaryKey(session, 'production')],
+    paid = session.plan.price > 0,
+    older = session.workspace.keys.filter(
+      (key) => key.status === 'active' && !current.includes(key),
+    );
+  async function act(work: () => Promise<unknown>, failure: string) {
     setPending(true);
     setError('');
-    setNeedsLogin(false);
-    const f = new FormData(event.currentTarget);
     try {
-      const result = await mutate<{ secret: string; key: KeyRecord }>('/api/keys', 'POST', {
-        name: f.get('name'),
-        environment: f.get('environment'),
-      });
-      setNewSecret(result.secret);
-      setOpen(false);
+      await work();
       await refresh();
     } catch (e) {
-      setNeedsLogin(e instanceof ConsoleError && e.code === 'reauthentication_required');
-      setError(e instanceof Error ? e.message : 'Key creation failed.');
+      setError(e instanceof Error ? e.message : failure);
     } finally {
       setPending(false);
-    }
-  }
-  async function revoke(id: string) {
-    setPending(true);
-    setError('');
-    try {
-      await mutate(`/api/keys/${id}`, 'DELETE');
+      setConfirmRotate(null);
       setRevokeId('');
-      await refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not revoke the key.');
-    } finally {
-      setPending(false);
     }
   }
-  async function sendVerification() {
-    if (!config?.firebase) return;
-    setPending(true);
-    setError('');
-    try {
-      const { token } = await mutate<{ token: string }>('/api/auth/verification-token', 'POST');
-      const { sendVerificationEmail } = await import('../../lib/firebase');
-      await sendVerificationEmail(config.firebase, token);
-      setVerificationSent(true);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not send the verification email.');
-    } finally {
-      setPending(false);
-    }
-  }
-  async function signInAgain() {
-    setPending(true);
-    setError('');
-    try {
-      await mutate('/api/auth/logout', 'POST');
-      await refresh();
-      router.replace('/login');
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not sign out.');
-      setPending(false);
-    }
-  }
+  const rotate = (environment: Environment) =>
+    act(
+      () => mutate('/api/keys/rotate', 'POST', { environment }),
+      'The key could not be regenerated.',
+    );
+  const revoke = (id: string) =>
+    act(() => mutate(`/api/keys/${id}`, 'DELETE'), 'Could not revoke the key.');
+  const environments: [Environment, string][] = paid
+    ? [
+        ['sandbox', 'sandbox key'],
+        ['production', 'live key'],
+      ]
+    : [['sandbox', 'sandbox key']];
   return (
     <>
       <PageTitle
         eyebrow="CREDENTIALS"
         title="API keys"
-        copy="Give each integration a named credential. Keep the secret on your server."
-        action={
-          <button
-            className="button"
-            onClick={() => setOpen(!open)}
-            disabled={pending || !!newSecret || !session.user.verified}
-          >
-            Create API key <span>＋</span>
-          </button>
-        }
+        copy="Your sandbox key reads sample content on every plan. Your live key reads the full catalog and comes with a paid plan."
       />
       <ErrorNotice message={error} />
-      {needsLogin && (
-        <div className="action-row">
-          <button className="button subtle" disabled={pending} onClick={signInAgain}>
-            Sign in again
-          </button>
-        </div>
-      )}
-      {!session.user.verified && (
-        <section className="panel form-panel">
-          <h2>Verify your email to create API keys.</h2>
-          <p>
-            {verificationSent
-              ? `We sent a link to ${session.user.email}. Open it, then come back here.`
-              : `Confirm that ${session.user.email} is yours. Check your inbox for our link, or send a new one.`}
-          </p>
-          <div className="action-row">
-            <button className="button" disabled={pending} onClick={sendVerification}>
-              Send verification email
-            </button>
-            <button className="button subtle" disabled={pending} onClick={refresh}>
-              I’ve verified it
-            </button>
-          </div>
-        </section>
-      )}
-      {newSecret && (
-        <section className="secret-card" role="status">
-          <Badge tone="saffron">SHOWN ONCE</Badge>
-          <h2>Save your API key.</h2>
-          <p>The server stores a secure hash. This secret cannot be retrieved again.</p>
-          <code className="secret-value">{newSecret}</code>
-          <div className="action-row">
-            <CopyButton text={newSecret} label="Copy secret" />
-            <button className="button subtle" onClick={() => setNewSecret('')}>
-              I saved it · Hide secret
-            </button>
-          </div>
-        </section>
-      )}
-      {open && (
-        <section className="panel form-panel">
-          <h2>Create a named key</h2>
-          <form className="inline-form" onSubmit={create}>
-            <label>
-              Key name
-              <input
-                name="name"
-                maxLength={80}
-                placeholder="e.g. Reading app development"
-                required
-              />
-            </label>
-            <label>
-              Environment
-              <select name="environment" defaultValue="sandbox">
-                <option value="sandbox">Sandbox</option>
-                <option value="production" disabled={!session.plan.price}>
-                  Production · paid plan required
-                </option>
-              </select>
-            </label>
-            <button className="button" disabled={pending}>
-              {pending ? 'Creating…' : 'Create key'}
-            </button>
-            <button type="button" className="text-button" onClick={() => setOpen(false)}>
-              Cancel
-            </button>
-          </form>
-        </section>
-      )}
+      <ApiKeyCard manage />
       <section className="panel">
         <div className="panel-heading">
-          <h2>Workspace keys</h2>
-          <span className="small muted">{session.workspace.keys.length} records</span>
+          <h2>Regenerate a key</h2>
         </div>
-        {session.workspace.keys.length ? (
+        <div className="account-card-body">
+          <p>
+            If a key leaked, replace it. The current key stops working within a minute, so update
+            your servers straight away.
+          </p>
+          {confirmRotate ? (
+            <div className="action-row">
+              <button
+                className="button danger-button"
+                disabled={pending}
+                onClick={() => rotate(confirmRotate)}
+              >
+                {pending
+                  ? 'Regenerating…'
+                  : `Yes, regenerate the ${confirmRotate === 'sandbox' ? 'sandbox' : 'live'} key`}
+              </button>
+              <button className="text-button" onClick={() => setConfirmRotate(null)}>
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <div className="action-row">
+              {environments.map(([environment, label]) => (
+                <button
+                  key={environment}
+                  className="button subtle"
+                  onClick={() => setConfirmRotate(environment)}
+                >
+                  Regenerate {label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+      {older.length > 0 && (
+        <section className="panel">
+          <div className="panel-heading">
+            <h2>Older keys</h2>
+            <span className="small muted">Still active · revoke once you’ve switched</span>
+          </div>
           <div className="table-scroll" tabIndex={0}>
             <table>
               <thead>
                 <tr>
-                  <th>Name & prefix</th>
+                  <th>Key</th>
                   <th>Environment</th>
                   <th>Created</th>
                   <th>Last used</th>
-                  <th>Status</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {session.workspace.keys.map((key) => (
+                {older.map((key) => (
                   <tr key={key.id}>
                     <td>
                       <strong>{key.name}</strong>
                       <code className="table-code">{key.prefix}••••••••</code>
                     </td>
                     <td>
-                      <Badge>{key.environment}</Badge>
+                      <EnvTag environment={keyEnvironment(key)} />
                     </td>
                     <td>{formatDate(key.createdAt)}</td>
                     <td>{formatDate(key.lastUsedAt)}</td>
                     <td>
-                      <Badge tone={key.status === 'active' ? 'green' : 'neutral'}>
-                        {key.status}
-                      </Badge>
-                    </td>
-                    <td>
-                      {key.status === 'active' &&
-                        (revokeId === key.id ? (
-                          <div className="action-row">
-                            <button
-                              className="text-button danger"
-                              disabled={pending}
-                              onClick={() => revoke(key.id)}
-                            >
-                              Confirm revoke
-                            </button>
-                            <button className="text-button" onClick={() => setRevokeId('')}>
-                              Cancel
-                            </button>
-                          </div>
-                        ) : (
+                      {revokeId === key.id ? (
+                        <div className="action-row">
                           <button
                             className="text-button danger"
-                            onClick={() => setRevokeId(key.id)}
+                            disabled={pending}
+                            onClick={() => revoke(key.id)}
                           >
-                            Revoke
+                            Confirm revoke
                           </button>
-                        ))}
+                          <button className="text-button" onClick={() => setRevokeId('')}>
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button className="text-button danger" onClick={() => setRevokeId(key.id)}>
+                          Revoke
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        ) : (
-          <Empty icon="⌘" title="Your first key starts here.">
-            Create a sandbox key to run the local fixture endpoints. Production access requires an
-            active paid content plan.
-          </Empty>
-        )}
-      </section>
+        </section>
+      )}
       <div className="notice">
-        Never place secrets in mobile apps, browser bundles, Git, or request logs. Newly generated
-        secrets remain in this page’s memory until hidden or you navigate away.
+        Never place your key in mobile apps, browser bundles, Git, or request logs. Call the API
+        from your own server.
       </div>
     </>
   );

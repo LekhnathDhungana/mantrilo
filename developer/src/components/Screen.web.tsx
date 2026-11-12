@@ -3,6 +3,7 @@ import { Empty } from './ui.web';
 import Overview from './screens/Overview.web';
 import Keys from './screens/Keys.web';
 import Library from './screens/Library.web';
+import Implementation from './screens/Implementation.web';
 import Billing from './screens/Billing.web';
 import Settings from './screens/Settings.web';
 import Administrator from './screens/Admin.web';
@@ -13,6 +14,7 @@ const screens: Record<string, () => ReactNode> = {
   overview: Overview,
   keys: Keys,
   library: Library,
+  implementation: Implementation,
   billing: Billing,
   settings: Settings,
   admin: Administrator,

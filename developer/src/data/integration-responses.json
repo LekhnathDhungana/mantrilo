@@ -1,0 +1,183 @@
+{
+  "mantras": {
+    "data": [
+      {
+        "id": "annapurna-aham-vaishvanaro-bhuthva",
+        "title": "Aham Vaishvanaro Bhuthva",
+        "deity": {
+          "id": "annapurna",
+          "name": "Lord Annapurna"
+        },
+        "category": "Annapurna Stotras",
+        "verseCount": 1,
+        "audio": {
+          "href": "/v1/mantras/annapurna-aham-vaishvanaro-bhuthva/audio"
+        }
+      }
+    ],
+    "nextCursor": null,
+    "sandbox": true
+  },
+  "mantra": {
+    "data": {
+      "id": "annapurna-aham-vaishvanaro-bhuthva",
+      "title": "Aham Vaishvanaro Bhuthva",
+      "deity": {
+        "id": "annapurna",
+        "name": "Lord Annapurna"
+      },
+      "category": "Annapurna Stotras",
+      "verseCount": 1,
+      "audio": {
+        "href": "/v1/mantras/annapurna-aham-vaishvanaro-bhuthva/audio"
+      },
+      "verses": [
+        {
+          "number": 1,
+          "sanskrit": "अहं वैश्वानरो भूत्वा प्राणिनां देहमाश्रितः\nप्राणापान समायुक्तः पचाम्यन्नं चतुर्विधम्",
+          "transliteration": "ahaṃ vaiśvānaro bhūtvā prāṇināṃ dehamāśritaḥ\nprāṇāpāna samāyuktaḥ pacāmyannaṃ caturvidham",
+          "translation": "I, having become the universal fire, residing in the bodies of living beings, and united with the inward and outward breaths, digest the four kinds of food (which is chewed, swallowed, licked and sucked)."
+        }
+      ]
+    },
+    "sandbox": true
+  },
+  "audio": {
+    "data": {
+      "url": "https://storage.example.com/signed-recording",
+      "expiresAt": "2026-11-12T17:51:28.392Z",
+      "bytes": 123077,
+      "contentType": "audio/x-m4a"
+    }
+  },
+  "books": {
+    "data": [
+      {
+        "id": "bhagavadGita",
+        "title": "Bhagavad Gītā",
+        "author": "Vyāsa · Spoken by Lord Krishna",
+        "verseCount": 700
+      }
+    ],
+    "nextCursor": null
+  },
+  "chapter": {
+    "data": {
+      "number": 1,
+      "title": "Arjuna Visada Yoga",
+      "nextOffset": null,
+      "verses": [
+        {
+          "number": 1,
+          "sanskrit": "धृतराष्ट्र उवाच\n\nधर्मक्षेत्रे कुरुक्षेत्रे समवेता युयुत्सवः।\n\nमामकाः पाण्डवाश्चैव किमकुर्वत सञ्जय।।1.1।।",
+          "transliteration": "dhṛitarāśhtra uvācha\ndharma-kṣhetre kuru-kṣhetre samavetā yuyutsavaḥ\nmāmakāḥ pāṇḍavāśhchaiva kimakurvata sañjaya",
+          "translation": "Dhṛtarāṣṭra said: O Sanjaya, what did my sons and the sons of Pandu do when they assembled on the sacred field of Kurukshetra, eager for battle?"
+        }
+      ]
+    }
+  },
+  "positions": {
+    "data": {
+      "operation": "positions",
+      "engineVersion": "mantrilo-astro-1",
+      "datetimeUtc": "2026-11-12T12:00:00.000Z",
+      "planets": [
+        {
+          "body": "Sun",
+          "tropicalLongitudeDegrees": 230.113778,
+          "siderealLongitudeDegrees": 205.881416,
+          "latitudeDegrees": 0.000047,
+          "distanceAU": 0.989889235,
+          "motion": {
+            "degreesPerDay": 1.006151,
+            "retrograde": false
+          },
+          "rashi": {
+            "number": 7,
+            "name": "Tula",
+            "degreesWithin": 25.881416
+          },
+          "nakshatra": {
+            "number": 16,
+            "name": "Vishakha",
+            "pada": 2
+          }
+        }
+      ]
+    },
+    "calculated": true
+  },
+  "panchang": {
+    "data": {
+      "operation": "panchang",
+      "engineVersion": "mantrilo-astro-1",
+      "datetimeUtc": "2026-11-12T12:00:00.000Z",
+      "panchang": {
+        "elongationDegrees": 35.69949,
+        "tithi": {
+          "number": 3,
+          "numberWithinPaksha": 3,
+          "paksha": "Shukla"
+        },
+        "nakshatra": {
+          "number": 19,
+          "name": "Mula",
+          "pada": 1
+        },
+        "yoga": {
+          "number": 7
+        },
+        "karana": {
+          "halfTithiNumber": 6,
+          "name": "Garaja"
+        },
+        "sunRashi": {
+          "number": 7,
+          "name": "Tula",
+          "degreesWithin": 25.881416
+        },
+        "moonRashi": {
+          "number": 9,
+          "name": "Dhanu",
+          "degreesWithin": 1.580906
+        }
+      }
+    },
+    "calculated": true
+  },
+  "moon-timeline": {
+    "data": {
+      "operation": "moon-timeline",
+      "engineVersion": "mantrilo-vedic-1",
+      "result": {
+        "year": 2026,
+        "month": 11,
+        "month_name": "November",
+        "days_in_month": 30,
+        "calendar_basis": "utc",
+        "calendar_timezone": "Etc/UTC",
+        "days": [
+          {
+            "calendar_date": "2026-11-01",
+            "timestamp": "2026-11-01T00:00:00.000Z",
+            "phase": {
+              "name": "Last Quarter",
+              "phase_angle_deg": 258.88902488043,
+              "illumination": 0.597462390575014,
+              "age_days": 21.339852731481482,
+              "distance_km": 369932.52874942805,
+              "is_waxing": false
+            },
+            "next_phases": {
+              "new_moon": "2026-11-09T07:02:42.392Z",
+              "first_quarter": "2026-11-17T11:48:27.140Z",
+              "full_moon": "2026-11-24T14:54:04.191Z",
+              "last_quarter": "2026-11-01T20:28:58.794Z"
+            }
+          }
+        ]
+      }
+    },
+    "calculated": true
+  }
+}

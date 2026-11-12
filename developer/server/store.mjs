@@ -6,7 +6,7 @@ import {
   removedKeys,
   mergeUsage,
 } from './domain.mjs';
-import { FirestoreUsageSink } from '../api/usage.mjs';
+import { FirestoreUsageSink, MemoryUsageSink } from '../api/usage.mjs';
 export class MemoryStore {
   constructor() {
     this.workspaces = new Map();
@@ -14,6 +14,7 @@ export class MemoryStore {
     this.apiKeys = new Map();
     this.activity = new Map();
     this.apiEvents = [];
+    this.usageSink = new MemoryUsageSink(this.apiEvents);
     this.authCodes = new Map();
     this.locks = new Map();
   }
@@ -79,9 +80,10 @@ export class MemoryStore {
   async recordApiUsage(event) {
     this.apiEvents.push(event);
   }
-  async apiUsage(workspaceId, period) {
+  async apiUsage(workspaceId, period, lane = 'sandbox') {
     const meters = this.apiEvents
       .filter((e) => e.workspaceId === workspaceId && e.period === period)
+      .filter((e) => (e.lane || 'sandbox') === lane)
       .map((e) => {
         const counts = {
           contentRequests: e.requests,
@@ -99,6 +101,7 @@ export class MemoryStore {
 export class FirestoreStore {
   constructor(db) {
     this.db = db;
+    this.usageSink = new FirestoreUsageSink(db);
   }
   async updateAuthCode(id, change) {
     const ref = this.db.doc(`authCodes/${id}`);
@@ -167,15 +170,17 @@ export class FirestoreStore {
     return record ? { ...record, id: record.keyId } : null;
   }
   recordApiUsage(event) {
-    return new FirestoreUsageSink(this.db).add(event);
+    return this.usageSink.add(event);
   }
-  async apiUsage(workspaceId, period) {
+  async apiUsage(workspaceId, period, lane = 'sandbox') {
     const snapshot = await this.db
       .collection('apiUsage')
       .where('workspaceId', '==', workspaceId)
       .where('period', '==', period)
       .get();
-    return mergeUsage(...snapshot.docs.map((doc) => doc.data()));
+    return mergeUsage(
+      ...snapshot.docs.map((doc) => doc.data()).filter((data) => (data.lane || 'sandbox') === lane),
+    );
   }
   // One small document per workspace, so the console reads every key's last use in one read.
   async keyActivity(workspaceId) {

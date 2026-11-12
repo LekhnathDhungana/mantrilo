@@ -1,0 +1,78 @@
+{
+  "mantra": {
+    "data": {
+      "id": "annapurna-aham-vaishvanaro-bhuthva",
+      "title": "Aham Vaishvanaro Bhuthva",
+      "deity": {
+        "id": "annapurna",
+        "name": "Lord Annapurna"
+      },
+      "category": "Annapurna Stotras",
+      "source": "Sanatana Shastras",
+      "description": "Aham Vaishvanaro Bhutva means \"I, having become the universal fire,\" and in Bhagavad Gita 15.14 Krishna says he lives in every body and digests its food. United with the prana and apana breaths, this inner fire cooks the four kinds of food: chewed, swallowed, licked and sucked. Families often say it before a meal to treat eating as an offering.",
+      "verseCount": 1,
+      "audio": {
+        "href": "/v1/mantras/annapurna-aham-vaishvanaro-bhuthva/audio"
+      },
+      "verses": [
+        {
+          "number": 1,
+          "title": "Aham Vaishvanaro Bhuthva – Verse 1",
+          "sanskrit": "अहं वैश्वानरो भूत्वा प्राणिनां देहमाश्रितः\nप्राणापान समायुक्तः पचाम्यन्नं चतुर्विधम्",
+          "transliteration": "ahaṃ vaiśvānaro bhūtvā prāṇināṃ dehamāśritaḥ\nprāṇāpāna samāyuktaḥ pacāmyannaṃ caturvidham",
+          "translation": "I, having become the universal fire, residing in the bodies of living beings, and united with the inward and outward breaths, digest the four kinds of food (which is chewed, swallowed, licked and sucked).",
+          "wordMeanings": [
+            {
+              "word": "अहम् (aham)",
+              "meaning": "I"
+            },
+            {
+              "word": "वैश्वानरः (vaiśvānaraḥ)",
+              "meaning": "universal fire"
+            },
+            {
+              "word": "भूत्वा (bhūtvā)",
+              "meaning": "having become"
+            },
+            {
+              "word": "प्राणिनाम् (prāṇinām)",
+              "meaning": "of living beings"
+            },
+            {
+              "word": "देहम् (deham)",
+              "meaning": "body"
+            },
+            {
+              "word": "आश्रितः (āśritaḥ)",
+              "meaning": "residing"
+            },
+            {
+              "word": "प्राणापान (prāṇāpāna)",
+              "meaning": "inward and outward breaths (prāṇa:inward breath | apāna:outward breath)"
+            },
+            {
+              "word": "समायुक्तः (samāyuktaḥ)",
+              "meaning": "united with"
+            },
+            {
+              "word": "पचामि (pacāmi)",
+              "meaning": "I digest"
+            },
+            {
+              "word": "अन्नम् (annam)",
+              "meaning": "food"
+            },
+            {
+              "word": "चतुर्विधम् (caturvidham)",
+              "meaning": "four kinds (catur:four | vidham:kinds)"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "recording": {
+    "src": "/samples/annapurna-aham-vaishvanaro-bhuthva.m4a",
+    "bytes": 123077
+  }
+}

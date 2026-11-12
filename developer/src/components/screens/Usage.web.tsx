@@ -5,6 +5,8 @@ import type { Activity } from '../../lib/types';
 
 export default function UsageDetails() {
   const { session } = useConsole();
+  const liveLane = session && session.usageLane !== 'sandbox' ? session.usageLane : null;
+  const [lane, setLane] = useState(session?.usageLane ?? 'sandbox');
   const [from, setFrom] = useState(`${session?.period || new Date().toISOString().slice(0, 7)}-01`),
     [to, setTo] = useState(new Date().toISOString().slice(0, 10)),
     [range, setRange] = useState({ from, to }),
@@ -16,7 +18,7 @@ export default function UsageDetails() {
     endpoints: Record<string, number>;
     policy: string;
     logLimit: number;
-  }>(`/api/usage?from=${range.from}&to=${range.to}`);
+  }>(`/api/usage?from=${range.from}&to=${range.to}&lane=${lane}`);
   const labels = {
     contentRequests: 'Content requests',
     audioBytes: 'Audio bytes delivered',
@@ -42,6 +44,26 @@ export default function UsageDetails() {
         </label>
         <button className="button subtle">Apply date range</button>
         <span className="small muted">Up to 94 days</span>
+        {liveLane && (
+          <div className="segmented compact" role="group" aria-label="Which key's usage">
+            {[
+              [liveLane, 'Live'],
+              ['sandbox', 'Sandbox'],
+            ].map(([id, label]) => (
+              <button
+                type="button"
+                key={id}
+                aria-pressed={lane === id}
+                onClick={() => {
+                  setLane(id as typeof lane);
+                  setPage(0);
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
       </form>
       <ErrorNotice message={error} />
       {loading ? (

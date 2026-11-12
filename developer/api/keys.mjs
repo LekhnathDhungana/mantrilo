@@ -1,6 +1,13 @@
-import { ApiError, getPlan, hasValidChecksum, hash } from '../server/domain.mjs';
+import {
+  ApiError,
+  getPlan,
+  hasValidChecksum,
+  hash,
+  keyEnvironment,
+  planFor,
+} from '../server/domain.mjs';
 
-// mtr_sbx_/mtr_live_ then 32 random bytes in base64url and a 6-character checksum (newApiKey in
+// mtr_sbx_ (sandbox) or mtr_live_ (live) then 32 random bytes in base64url and a 6-character checksum (newApiKey in
 // server/domain.mjs). Keys issued before the checksum have only the first 43 characters.
 export const KEY_PATTERN = /^mtr_(?:sbx|live)_[A-Za-z0-9_-]{43}([A-Za-z0-9_-]{6})?$/;
 
@@ -22,8 +29,10 @@ const invalid = () =>
 // briefly so repeat requests cost no reads; a revoked key stops working within `ttlMs`.
 // `beforeLookup` runs just before a database read and may throw to refuse it.
 export class KeyResolver {
-  constructor(store, { ttlMs = 60_000, now = () => Date.now() } = {}) {
+  // `billingMode` picks which Stripe mode's entitlement applies (see planFor in server/domain.mjs).
+  constructor(store, { ttlMs = 60_000, now = () => Date.now(), billingMode = 'live' } = {}) {
     this.store = store;
+    this.billingMode = billingMode;
     this.ttlMs = ttlMs;
     this.now = now;
     this.cache = new Map();
@@ -48,7 +57,7 @@ export class KeyResolver {
       throw new ApiError(
         403,
         'plan_inactive',
-        'Production keys require an active paid plan. Use a sandbox key or upgrade the plan.',
+        'Live keys need an active paid plan. Use your sandbox key, or subscribe in the console.',
       );
     return { ...entry, keyHash, plan };
   }
@@ -60,9 +69,9 @@ export class KeyResolver {
     return {
       keyId: record.keyId ?? record.id,
       workspaceId: record.workspaceId,
-      environment: record.environment,
+      environment: keyEnvironment(record),
       status: record.status,
-      plan: workspace.plan,
+      plan: planFor(workspace, this.billingMode).name,
     };
   }
 }

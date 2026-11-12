@@ -2,6 +2,8 @@
 
 **Positioning update:** Astrology no longer carries a Planned badge in the website or console. This supersedes the planned-positioning descriptions in the original audit below. The console now includes a real server-side positions and instant Panchang engine, included in every plan at one content request per calculation. Its sidereal default is explicitly approximate. See `developer/server/astrology/README.md`.
 
+**Launch route update:** `/sacred-audio-api`, `/shastra-books-api`, and `/library` are noindex until recording rights, a books endpoint, and cleared catalog examples exist. Indexable routes are set per page in `src/data/seo-pages.json`, which supersedes the counts below.
+
 ## Scope and evidence
 
 At the original SEO audit, the repository contained only an Expo 58 static marketing website and illustrative schema fixtures. At that time it had no production catalog, API documentation contract, account/key provisioning, usage dashboard, billing, or astrology service. No Panchang, birth-chart, planetary-position, nakshatra, rashi, or horoscope implementation was found then. This is evidence about this checkout, not an audit of an external service.
@@ -30,7 +32,7 @@ These are candidate themes from the brief, **not validated keyword demand**.
 | Route | Search theme / purpose |
 | --- | --- |
 | `/` | Hindu content API; B2B offering overview and access conversion. |
-| `/mantra-shloka-api` | Mantra API, shloka API, Sanskrit verses API; optional text fields, context, provenance, and reading workflow. |
+| `/mantra-api` | Mantra API, Sanskrit verses API; optional text fields, context, provenance, and reading workflow. |
 | `/sacred-audio-api` | Sacred audio API; linked recordings, user-initiated loading, delivery allowances, and recording-rights questions. |
 | `/shastra-books-api` | Hindu scripture API, shastra and religious books API; reading structures, source editions, and coverage limitations. |
 | `/astrology-api` | Astrology API; explicit planned status, scope decisions, and requirements inquiry. |

@@ -6,7 +6,7 @@ export default function Marketing() {
     <ScrollView contentContainerStyle={styles.page}>
       <Text style={styles.brand}>mantrilo.</Text>
       <Text style={styles.eyebrow}>ANCIENT WISDOM. MODERN INFRASTRUCTURE.</Text>
-      <Text style={styles.title}>Mantras, sacred audio, and shastra books. One API.</Text>
+      <Text style={styles.title}>Mantras and sacred audio. One API.</Text>
       <Text style={styles.body}>
         A Hindu content API for developers building apps and websites. Astrology calculations are
         included in every plan.
@@ -16,11 +16,11 @@ export default function Marketing() {
       </Link>
       {[
         [
-          'Mantras & shlokas',
+          'Mantras',
           'Original text, transliteration, translation, meaning, and source references where available.',
         ],
         ['Sacred audio', 'Recordings linked to relevant content.'],
-        ['Shastras & books', 'Books, chapters, and verses where applicable.'],
+        ['Shastras & books', 'Books by collection, chapter and verse, including the Upanishads.'],
       ].map(([title, copy]) => (
         <View style={styles.card} key={title}>
           <Text style={styles.heading}>{title}</Text>
@@ -47,15 +47,14 @@ export default function Marketing() {
       ))}
       <Text style={styles.body}>
         All allowances reset monthly. A customer product is an app or website. Paid plans include
-        available mantras, shlokas, sacred audio, shastra books, and discovery for commercial
-        integration, subject to the documented content license. Audio allowances measure data
-        delivery, not storage.
+        available mantras and sacred audio for commercial integration, subject to the documented
+        content license. Audio allowances measure data delivery, not storage.
       </Text>
       <Link style={styles.link} href="/astrology-api">
         Astrology API →
       </Link>
       <Link style={styles.link} href="/docs">
-        Integration guide →
+        API documentation →
       </Link>
       <Link style={styles.link} href="/license">
         Content license status →

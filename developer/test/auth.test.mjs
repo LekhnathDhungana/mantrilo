@@ -155,12 +155,16 @@ test('email sign-in reports when it is unavailable or the provider fails', async
   assert.equal(failing.store.authCodes.size, 0);
 });
 
-test('a first sign-in creates a Sandbox workspace and asks for onboarding once', async (t) => {
+test('a first sign-in creates a Free workspace with a key and asks for onboarding once', async (t) => {
   const f = await fixture(t);
   await f.signIn();
   const first = await f.call('/api/me');
   assert.equal(first.status, 200);
-  assert.equal(first.body.plan.name, 'Sandbox');
+  assert.equal(first.body.plan.name, 'Free');
+  assert.equal(first.body.allowance.requests, 500);
+  const [key] = first.body.workspace.keys;
+  assert.equal(key.status, 'active');
+  assert.equal((await f.store.findKey(hash(key.secret))).status, 'active');
   assert.equal(first.body.user.onboarded, false);
   const done = await f.call('/api/onboarding', 'POST', {
     name: 'Asha',
@@ -180,9 +184,7 @@ test('deleting an account removes its workspace, keys and sessions', async (t) =
   const f = await fixture(t);
   await f.signIn();
   const { body: me } = await f.call('/api/me');
-  const created = await f.call('/api/keys', 'POST', { name: 'one', environment: 'sandbox' });
-  assert.equal(created.status, 201);
-  const raw = created.body.secret;
+  const raw = me.workspace.keys[0].secret;
   assert.ok(await f.store.findKey(hash(raw)));
   assert.equal(
     (await f.call('/api/account/delete', 'POST', { confirm: 'nope' })).body.error.code,
@@ -205,7 +207,7 @@ test('administrators cannot delete their account from the console', async (t) =>
   assert.deepEqual(f.sessions.deleted, []);
 });
 
-test('unverified accounts cannot create keys but can ask for a verification email', async (t) => {
+test('unverified accounts still get a working key and can ask for a verification email', async (t) => {
   const f = await fixture(t);
   await f.signIn();
   assert.equal((await f.call('/api/me')).body.user.verified, true);
@@ -213,57 +215,39 @@ test('unverified accounts cannot create keys but can ask for a verification emai
   f.sessions.update({ verified: false });
   const { body: me } = await f.call('/api/me');
   assert.equal(me.user.verified, false);
-  const blocked = await f.call('/api/keys', 'POST', { name: 'k', environment: 'sandbox' });
-  assert.equal(blocked.status, 403);
-  assert.equal(blocked.body.error.code, 'email_unverified');
+  assert.ok(me.workspace.keys[0].secret);
   const token = await f.call('/api/auth/verification-token', 'POST');
   assert.equal(token.body.token, `custom:${me.user.uid}`);
 });
 
-async function paidAccount(t, mailer) {
-  const f = await fixture(t, { mailer });
-  await f.signIn();
-  const { body: me } = await f.call('/api/me');
-  await f.store.transact(me.workspace.id, (w) => {
-    w.plan = 'Starter';
-  });
-  return f;
-}
-const live = { name: 'Live <b>', environment: 'production' };
-
-test('production keys need a recent sign-in, sandbox keys do not', async (t) => {
-  const f = await paidAccount(t);
-  f.sessions.update({ authTime: Math.floor(Date.now() / 1000) - 3600 });
-  const stale = await f.call('/api/keys', 'POST', live);
-  assert.equal(stale.status, 403);
-  assert.equal(stale.body.error.code, 'reauthentication_required');
-  assert.equal(
-    (await f.call('/api/keys', 'POST', { name: 's', environment: 'sandbox' })).status,
-    201,
-  );
-  f.sessions.update({ authTime: Math.floor(Date.now() / 1000) });
-  assert.equal((await f.call('/api/keys', 'POST', live)).status, 201);
-});
-
-test('creating a production key emails the owner without exposing the secret', async (t) => {
+test('regenerating the key emails the owner without exposing the secret', async (t) => {
   const notices = [],
-    f = await paidAccount(t, { sendKeyCreated: async (to, key) => notices.push({ to, key }) });
-  await f.call('/api/keys', 'POST', { name: 's', environment: 'sandbox' });
+    f = await fixture(t, {
+      mailer: { sendKeyCreated: async (to, key) => notices.push({ to, key }) },
+    });
+  await f.signIn();
+  await f.call('/api/me');
   assert.equal(notices.length, 0);
-  const created = await f.call('/api/keys', 'POST', live);
+  const rotated = await f.call('/api/keys/rotate', 'POST', { environment: 'sandbox' });
+  assert.equal(rotated.status, 201);
+  const { keys } = (await f.call('/api/me')).body.workspace,
+    current = keys.find((key) => key.status === 'active');
   assert.equal(notices.length, 1);
   assert.equal(notices[0].to, 'person@example.com');
-  assert.equal(notices[0].key.prefix, created.body.key.prefix);
-  assert.ok(!JSON.stringify(notices).includes(created.body.secret));
+  assert.equal(notices[0].key.prefix, rotated.body.key.prefix);
+  assert.ok(!JSON.stringify(notices).includes(current.secret));
+  assert.ok(!JSON.stringify(rotated.body).includes(current.secret));
 });
 
-test('a failed key notice does not fail key creation', async (t) => {
-  const f = await paidAccount(t, {
-    sendKeyCreated: async () => {
-      throw new Error('provider down');
+test('a failed key notice does not fail regeneration', async (t) => {
+  const f = await fixture(t, {
+    mailer: {
+      sendKeyCreated: async () => {
+        throw new Error('provider down');
+      },
     },
   });
-  const created = await f.call('/api/keys', 'POST', live);
-  assert.equal(created.status, 201);
-  assert.ok(created.body.secret);
+  await f.signIn();
+  await f.call('/api/me');
+  assert.equal((await f.call('/api/keys/rotate', 'POST', { environment: 'sandbox' })).status, 201);
 });

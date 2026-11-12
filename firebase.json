@@ -8,7 +8,19 @@
     "headers": [
       {
         "source": "/_expo/static/**",
-        "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      }
+    ],
+    "redirects": [
+      {
+        "source": "/mantra-shloka-api",
+        "destination": "/mantra-api",
+        "type": 301
       }
     ]
   }

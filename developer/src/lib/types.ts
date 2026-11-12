@@ -7,7 +7,10 @@ export type Usage = {
 export type KeyRecord = {
   id: string;
   name: string;
-  environment: 'sandbox' | 'production';
+  // Missing on keys made before environments were recorded; see keyEnvironment.
+  environment?: 'sandbox' | 'production';
+  // Only on the workspace's own keys, which the console shows. Older keys keep just a prefix.
+  secret?: string;
   prefix: string;
   status: string;
   createdAt: string;
@@ -70,14 +73,22 @@ export type Session = {
   };
   workspace: Workspace;
   mode: 'demo' | 'firebase';
+  // Which Stripe mode this console sells and reads plans from. 'test' is local development.
+  billingMode: 'live' | 'test';
   period: string;
+  // The lane the plan is about: the live lane once paid, sandbox before that.
   usage: Usage;
+  usageLane: 'sandbox' | 'live' | 'live-test';
+  // Sandbox and live keys are metered separately; live appears once the plan is paid.
+  usageByLane: { sandbox: Usage; live?: Usage };
   plan: Plan;
   allowance: {
     requests: number;
     audioBytes: number;
     products: number | null;
   };
+  // When the monthly allowance resets (the 1st of next month, UTC).
+  resetsAt: string;
   accountingPolicy: string;
   billingPeriod: null;
   integrations: Record<string, boolean>;

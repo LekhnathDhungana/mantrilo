@@ -16,13 +16,13 @@ npm run build
 
 ## Configuration
 
-Copy `.env.example` to `.env.local` and optionally set a verified `EXPO_PUBLIC_CONTACT_EMAIL`. This is a public build-time value. Rebuild when it changes. Without it, the access form prepares a downloadable text draft and clearly states that it sends nothing. With it, visitors can open the prepared request in their email app. There is no submission backend.
+Copy `.env.example` to `.env.local` and optionally set a verified `EXPO_PUBLIC_CONTACT_EMAIL`. This is a public build-time value. Rebuild when it changes. Without it, the access form prepares a downloadable text draft and clearly states that it sends nothing. With it, visitors can open the prepared request in their email app. Production builds read it from the committed `.env.production`. There is no submission backend.
 
 Keep private API keys server-side, preferably in GCP Secret Manager. No secret is needed to build this site. Never use `EXPO_PUBLIC_*` for credentials.
 
 - Pricing: `shared/content-plans.json` is the single source of truth; `src/data/plans.ts` re-exports it for marketing cards and the comparison table.
 - Samples: `src/data/samples.ts` contains illustrative schema fixtures only. No catalog title, translation, audio, or content license has been supplied.
-- Pages: `/mantra-shloka-api`, `/sacred-audio-api`, `/shastra-books-api`, `/astrology-api`, `/pricing`, `/docs`, `/access`, `/privacy`, `/terms`, `/license` are working routes; legal pages disclose missing final documents and grant no rights.
+- Pages: `/mantra-api` (the old `/mantra-shloka-api` redirects there), `/sacred-audio-api`, `/shastra-books-api`, `/astrology-api`, `/pricing`, `/docs`, `/access`, `/privacy`, `/terms`, `/license` are working routes; legal pages disclose missing final documents and grant no rights.
 - The ornamental rosette is a local SVG, not a product or authenticity claim. Devanagari uses system fonts with no third-party font request.
 
 ## GCP preparation (not deployed)

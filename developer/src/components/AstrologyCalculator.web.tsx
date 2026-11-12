@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'expo-router';
+import { coreInputs } from '../data/integrations';
 import { mutate, ConsoleError } from '../lib/api';
 import { useConsole } from './Session.web';
 import { Badge, CopyButton, ErrorNotice, Loading, Meter, useLoad } from './ui.web';
@@ -14,6 +15,10 @@ type Budget = {
     id: string;
     name: string;
     description: string;
+    category?: string;
+    requestFormat?: string;
+    example?: object;
+    availability?: 'available' | 'limited';
   }[];
 };
 type Planet = {
@@ -29,9 +34,10 @@ type Planet = {
 type Calculation = {
   data: {
     operation: string;
-    datetimeUtc: string;
+    datetimeUtc?: string;
+    imageBase64?: string;
     engineVersion: string;
-    ayanamsa: { model: string; degrees: number; approximate: boolean; note: string };
+    ayanamsa?: string | { model: string; degrees: number; approximate: boolean; note: string };
     planets?: Planet[];
     panchang?: {
       tithi: { number: number; numberWithinPaksha: number; paksha: string };
@@ -46,27 +52,68 @@ type Calculation = {
   requestId: string;
   responseTimeMs: number;
 };
-export default function AstrologyCalculator() {
+export default function AstrologyCalculator({ initialOperation }: { initialOperation?: string }) {
   const budget = useLoad<Budget>('/api/astrology'),
     { refresh, config } = useConsole();
-  const [operation, setOperation] = useState('positions'),
-    [datetime, setDatetime] = useState(() => new Date().toISOString().slice(0, 19)),
+  const [operation, setOperation] = useState(initialOperation ?? 'positions'),
+    [datetime, setDatetime] = useState(() =>
+      initialOperation ? '2026-11-12T12:00:00' : new Date().toISOString().slice(0, 19),
+    ),
     [model, setModel] = useState('approximate'),
     [custom, setCustom] = useState('24.2'),
+    [advancedInput, setAdvancedInput] = useState<string | null>(null),
     [pending, setPending] = useState(false),
     [error, setError] = useState(''),
     [result, setResult] = useState<Calculation | null>(null),
     [example, setExample] = useState('curl');
-  const payload = {
-    operation,
+  const operations = budget.data?.availableOperations ?? [];
+  const selectedOperation = operations.find((item) => item.id === operation);
+  const advanced =
+    (operation !== 'positions' &&
+      operation !== 'panchang' &&
+      Object.hasOwn(coreInputs, operation)) ||
+    selectedOperation?.requestFormat === 'parameters';
+  const advancedText =
+    advancedInput ??
+    JSON.stringify(
+      selectedOperation?.example ?? coreInputs[operation] ?? { parameters: {} },
+      null,
+      2,
+    );
+  const groups = [...new Set(operations.map((item) => item.category ?? 'Core astrology'))];
+  function chooseOperation(id: string) {
+    setOperation(id);
+    setAdvancedInput(null);
+    setResult(null);
+    setError('');
+  }
+  const basicInput = {
     datetime: `${datetime.length === 16 ? datetime + ':00' : datetime}Z`,
     ...(model === 'custom' ? { ayanamsaDegrees: Number(custom) } : {}),
   };
+  let payload: object | null = { operation, ...basicInput };
+  if (advanced) {
+    try {
+      const input = JSON.parse(advancedText);
+      payload =
+        input && typeof input === 'object' && !Array.isArray(input)
+          ? { ...input, operation }
+          : null;
+    } catch {
+      payload = null;
+    }
+  }
   const base = config?.apiUrl ?? 'https://api.mantrilo.com';
-  const curl = `curl --request POST '${base}/v1/astrology/calculate' \\\n  -H "Authorization: Bearer $MANTRILO_API_KEY" \\\n  -H 'Content-Type: application/json' \\\n  --data '${JSON.stringify(payload, null, 2)}'`;
-  const javascript = `// Run this on your server. Never ship the key in an app or browser.\nconst response = await fetch('${base}/v1/astrology/calculate', {\n  method: 'POST',\n  headers: {\n    Authorization: \`Bearer \${process.env.MANTRILO_API_KEY}\`,\n    'Content-Type': 'application/json'\n  },\n  body: JSON.stringify(${JSON.stringify(payload, null, 2)})\n});\nconst result = await response.json();`;
+  const body = payload ? JSON.stringify(payload, null, 2) : '';
+  const curl = `curl --request POST '${base}/v1/astrology/calculate' \\\n  -H "Authorization: Bearer $MANTRILO_API_KEY" \\\n  -H 'Content-Type: application/json' \\\n  --data '${body.replaceAll("'", "'\\''")}'`;
+  const javascript = `// Run this on your server.\nconst response = await fetch('${base}/v1/astrology/calculate', {\n  method: 'POST',\n  headers: {\n    Authorization: \`Bearer \${process.env.MANTRILO_API_KEY}\`,\n    'Content-Type': 'application/json'\n  },\n  body: ${JSON.stringify(body)}\n});\nconst result = await response.json();`;
   async function run(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!selectedOperation || selectedOperation.availability === 'limited') return;
+    if (!payload) {
+      setError('Enter a valid JSON object for the calculation inputs.');
+      return;
+    }
     setPending(true);
     setError('');
     setResult(null);
@@ -105,58 +152,118 @@ export default function AstrologyCalculator() {
               <h2 className="status-heading">
                 Available <Badge tone="green">SERVER-SIDE</Badge>
               </h2>
-              <p>Planetary positions & instant Panchang elements · {budget.data?.engineVersion}</p>
+              <p>{budget.data?.availableOperations.length ?? 0} operations available</p>
             </section>
           </div>
+          <details className="panel prose">
+            <summary>Browse all {operations.length} astrology operations</summary>
+            {groups.map((group) => (
+              <section key={group}>
+                <h3>{group}</h3>
+                <ul>
+                  {operations
+                    .filter((item) => (item.category ?? 'Core astrology') === group)
+                    .map((item) => (
+                      <li key={item.id}>
+                        <button
+                          type="button"
+                          className="text-button"
+                          disabled={pending}
+                          onClick={() => chooseOperation(item.id)}
+                        >
+                          {item.name}
+                        </button>{' '}
+                        <code>{item.id}</code>
+                        {item.availability === 'limited' ? ' · Currently unavailable' : ''}
+                      </li>
+                    ))}
+                </ul>
+              </section>
+            ))}
+          </details>
           <div className="playground-grid">
             <section className="panel form-panel">
+              {initialOperation && !selectedOperation && (
+                <p className="notice">
+                  This operation is not enabled in the workspace sandbox. Choose another operation
+                  below.
+                </p>
+              )}
               <h2>Run a calculation</h2>
               <form onSubmit={run}>
                 <label>
                   Operation
-                  <select value={operation} onChange={(e) => setOperation(e.target.value)}>
-                    {budget.data?.availableOperations.map((op) => (
-                      <option key={op.id} value={op.id}>
-                        {op.name}
-                      </option>
+                  <select
+                    value={operation}
+                    disabled={pending}
+                    onChange={(e) => chooseOperation(e.target.value)}
+                  >
+                    {groups.map((group) => (
+                      <optgroup key={group} label={group}>
+                        {operations
+                          .filter((op) => (op.category ?? 'Core astrology') === group)
+                          .map((op) => (
+                            <option key={op.id} value={op.id}>
+                              {op.name}
+                              {op.availability === 'limited' ? ' · Currently unavailable' : ''}
+                            </option>
+                          ))}
+                      </optgroup>
                     ))}
                   </select>
                 </label>
                 <p className="small muted">
-                  {budget.data?.availableOperations.find((op) => op.id === operation)?.description}
+                  {selectedOperation?.availability === 'limited'
+                    ? 'This operation is currently unavailable. You can still view and copy its request example.'
+                    : selectedOperation?.description}
                 </p>
-                <label>
-                  Date & time · UTC
-                  <input
-                    type="datetime-local"
-                    step="1"
-                    value={datetime}
-                    onChange={(e) => setDatetime(e.target.value)}
-                    min="1900-01-01T00:00:00"
-                    max="2100-12-31T23:59:59"
-                    required
-                  />
-                </label>
-                <label>
-                  Sidereal offset model
-                  <select value={model} onChange={(e) => setModel(e.target.value)}>
-                    <option value="approximate">Approximate Lahiri · starter model</option>
-                    <option value="custom">Custom ayanamsa for this instant</option>
-                  </select>
-                </label>
-                {model === 'custom' && (
+                {advanced ? (
                   <label>
-                    Custom ayanamsa · degrees
-                    <input
-                      type="number"
-                      min="0"
-                      max="60"
-                      step="any"
-                      value={custom}
-                      onChange={(e) => setCustom(e.target.value)}
+                    Request inputs (JSON)
+                    <textarea
+                      value={advancedText}
+                      onChange={(e) => setAdvancedInput(e.target.value)}
+                      rows={12}
+                      spellCheck={false}
                       required
                     />
                   </label>
+                ) : (
+                  <>
+                    <label>
+                      Date & time · UTC
+                      <input
+                        type="datetime-local"
+                        step="1"
+                        value={datetime}
+                        onChange={(e) => setDatetime(e.target.value)}
+                        min="1900-01-01T00:00:00"
+                        max="2100-12-31T23:59:59"
+                        required
+                      />
+                    </label>
+                    <label>
+                      Sidereal offset model
+                      <select value={model} onChange={(e) => setModel(e.target.value)}>
+                        <option value="approximate">Approximate Lahiri · starter model</option>
+                        <option value="custom">Custom ayanamsa for this instant</option>
+                      </select>
+                    </label>
+                    {model === 'custom' && (
+                      <label>
+                        Custom ayanamsa · degrees
+                        <input
+                          type="number"
+                          min="0"
+                          max="60"
+                          step="any"
+                          value={custom}
+                          onChange={(e) => setCustom(e.target.value)}
+                          required
+                        />
+                      </label>
+                    )}
+                  </>
                 )}
                 <div className="cost-box">
                   <span>COST BEFORE EXECUTION</span>
@@ -165,7 +272,13 @@ export default function AstrologyCalculator() {
                 </div>
                 <button
                   className="button"
-                  disabled={pending || !budget.data || budget.data.balance <= 0}
+                  disabled={
+                    pending ||
+                    !budget.data ||
+                    budget.data.balance <= 0 ||
+                    !selectedOperation ||
+                    selectedOperation.availability === 'limited'
+                  }
                 >
                   {pending ? 'Calculating…' : 'Calculate now'} <span>↗</span>
                 </button>
@@ -176,24 +289,18 @@ export default function AstrologyCalculator() {
               </form>
             </section>
             <section className="panel prose">
-              <div className="eyebrow">METHOD & SCOPE</div>
-              <h2>A foundation you can extend.</h2>
+              <h2>Calculation inputs</h2>
               <p>
-                Sun, Moon, Mercury, Venus, Mars, Jupiter, and Saturn are calculated geocentrically
-                using Astronomy Engine. Both tropical and sidereal longitudes are returned.
+                Birth charts, chart images, and matching use an ISO birth time with an explicit UTC
+                offset and the birth place’s latitude, longitude, and IANA time zone.
               </p>
               <p>
-                The default sidereal offset is a labeled linear Lahiri approximation. Supply a
-                custom ayanamsa for the requested instant when matching a verified external method.
+                Daily Panchang uses a local calendar date and the same location fields. Use Find a
+                place to look up coordinates and a time zone.
               </p>
               <p>
-                Instant Panchang returns tithi, nakshatra/pada, yoga number, karana, and Sun/Moon
-                rashis. It does not assign a sunrise-based calendar day or calculate transition
-                times.
-              </p>
-              <p>
-                Houses, ascendant, nodes, dashas, birth-chart interpretation, and additional
-                traditions are outside this initial version.
+                Planetary positions and instant Panchang use an instant in UTC and accept a custom
+                sidereal offset in degrees.
               </p>
             </section>
           </div>
@@ -201,9 +308,8 @@ export default function AstrologyCalculator() {
             <section className="panel response-panel" aria-live="polite">
               <div className="panel-heading">
                 <h2>
-                  {result.data.operation === 'positions'
-                    ? 'Planetary positions result'
-                    : 'Instant Panchang result'}
+                  {budget.data?.availableOperations.find((op) => op.id === result.data.operation)
+                    ?.name ?? 'Calculation result'}
                 </h2>
                 <div className="action-row">
                   <Badge tone="green">HTTP 200</Badge>
@@ -212,14 +318,26 @@ export default function AstrologyCalculator() {
                 </div>
               </div>
               <p className="response-id">
-                UTC instant: {result.data.datetimeUtc}
-                <br />
-                Request ID: <code>{result.requestId}</code>
-                <br />
-                Ayanamsa: {result.data.ayanamsa.degrees}° ·{' '}
-                {result.data.ayanamsa.model.replaceAll('_', ' ')}
+                Request ID <code>{result.requestId}</code>
+                {result.data.datetimeUtc && (
+                  <>
+                    <br />
+                    UTC instant {result.data.datetimeUtc}
+                  </>
+                )}
               </p>
-              <div className="notice calculation-notice">{result.data.ayanamsa.note}</div>
+              {typeof result.data.ayanamsa === 'object' && (
+                <div className="notice calculation-notice">
+                  {result.data.ayanamsa.degrees}° · {result.data.ayanamsa.note}
+                </div>
+              )}
+              {result.data.imageBase64 && (
+                <img
+                  style={{ maxWidth: '100%', height: 'auto' }}
+                  src={`data:image/png;base64,${result.data.imageBase64}`}
+                  alt="Vedic chart"
+                />
+              )}
               {result.data.planets && (
                 <div className="table-scroll" tabIndex={0}>
                   <table>
@@ -294,7 +412,18 @@ export default function AstrologyCalculator() {
                 <CopyButton text={JSON.stringify(result, null, 2)} />
               </div>
               <pre>
-                <code>{JSON.stringify(result, null, 2)}</code>
+                <code>
+                  {JSON.stringify(
+                    result.data.imageBase64
+                      ? {
+                          ...result,
+                          data: { ...result.data, imageBase64: '(included in copied response)' },
+                        }
+                      : result,
+                    null,
+                    2,
+                  )}
+                </code>
               </pre>
             </section>
           )}
@@ -314,9 +443,15 @@ export default function AstrologyCalculator() {
               </div>
             </div>
             <pre>
-              <code>{example === 'curl' ? curl : javascript}</code>
+              <code>
+                {payload
+                  ? example === 'curl'
+                    ? curl
+                    : javascript
+                  : 'Enter valid request inputs to see the example.'}
+              </code>
             </pre>
-            <CopyButton text={example === 'curl' ? curl : javascript} />
+            {payload && <CopyButton text={example === 'curl' ? curl : javascript} />}
             <p className="small muted example-note">
               The API uses the same engine and allowance as this console.{' '}
               <Link href="/keys">Create an API key →</Link>

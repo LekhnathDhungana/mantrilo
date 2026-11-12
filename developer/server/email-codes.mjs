@@ -127,16 +127,15 @@ export class ResendMailer {
     });
     if (!response.ok) throw new Error(`Resend responded ${response.status}`);
   }
-  // Plain text only, because the key name is customer input.
-  async sendKeyCreated(to, { name, prefix }) {
+  async sendKeyCreated(to, { prefix }) {
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: this.from,
         to,
-        subject: 'A production API key was created on your Mantrilo account',
-        text: `A production API key was just created on your Mantrilo account.\n\nName: ${name}\nKey starts with: ${prefix}\n\nIf this wasn't you, sign in to the Developer Console, revoke the key and change your password.`,
+        subject: 'Your Mantrilo API key was regenerated',
+        text: `The API key on your Mantrilo account was just regenerated, so the previous key no longer works.\n\nNew key starts with: ${prefix}\n\nIf this wasn't you, sign in to the Developer Console, regenerate the key again and change your password.`,
       }),
     });
     if (!response.ok) throw new Error(`Resend responded ${response.status}`);
@@ -149,7 +148,7 @@ export class EmulatorMailer {
     console.log(`[auth emulator] sign-in code for ${to}: ${code}`);
   }
   async sendKeyCreated(to, { prefix }) {
-    console.log(`[auth emulator] production key ${prefix} created, notifying ${to}`);
+    console.log(`[auth emulator] API key regenerated (${prefix}), notifying ${to}`);
   }
 }
 

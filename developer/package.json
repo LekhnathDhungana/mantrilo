@@ -13,7 +13,9 @@
     "typecheck": "tsc --noEmit",
     "test": "node --test test/*.test.mjs",
     "bootstrap:admin": "node --env-file-if-exists=.env.local scripts/bootstrap-admin.mjs",
-    "api": "node --env-file-if-exists=.env.local api/index.mjs"
+    "api": "node --env-file-if-exists=.env.local api/index.mjs",
+    "site:sample": "node --env-file-if-exists=.env.local scripts/export-site-sample.mjs",
+    "seo:apply": "node --env-file-if-exists=.env.local scripts/apply-seo-descriptions.mjs"
   },
   "dependencies": {
     "@google-cloud/storage": "8.4.0",

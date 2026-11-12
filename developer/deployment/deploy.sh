@@ -58,6 +58,8 @@ self_sign "$API_SA"
 self_sign "$CONSOLE_SA"
 gcloud storage buckets add-iam-policy-binding "gs://$BUCKET" --quiet \
   --member "serviceAccount:$API_SA" --role roles/storage.objectViewer >/dev/null
+gcloud storage buckets add-iam-policy-binding "gs://$BUCKET" --quiet \
+  --member "serviceAccount:$CONSOLE_SA" --role roles/storage.objectViewer >/dev/null
 
 PROJECT_NUMBER="$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')"
 API_URL="${API_URL:-https://mantrilo-api-$PROJECT_NUMBER.$REGION.run.app}"
@@ -70,6 +72,16 @@ build() {
     --substitutions "_DOCKERFILE=$2,_IMAGE=$1"
 }
 
+ASTROLOGY_SECRET=mantrilo-astrology-api-key
+ASTROLOGY_BINDING=""
+if gcp secrets describe "$ASTROLOGY_SECRET" >/dev/null 2>&1; then
+  for account in "$API_SA" "$CONSOLE_SA"; do
+    gcp secrets add-iam-policy-binding "$ASTROLOGY_SECRET" --member "serviceAccount:$account" \
+      --role roles/secretmanager.secretAccessor >/dev/null
+  done
+  ASTROLOGY_BINDING="MANTRILO_ASTROLOGY_API_KEY=$ASTROLOGY_SECRET:latest"
+fi
+
 echo "== Building and deploying the API"
 API_IMAGE="$REGION-docker.pkg.dev/$PROJECT/$REPO/api:$TAG"
 build "$API_IMAGE" developer/deployment/api.Dockerfile
@@ -77,7 +89,8 @@ build "$API_IMAGE" developer/deployment/api.Dockerfile
 gcp run deploy mantrilo-api --image "$API_IMAGE" --region "$REGION" \
   --service-account "$API_SA" --allow-unauthenticated --no-cpu-throttling \
   --memory 512Mi --min-instances 0 --max-instances 10 \
-  --set-env-vars "FIREBASE_PROJECT_ID=$PROJECT,MANTRILO_MEDIA_BUCKET=$BUCKET"
+  --set-env-vars "FIREBASE_PROJECT_ID=$PROJECT,MANTRILO_MEDIA_BUCKET=$BUCKET,MANTRILO_BILLING_MODE=live" \
+  ${ASTROLOGY_BINDING:+--update-secrets "$ASTROLOGY_BINDING"}
 
 echo "== Building and deploying the console"
 CONSOLE_IMAGE="$REGION-docker.pkg.dev/$PROJECT/$REPO/console:$TAG"
@@ -85,10 +98,16 @@ build "$CONSOLE_IMAGE" developer/deployment/Dockerfile
 
 ENV_VARS="FIREBASE_PROJECT_ID=$PROJECT,MANTRILO_APP_ORIGIN=$CONSOLE_ORIGIN,MANTRILO_API_URL=$API_URL"
 ENV_VARS+=",MANTRILO_API_SIGNER=$CONSOLE_SA"
-for name in FIREBASE_WEB_API_KEY FIREBASE_AUTH_DOMAIN FIREBASE_WEB_APP_ID \
-  STRIPE_PRICE_STARTER STRIPE_PRICE_GROWTH STRIPE_PRICE_BUSINESS MANTRILO_EMAIL_FROM; do
+for name in FIREBASE_WEB_API_KEY FIREBASE_AUTH_DOMAIN FIREBASE_WEB_APP_ID MANTRILO_EMAIL_FROM; do
   value="$(local_value "$name" || true)"
   [[ -z "$value" ]] || ENV_VARS+=",$name=$value"
+done
+# Production always bills in live mode. Local STRIPE_PRICE_* values are sandbox prices, so the
+# live ones are read from STRIPE_LIVE_PRICE_* instead.
+ENV_VARS+=",MANTRILO_BILLING_MODE=live"
+for plan in STARTER GROWTH BUSINESS; do
+  value="$(local_value "STRIPE_LIVE_PRICE_$plan" || true)"
+  [[ -z "$value" ]] || ENV_VARS+=",STRIPE_PRICE_$plan=$value"
 done
 
 # Secrets live in Secret Manager and are attached only once they exist.
@@ -102,6 +121,9 @@ attach_secret() {
 attach_secret STRIPE_SECRET_KEY stripe-secret-key
 attach_secret STRIPE_WEBHOOK_SECRET stripe-webhook-secret
 attach_secret RESEND_API_KEY resend-api-key
+if [[ -n "$ASTROLOGY_BINDING" ]]; then
+  SECRETS+="${SECRETS:+,}$ASTROLOGY_BINDING"
+fi
 
 gcp run deploy mantrilo-console --image "$CONSOLE_IMAGE" --region "$REGION" \
   --service-account "$CONSOLE_SA" --allow-unauthenticated \

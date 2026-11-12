@@ -1,3 +1,5 @@
+import { Image } from 'react-native';
+
 export function Rosette({ className = '' }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 240 240" fill="none" aria-hidden="true">
@@ -15,13 +17,23 @@ export function Rosette({ className = '' }: { className?: string }) {
     </svg>
   );
 }
-export default function Brand() {
+export default function Brand({ adaptToTheme = false }: { adaptToTheme?: boolean }) {
+  const logo = require('../../developer/assets/mantrilo-logo.png');
   return (
-    <span className="brand">
-      <Rosette />
-      <span>
-        mantrilo<span className="brand-dot">.</span>
-      </span>
-    </span>
+    <div className="brand">
+      <div className="brand-original">
+        <Image
+          accessibilityLabel="Mantrilo"
+          source={logo}
+          style={{ width: '100%', height: '100%' }}
+          resizeMode="contain"
+        />
+      </div>
+      {adaptToTheme && (
+        <div className="brand-light-lettering" aria-hidden="true">
+          <Image source={logo} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+        </div>
+      )}
+    </div>
   );
 }

@@ -54,6 +54,14 @@ export const formatDate = (value: string | null | undefined) =>
         year: 'numeric',
       })
     : 'Not recorded';
+// Allowances reset at 00:00 UTC on the 1st, so show that day whatever the viewer's time zone.
+export const formatResetDate = (value: string) =>
+  new Date(value).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
 export const formatBytes = (bytes: number) =>
   bytes >= 1e9
     ? `${(bytes / 1e9).toFixed(2)} GB`

@@ -10,24 +10,32 @@ import {
   hash,
   cleanText,
   plans,
-  getPlan,
   allowance,
   publicWorkspace,
   usage,
   mergeUsage,
   currentPeriod,
   log,
-  addKey,
-  newApiKey,
   chargeRequest,
+  migrateWorkspace,
+  needsMigration,
+  primaryKey,
+  keyEnvironment,
+  rotateKey,
+  resetDate,
   accountingPolicy,
+  planFor,
+  billingFor,
+  setEntitlement,
+  usageLane,
   readJson as body,
 } from './domain.mjs';
 import { catalog } from './fixtures.mjs';
 import { readEmail, Throttle } from './email-codes.mjs';
-import { libraryItem, libraryPage } from './library.mjs';
-import { calculate, OPERATIONS, ENGINE_VERSION } from './astrology/engine.mjs';
-import { RATE_LIMITS, limitsFor } from '../api/usage.mjs';
+import { libraryItem, libraryPage, streamLibraryAudio } from './library.mjs';
+import { readBookListQuery, readPustakLibrary } from './pustak.mjs';
+import { createAstrologyService } from './astrology/service.mjs';
+import { RATE_LIMITS, RateLimiter, UsageMeter, limitsFor } from '../api/usage.mjs';
 import { ENTITLED_STATUSES, PAID_PLANS, syncFromEvent, syncWorkspace } from './billing.mjs';
 
 function cookies(request) {
@@ -82,10 +90,9 @@ export async function seedDemo(store) {
     await store.putUser(uid, { workspaceId: `workspace_${uid}`, role: 'owner' });
   }
 }
-const RECENT_LOGIN_SECONDS = 10 * 60;
 // Only public API routes can be relayed, so the playground can't reach anything else.
 const PLAYGROUND_PATH =
-  /^\/v1(?:\/(?:shlokas|mantras)(?:\/[\w-]{1,200}(?:\/audio)?)?)?(?:\?[\w%=&.~+-]*)?$/;
+  /^\/v1(?:\/(?:mantras(?:\/[\w-]{1,200}(?:\/audio)?)?|books(?:\/[\w-]{1,200}(?:\/chapters\/[1-9]\d{0,8})?)?))?(?:\?[\w%=&.~+-]*)?$/;
 export function createConsoleServer({
   store,
   sessions,
@@ -97,12 +104,19 @@ export function createConsoleServer({
   mailer = null,
   apiUrl = null,
   billing = null,
+  // Which Stripe mode's entitlements this deployment reads and writes (see planFor).
+  billingMode = 'live',
   content = null,
+  media = null,
+  books = null,
+  astrologyService = createAstrologyService(),
   phoneCodes = false,
   trustProxy = false,
   codeThrottle = new Throttle({ limit: 20, windowMs: 60 * 60 * 1000 }),
   staticRoot = path.resolve('dist'),
 }) {
+  const astrologyMeter = new UsageMeter(store.usageSink, { ttlMs: 0 });
+  const astrologyLimiter = new RateLimiter();
   const cookie = (name, value, maxAge) =>
     `${name}=${value}; HttpOnly; Path=/; SameSite=Strict; Max-Age=${maxAge}${secureCookies ? '; Secure' : ''}`;
   const sessionName = secureCookies ? '__Host-mantrilo_session' : 'mantrilo_session';
@@ -278,7 +292,7 @@ export function createConsoleServer({
             rawKey.startsWith('mtr_sbx_'),
             401,
             'invalid_api_key',
-            'Provide an active sandbox API key.',
+            'Provide your sandbox API key.',
           );
           const keyHash = hash(rawKey),
             index = await store.findKey(keyHash);
@@ -303,7 +317,7 @@ export function createConsoleServer({
               audioBytes: 0,
               billable: false,
               remaining:
-                allowance(getPlan((await store.getWorkspace(workspaceId)).plan)).requests -
+                allowance(planFor(await store.getWorkspace(workspaceId), billingMode)).requests -
                 result.meter.contentRequests,
             },
           });
@@ -316,7 +330,7 @@ export function createConsoleServer({
           return send(200, { ok: true });
         }
         let profile = await store.getUser(actor.uid);
-        // Signing in is signing up: a new account starts on its own Sandbox workspace.
+        // Signing in is signing up: a new account starts on its own Free workspace.
         if (!profile?.workspaceId && mode === 'firebase') {
           const id = `workspace_${actor.uid}`;
           await store.ensureWorkspace(id, actor.uid, 'My workspace');
@@ -330,16 +344,31 @@ export function createConsoleServer({
           'An administrator must assign your account to a workspace.',
         );
         workspaceId = profile.workspaceId;
-        const workspace = await store.getWorkspace(workspaceId);
+        let workspace = await store.getWorkspace(workspaceId);
         insist(
           workspace && workspace.ownerUid === actor.uid,
           403,
           'workspace_denied',
           'Workspace access is not allowed.',
         );
+        // Every workspace has a working key from the start, and older ones move to the free tier.
+        if (needsMigration(workspace, billingMode)) {
+          await store.transact(workspaceId, (w) => migrateWorkspace(w, billingMode));
+          workspace = await store.getWorkspace(workspaceId);
+        }
         const verified = mode === 'demo' || actor.verified === true;
-        const liveUsage = async (w = workspace) =>
-          mergeUsage(usage(w), await store.apiUsage(w.id, currentPeriod()));
+        const plan = planFor(workspace, billingMode),
+          paid = plan.price > 0,
+          liveLane = usageLane('production', billingMode);
+        // Usage per lane. Sandbox includes the console's own demo and astrology calls.
+        const laneUsage = async (lane, w = workspace, period = currentPeriod()) =>
+          lane === 'sandbox'
+            ? mergeUsage(usage(w, period), await store.apiUsage(w.id, period, lane))
+            : store.apiUsage(w.id, period, lane);
+        // The lane the plan is about: live once paid, sandbox before that.
+        const primaryLane = (w = workspace) =>
+          planFor(w, billingMode).price > 0 ? liveLane : 'sandbox';
+        const liveUsage = async (w = workspace) => laneUsage(primaryLane(w), w);
         if (route === '/api/me' && method === 'GET')
           return send(200, {
             user: {
@@ -350,15 +379,26 @@ export function createConsoleServer({
               name: profile.name || '',
               onboarded: mode === 'demo' || Boolean(profile.onboardedAt),
             },
-            workspace: publicWorkspace(workspace, await store.keyActivity(workspaceId)),
+            workspace: publicWorkspace(
+              workspace,
+              await store.keyActivity(workspaceId),
+              billingMode,
+            ),
             mode,
+            billingMode,
             period: currentPeriod(),
             usage: await liveUsage(),
-            plan: getPlan(workspace.plan),
-            allowance: {
-              ...allowance(getPlan(workspace.plan)),
-              ...limitsFor(getPlan(workspace.plan)),
+            usageLane: primaryLane(),
+            usageByLane: {
+              sandbox: await laneUsage('sandbox'),
+              ...(paid ? { live: await laneUsage(liveLane) } : {}),
             },
+            plan,
+            allowance: {
+              ...allowance(plan),
+              ...limitsFor(plan, paid ? 'production' : 'sandbox'),
+            },
+            resetsAt: resetDate(),
             accountingPolicy,
             integrations: {
               catalog: false,
@@ -377,7 +417,8 @@ export function createConsoleServer({
         }
         if (route === '/api/keys' && method === 'GET')
           return send(200, {
-            keys: publicWorkspace(workspace, await store.keyActivity(workspaceId)).keys,
+            keys: publicWorkspace(workspace, await store.keyActivity(workspaceId), billingMode)
+              .keys,
           });
         // The API deliberately has no CORS, so the browser playground goes through this session.
         if (route === '/api/playground' && method === 'POST') {
@@ -421,95 +462,91 @@ export function createConsoleServer({
           insist(!verified, 409, 'already_verified', 'This account is already verified.');
           return send(200, { token: await sessions.verificationToken(actor.uid) });
         }
-        if (route === '/api/keys' && method === 'POST') {
-          insist(verified, 403, 'email_unverified', 'Verify your email before creating API keys.');
-          const input = await body(request),
-            name = cleanText(input.name, 'Key name', 80),
-            environment = input.environment;
-          insist(
-            ['sandbox', 'production'].includes(environment),
-            400,
-            'invalid_environment',
-            'Choose sandbox or production.',
-          );
-          insist(
-            environment !== 'production' ||
-              mode === 'demo' ||
-              Date.now() / 1000 - actor.authTime < RECENT_LOGIN_SECONDS,
-            403,
-            'reauthentication_required',
-            'Sign in again to create a production key.',
-          );
-          const rawKey = newApiKey(environment),
-            keyHash = hash(rawKey);
-          const key = {
-            id: randomUUID(),
-            name,
-            environment,
-            prefix: rawKey.slice(0, 16),
-            hash: keyHash,
-            status: 'active',
-            createdAt: new Date().toISOString(),
-            lastUsedAt: null,
-          };
-          await store.transact(workspaceId, (w) => {
-            insist(
-              environment !== 'production' || getPlan(w.plan).price > 0,
-              403,
-              'production_plan_required',
-              'Production keys require an active paid content plan.',
-            );
-            addKey(w, key);
-            log(w, {
-              type: 'key_created',
-              message: `Created ${environment} key: ${name}`,
-              status: 201,
-            });
-          });
-          // The key already exists, so a mail failure mustn't fail the request or show as an error.
-          if (environment === 'production' && mailer && actor.email.includes('@'))
+        // Replaces the sandbox or live key. The old one stops working within the API's key cache TTL.
+        if (route === '/api/keys/rotate' && method === 'POST') {
+          const { environment } = await body(request),
+            key = await store.transact(workspaceId, (w) => rotateKey(w, environment, billingMode));
+          if (mailer && actor.email.includes('@'))
             await mailer
-              .sendKeyCreated(actor.email, key)
+              .sendKeyCreated(actor.email, { prefix: key.prefix })
               .catch((error) => console.error(`Key notice failed: ${error.message}`));
-          const { hash: _hash, ...metadata } = key;
-          return send(201, {
-            key: metadata,
-            secret: rawKey,
-            notice: 'Copy this secret now. It cannot be retrieved again.',
-          });
+          return send(201, { key: { id: key.id, prefix: key.prefix } });
         }
         if (/^\/api\/keys\/[^/]+$/.test(route) && method === 'DELETE') {
           const id = route.split('/').at(-1);
           await store.transact(workspaceId, (w) => {
             const key = w.keys.find((k) => k.id === id);
             insist(key, 404, 'key_missing', 'API key not found.');
+            insist(
+              key !== primaryKey(w, keyEnvironment(key)),
+              409,
+              'primary_key',
+              'This is your workspace key. Regenerate it instead of revoking it.',
+            );
             key.status = 'revoked';
             log(w, { type: 'key_revoked', message: `Revoked key: ${key.name}`, status: 200 });
           });
           return send(200, { ok: true });
         }
+        const booksRoute = route.match(
+          /^\/api\/library\/books(?:\/([\w-]{1,200})(?:\/chapters\/([1-9]\d{0,8}))?)?$/,
+        );
+        if (booksRoute && method === 'GET') {
+          insist(books, 503, 'library_unavailable', 'The books library is not connected here.');
+          const [, id, chapter] = booksRoute;
+          return send(
+            200,
+            await readPustakLibrary(books, {
+              id,
+              chapter,
+              cursor: url.searchParams.get('cursor'),
+              offset: url.searchParams.get('offset'),
+              sampleOnly: !paid,
+              ...(id ? {} : readBookListQuery(url.searchParams)),
+            }),
+          );
+        }
+        const libraryAudio = route.match(/^\/api\/library\/mantras\/([\w-]{1,200})\/audio$/);
+        if (libraryAudio && ['GET', 'HEAD'].includes(method)) {
+          insist(
+            content && media,
+            503,
+            'audio_unavailable',
+            'Library playback is unavailable here.',
+          );
+          return await streamLibraryAudio({
+            content,
+            media,
+            id: libraryAudio[1],
+            sampleOnly: !paid,
+            request,
+            response,
+          });
+        }
         const libraryRoute = route.match(/^\/api\/library\/(\w+)(?:\/([\w-]{1,200}))?$/);
         if (libraryRoute && method === 'GET') {
           insist(content, 503, 'library_unavailable', 'The library is not connected here.');
           const [, resource, id] = libraryRoute,
-            sampleOnly = !getPlan(workspace.plan).price;
+            sampleOnly = !paid;
           return send(
             200,
             id
               ? await libraryItem(content, resource, id, { sampleOnly })
               : await libraryPage(content, resource, {
                   cursor: url.searchParams.get('cursor'),
+                  deity: url.searchParams.get('deity') || null,
                   sampleOnly,
                 }),
           );
         }
+        // The console calculator is a test bench: it counts in the sandbox lane.
         if (route === '/api/astrology' && method === 'GET') {
-          const limit = limitsFor(getPlan(workspace.plan)).requests,
-            used = (await liveUsage()).contentRequests;
+          const limit = limitsFor(plan, 'sandbox').requests,
+            used = (await laneUsage('sandbox')).contentRequests;
           return send(200, {
             status: 'available',
-            engineVersion: ENGINE_VERSION,
-            availableOperations: OPERATIONS,
+            engineVersion: astrologyService.engineVersion,
+            availableOperations: astrologyService.operations,
             allowance: limit,
             used,
             balance: Math.max(0, limit - used),
@@ -518,26 +555,37 @@ export function createConsoleServer({
         }
         if (route === '/api/astrology/calculate' && method === 'POST') {
           operation = '/api/astrology/calculate';
-          const data = calculate(await body(request));
-          const limit = limitsFor(getPlan(workspace.plan)).requests,
-            used = (await liveUsage()).contentRequests;
+          const calculation = astrologyService.prepare(await body(request));
+          const rate = astrologyLimiter.take(workspaceId, RATE_LIMITS.Free);
+          if (!rate.ok) {
+            response.setHeader('Retry-After', String(rate.retryAfter));
+            throw new ApiError(429, 'rate_limited', 'Too many calculations. Try again shortly.');
+          }
+          const limit = limitsFor(plan, 'sandbox').requests;
+          const endpoint = `astrology.${calculation.operation}`;
+          const reservation = await astrologyMeter.reserve({
+            workspaceId,
+            keyId: 'console',
+            lane: 'sandbox',
+            endpoint,
+            limit,
+            margin: limit,
+          });
           insist(
-            used < limit,
+            reservation.ok,
             429,
             'quota_exceeded',
             'The monthly request allowance for this plan has been reached.',
           );
-          const at = new Date(),
-            endpoint = `astrology.${data.operation}`;
-          await store.recordApiUsage({
-            workspaceId,
-            keyId: 'console',
-            endpoint,
-            requests: 1,
-            audioBytes: 0,
-            period: currentPeriod(at),
-            at,
-          });
+          let data;
+          try {
+            data = await calculation.run();
+          } catch (error) {
+            await reservation
+              .refund()
+              .catch(() => console.error(`Astrology usage refund failed ${requestId}`));
+            throw error;
+          }
           // Never include calculation inputs or results in general request logs.
           await store.transact(workspaceId, (w) =>
             log(w, {
@@ -550,7 +598,7 @@ export function createConsoleServer({
           );
           return send(200, {
             data,
-            usage: { contentRequests: 1, remaining: limit - used - 1 },
+            usage: { contentRequests: 1, remaining: limit - reservation.used },
             calculated: true,
           });
         }
@@ -575,10 +623,16 @@ export function createConsoleServer({
             periods.push(month.toISOString().slice(0, 7));
             month = new Date(Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + 1, 1));
           }
-          const apiMeters = await Promise.all(
-            periods.map((period) => store.apiUsage(workspaceId, period)),
+          const lane = url.searchParams.get('lane') || primaryLane();
+          insist(
+            ['sandbox', liveLane].includes(lane),
+            400,
+            'invalid_lane',
+            `lane must be sandbox or ${liveLane}.`,
           );
-          const merged = mergeUsage(...Object.values(workspace.usage), ...apiMeters);
+          const merged = mergeUsage(
+            ...(await Promise.all(periods.map((period) => laneUsage(lane, workspace, period)))),
+          );
           const daily = Object.entries(merged.daily)
             .filter(([day]) => day >= from && day <= to)
             .map(([day, value]) => ({ day, ...value }))
@@ -596,6 +650,7 @@ export function createConsoleServer({
             policy: accountingPolicy,
             from,
             to,
+            lane,
             logLimit: 200,
           });
         }
@@ -618,13 +673,13 @@ export function createConsoleServer({
             createdAt: new Date().toISOString(),
           };
           await store.transact(workspaceId, (w) => {
-            const p = getPlan(w.plan),
+            const p = planFor(w, billingMode),
               limit = allowance(p).products;
             insist(
               environment !== 'production' || p.price > 0,
               403,
               'testing_only',
-              'Sandbox is for testing only.',
+              'The Free plan is for testing only.',
             );
             insist(
               w.products.length < 100,
@@ -730,9 +785,10 @@ export function createConsoleServer({
             'Type DELETE to confirm.',
           );
           // Stop charging first, so a failure here leaves the account intact and retryable.
-          if (ENTITLED_STATUSES.has(workspace.billing?.status)) {
+          const record = billingFor(workspace, billingMode);
+          if (ENTITLED_STATUSES.has(record?.status)) {
             insist(billing, 503, 'billing_unconfigured', 'Billing is not configured.');
-            await billing.cancelSubscription(workspace.billing.subscriptionId);
+            await billing.cancelSubscription(record.subscriptionId);
           }
           await store.deleteWorkspace(workspaceId);
           await sessions.deleteAccount(actor.uid);
@@ -741,11 +797,12 @@ export function createConsoleServer({
         }
         if (route === '/api/billing' && method === 'GET')
           return send(200, {
-            plan: getPlan(workspace.plan),
-            monthlyTotal: getPlan(workspace.plan).price,
+            plan,
+            monthlyTotal: plan.price,
             period: null,
             invoices: [],
-            renewalAt: workspace.billing?.currentPeriodEnd ?? null,
+            renewalAt: billingFor(workspace, billingMode)?.currentPeriodEnd ?? null,
+            billingMode,
             setupRequired: !billing,
             provider: billing ? 'stripe' : null,
             purchasable: billing ? PAID_PLANS : [],
@@ -758,7 +815,7 @@ export function createConsoleServer({
           insist(verified, 403, 'email_unverified', 'Verify your email before subscribing.');
           const { plan } = await body(request);
           insist(PAID_PLANS.includes(plan), 400, 'invalid_plan', 'Choose a paid plan.');
-          let customerId = workspace.billing?.customerId;
+          let customerId = billingFor(workspace, billingMode)?.customerId;
           if (customerId)
             insist(
               !(await billing.hasLiveSubscription(customerId)),
@@ -769,7 +826,13 @@ export function createConsoleServer({
           else {
             customerId = await billing.createCustomer(workspaceId, actor.email);
             await store.transact(workspaceId, (w) => {
-              w.billing = { ...w.billing, customerId };
+              setEntitlement(w, billingMode, {
+                billing: {
+                  ...billingFor(w, billingMode),
+                  customerId,
+                  livemode: billingMode === 'live',
+                },
+              });
             });
           }
           return send(200, {
@@ -783,13 +846,9 @@ export function createConsoleServer({
         }
         if (route === '/api/billing/portal' && method === 'POST') {
           insist(billing, 503, 'billing_unconfigured', 'Billing is not configured.');
-          insist(
-            workspace.billing?.customerId,
-            409,
-            'no_subscription',
-            'This workspace has no billing account yet.',
-          );
-          return send(200, { url: await billing.portalUrl(workspace.billing.customerId) });
+          const customerId = billingFor(workspace, billingMode)?.customerId;
+          insist(customerId, 409, 'no_subscription', 'This workspace has no billing account yet.');
+          return send(200, { url: await billing.portalUrl(customerId) });
         }
         if (route.startsWith('/api/admin/')) {
           insist(
@@ -804,7 +863,7 @@ export function createConsoleServer({
                 (await store.listWorkspaces()).map(async (w) => ({
                   id: w.id,
                   name: w.name,
-                  plan: w.plan,
+                  plan: planFor(w, billingMode).name,
                   createdAt: w.createdAt,
                   products: w.products.length,
                   usage: await liveUsage(w),

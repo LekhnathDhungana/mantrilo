@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import Stripe from 'stripe';
 import { createConsoleServer } from '../server/app.mjs';
 import { MemoryStore } from '../server/store.mjs';
-import { StripeBilling, createBilling } from '../server/billing.mjs';
+import { StripeBilling, createBilling, stripeModeOf } from '../server/billing.mjs';
 
 const webhookSecret = 'whsec_test',
   prices = { Starter: 'price_s', Growth: 'price_g', Business: 'price_b' },
@@ -70,7 +70,7 @@ class FakeSessions {
   }
 }
 
-async function fixture(t, { configured = true, secret = webhookSecret } = {}) {
+async function fixture(t, { configured = true, secret = webhookSecret, mode = 'live' } = {}) {
   const store = new MemoryStore(),
     sessions = new FakeSessions(),
     stripe = new FakeStripe();
@@ -82,12 +82,14 @@ async function fixture(t, { configured = true, secret = webhookSecret } = {}) {
         webhookSecret: secret,
         prices,
         appOrigin: 'http://localhost:4190',
+        mode,
       })
     : null;
   const server = createConsoleServer({
     store,
     sessions,
     billing,
+    billingMode: mode,
     mode: 'firebase',
     appOrigin: 'http://localhost:4190',
     staticRoot: '/tmp/nonexistent-console-test',
@@ -109,7 +111,12 @@ async function fixture(t, { configured = true, secret = webhookSecret } = {}) {
     return { status: response.status, body: await response.json() };
   };
   const post = async (event, signature) => {
-    const payload = JSON.stringify({ id: 'evt_1', object: 'event', ...event });
+    const payload = JSON.stringify({
+      id: 'evt_1',
+      object: 'event',
+      livemode: mode === 'live',
+      ...event,
+    });
     const response = await fetch(`${base}/api/billing/webhook`, {
       method: 'POST',
       headers: {
@@ -147,7 +154,7 @@ test('checkout uses the right price and tags the subscription with the workspace
   assert.equal(params.customer, 'cus_1');
   assert.deepEqual(params.subscription_data.metadata, { workspaceId });
   assert.equal((await f.workspace()).billing.customerId, 'cus_1');
-  assert.equal((await f.workspace()).plan, 'Sandbox');
+  assert.equal((await f.workspace()).plan, 'Free');
   await f.call('/api/billing/checkout', 'POST', { plan: 'Starter' });
   assert.equal(f.stripe.calls.customers.length, 1);
 });
@@ -155,7 +162,7 @@ test('checkout uses the right price and tags the subscription with the workspace
 test('checkout rejects bad plans, unverified accounts and existing subscribers', async (t) => {
   const f = await fixture(t);
   assert.equal(
-    (await f.call('/api/billing/checkout', 'POST', { plan: 'Sandbox' })).body.error.code,
+    (await f.call('/api/billing/checkout', 'POST', { plan: 'Free' })).body.error.code,
     'invalid_plan',
   );
   f.sessions.session.verified = false;
@@ -179,24 +186,35 @@ test('an unsigned or forged webhook changes nothing', async (t) => {
   const event = { type: 'customer.subscription.updated', data: { object: subscription() } };
   for (const signature of ['', 't=1,v1=forged'])
     assert.equal((await f.post(event, signature)).body.error.code, 'invalid_signature');
-  assert.equal((await f.workspace()).plan, 'Sandbox');
+  assert.equal((await f.workspace()).plan, 'Free');
 });
 
-test('a paid subscription unlocks the plan and production keys', async (t) => {
+test('a paid subscription raises the quota and adds a live key', async (t) => {
   const f = await fixture(t);
-  assert.equal(
-    (await f.call('/api/keys', 'POST', { name: 'L', environment: 'production' })).status,
-    403,
+  const before = (await f.call('/api/me')).body,
+    active = (me) => me.workspace.keys.filter((k) => k.status === 'active'),
+    sandbox = active(before)[0].secret;
+  assert.deepEqual(
+    active(before).map((k) => k.environment),
+    ['sandbox'],
   );
+  assert.equal(before.allowance.requests, 500);
+  const early = await f.call('/api/keys/rotate', 'POST', { environment: 'production' });
+  assert.equal(early.body.error.code, 'production_plan_required');
   assert.equal((await f.send(subscription())).status, 200);
   const w = await f.workspace();
   assert.equal(w.plan, 'Starter');
   assert.equal(w.billing.subscriptionId, 'sub_1');
   assert.equal(w.billing.currentPeriodEnd, new Date(1_800_000_000_000).toISOString());
-  assert.equal(
-    (await f.call('/api/keys', 'POST', { name: 'L', environment: 'production' })).status,
-    201,
+  const after = (await f.call('/api/me')).body;
+  assert.equal(after.allowance.requests, 50_000);
+  const keys = active(after);
+  assert.deepEqual(
+    keys.map((k) => k.environment),
+    ['sandbox', 'production'],
   );
+  assert.equal(keys[0].secret, sandbox);
+  assert.match(keys[1].secret, /^mtr_live_[\w-]{49}$/);
 });
 
 test('checkout completion reads the subscription from Stripe', async (t) => {
@@ -224,14 +242,14 @@ test('the plan follows upgrades, failed payments and cancellation', async (t) =>
     'customer.subscription.deleted',
   );
   const ended = await f.workspace();
-  assert.equal(ended.plan, 'Sandbox');
+  assert.equal(ended.plan, 'Free');
   assert.equal(ended.billing.status, 'canceled');
 });
 
 test('an unpaid first attempt grants nothing, and old subscriptions cannot downgrade', async (t) => {
   const f = await fixture(t);
   await f.send(subscription({ status: 'incomplete' }));
-  assert.equal((await f.workspace()).plan, 'Sandbox');
+  assert.equal((await f.workspace()).plan, 'Free');
   await f.send(subscription({ id: 'sub_new' }));
   await f.send(subscription({ id: 'sub_old', status: 'canceled' }));
   assert.equal((await f.workspace()).plan, 'Starter');
@@ -241,7 +259,7 @@ test('an unpaid first attempt grants nothing, and old subscriptions cannot downg
 test('other products and deleted workspaces are acknowledged and ignored', async (t) => {
   const f = await fixture(t);
   assert.equal((await f.send(subscription({ metadata: {} }))).status, 200);
-  assert.equal((await f.workspace()).plan, 'Sandbox');
+  assert.equal((await f.workspace()).plan, 'Free');
   assert.equal((await f.send(subscription({ metadata: { workspaceId: 'gone' } }))).status, 200);
 });
 
@@ -249,7 +267,7 @@ test('an unconfigured price fails so Stripe retries, and leaves the plan alone',
   const f = await fixture(t);
   const items = { data: [{ price: { id: 'price_unknown' }, current_period_end: 1 }] };
   assert.equal((await f.send(subscription({ items }))).status, 500);
-  assert.equal((await f.workspace()).plan, 'Sandbox');
+  assert.equal((await f.workspace()).plan, 'Free');
 });
 
 test('the portal needs a billing account', async (t) => {
@@ -281,10 +299,10 @@ test('without a webhook, returning to Billing activates what Stripe says was pai
   const event = { type: 'customer.subscription.updated', data: { object: subscription() } };
   assert.equal((await f.post(event, 'x')).status, 503);
   assert.equal((await f.call('/api/billing/sync', 'POST')).status, 200);
-  assert.equal((await f.workspace()).plan, 'Sandbox');
+  assert.equal((await f.workspace()).plan, 'Free');
   await f.call('/api/billing/checkout', 'POST', { plan: 'Starter' });
   await f.call('/api/billing/sync', 'POST');
-  assert.equal((await f.workspace()).plan, 'Sandbox');
+  assert.equal((await f.workspace()).plan, 'Free');
   f.stripe.live = [subscription()];
   await f.call('/api/billing/sync', 'POST');
   assert.equal((await f.workspace()).plan, 'Starter');
@@ -296,10 +314,10 @@ test('sync ignores other products and unpaid attempts, and notices cancellations
   await f.call('/api/billing/checkout', 'POST', { plan: 'Starter' });
   f.stripe.live = [subscription({ id: 'sub_other', metadata: {} })];
   await f.call('/api/billing/sync', 'POST');
-  assert.equal((await f.workspace()).plan, 'Sandbox');
+  assert.equal((await f.workspace()).plan, 'Free');
   f.stripe.live = [subscription({ id: 'sub_try', status: 'incomplete' })];
   await f.call('/api/billing/sync', 'POST');
-  assert.equal((await f.workspace()).plan, 'Sandbox');
+  assert.equal((await f.workspace()).plan, 'Free');
   f.stripe.live = [subscription()];
   await f.call('/api/billing/sync', 'POST');
   assert.equal((await f.workspace()).plan, 'Starter');
@@ -308,7 +326,7 @@ test('sync ignores other products and unpaid attempts, and notices cancellations
     subscription({ status: 'canceled' }),
   ];
   await f.call('/api/billing/sync', 'POST');
-  assert.equal((await f.workspace()).plan, 'Sandbox');
+  assert.equal((await f.workspace()).plan, 'Free');
 });
 
 test('billing stays off until it is fully configured', () => {
@@ -331,4 +349,105 @@ test('billing stays off until it is fully configured', () => {
       'http://x',
     ),
   );
+});
+
+test('a replayed webhook changes nothing the second time and never touches usage', async (t) => {
+  const f = await fixture(t);
+  await f.store.recordApiUsage({
+    workspaceId,
+    keyId: 'k',
+    lane: 'live',
+    endpoint: 'mantras.list',
+    requests: 7,
+    audioBytes: 0,
+    period: new Date().toISOString().slice(0, 7),
+    at: new Date(),
+  });
+  for (let i = 0; i < 3; i++) assert.equal((await f.send(subscription())).status, 200);
+  for (let i = 0; i < 2; i++)
+    await f.post({
+      type: 'checkout.session.completed',
+      data: { object: { mode: 'subscription', subscription: 'sub_1' } },
+    });
+  const w = await f.workspace();
+  assert.equal(w.plan, 'Starter');
+  assert.equal(w.logs.filter((l) => l.type === 'billing').length, 1);
+  const me = (await f.call('/api/me')).body;
+  assert.equal(me.usage.contentRequests, 7);
+  assert.equal(me.workspace.keys.filter((k) => k.environment === 'production').length, 1);
+  await f.send(subscription());
+  const again = (await f.call('/api/me')).body;
+  assert.equal(again.usage.contentRequests, 7);
+  assert.equal(again.workspace.keys.filter((k) => k.environment === 'production').length, 1);
+});
+
+test('test-mode payments never unlock live access, and live ones never unlock test access', async (t) => {
+  const live = await fixture(t);
+  // A sandbox subscription, or an event from the sandbox, reaching the live console is ignored.
+  assert.equal((await live.send(subscription({ livemode: false }))).status, 200);
+  live.stripe.subs.set('sub_1', subscription());
+  await live.post({
+    type: 'customer.subscription.updated',
+    livemode: false,
+    data: { object: subscription() },
+  });
+  assert.equal((await live.workspace()).plan, 'Free');
+  assert.equal((await live.call('/api/me')).body.plan.name, 'Free');
+
+  const sandbox = await fixture(t, { mode: 'test' });
+  assert.equal((await sandbox.send(subscription({ livemode: true }))).status, 200);
+  assert.equal((await sandbox.workspace()).testPlan, undefined);
+  assert.equal((await sandbox.send(subscription({ livemode: false }))).status, 200);
+  const w = await sandbox.workspace();
+  assert.equal(w.testPlan, 'Starter');
+  assert.equal(w.testBilling.livemode, false);
+  assert.equal(w.plan, 'Free'); // the live entitlement is untouched
+  assert.equal(w.billing, undefined);
+  const me = (await sandbox.call('/api/me')).body;
+  assert.equal(me.plan.name, 'Starter');
+  assert.equal(me.billingMode, 'test');
+  assert.equal(me.workspace.testPlan, undefined); // never sent to the browser
+});
+
+test('billing records from before modes existed move to test mode', async (t) => {
+  const f = await fixture(t);
+  await f.store.transact(workspaceId, (w) => {
+    w.plan = 'Starter';
+    w.billing = { customerId: 'cus_1', subscriptionId: 'sub_1', status: 'active' };
+  });
+  const me = (await f.call('/api/me')).body;
+  assert.equal(me.plan.name, 'Free');
+  const w = await f.workspace();
+  assert.equal(w.testPlan, 'Starter');
+  assert.equal(w.testBilling.livemode, false);
+  assert.equal(w.billing, undefined);
+});
+
+test('the Stripe key decides the mode, and prices are checked against the plans', async () => {
+  assert.equal(stripeModeOf('sk_live_x'), 'live');
+  assert.equal(stripeModeOf('rk_live_x'), 'live');
+  assert.equal(stripeModeOf('sk_test_x'), 'test');
+  const price = (unit_amount, extra = {}) => ({
+    active: true,
+    livemode: false,
+    currency: 'usd',
+    unit_amount,
+    recurring: { interval: 'month', interval_count: 1 },
+    ...extra,
+  });
+  const stored = {
+    price_s: price(4900),
+    price_g: price(14900),
+    price_b: price(39900, { recurring: { interval: 'year', interval_count: 1 } }),
+  };
+  const billing = new StripeBilling({
+    stripe: { prices: { retrieve: async (id) => stored[id] } },
+    prices,
+    appOrigin: 'http://x',
+    mode: 'test',
+  });
+  assert.deepEqual(await billing.verifyPrices(), [
+    'Starter: Stripe charges $49.00, plans list $49.99',
+    'Business: not a monthly subscription price',
+  ]);
 });
