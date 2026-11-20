@@ -2,12 +2,31 @@
   "hosting": {
     "site": "mantrilo",
     "public": "dist",
+    "predeploy": ["python3 scripts/check-seo.py dist https://www.mantrilo.com"],
     "cleanUrls": true,
     "trailingSlash": false,
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**", "nginx-seo.conf"],
+    "rewrites": [
+      {
+        "regex": "^/console(/.*)?$",
+        "run": {
+          "serviceId": "mantrilo-console-hosting",
+          "region": "us-central1"
+        }
+      }
+    ],
     "headers": [
       {
         "source": "/_expo/static/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      },
+      {
+        "source": "/fonts/*.woff2",
         "headers": [
           {
             "key": "Cache-Control",
@@ -18,9 +37,44 @@
     ],
     "redirects": [
       {
+        "source": "/shastra-books-api",
+        "destination": "/books-api",
+        "type": 301
+      },
+      {
         "source": "/mantra-shloka-api",
         "destination": "/mantra-api",
         "type": 301
+      },
+      {
+        "source": "/implementation",
+        "destination": "/docs",
+        "type": 301
+      },
+      {
+        "source": "/access",
+        "destination": "/contact",
+        "type": 301
+      },
+      {
+        "source": "/hi",
+        "destination": "/",
+        "type": 302
+      },
+      {
+        "source": "/hi/astrology-api/daily-panchang",
+        "destination": "/astrology-api/daily-panchang",
+        "type": 302
+      },
+      {
+        "source": "/ne",
+        "destination": "/",
+        "type": 302
+      },
+      {
+        "source": "/ne/astrology-api/daily-panchang",
+        "destination": "/astrology-api/daily-panchang",
+        "type": 302
       }
     ]
   }

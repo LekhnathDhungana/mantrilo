@@ -1,6 +1,21 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { api } from '../lib/api';
+import { useConsole } from './Session.web';
+
+const pendingReads = new Map<string, Promise<unknown>>();
+
+function loadShared<T>(workspace: string, path: string): Promise<T> {
+  const key = workspace + ':' + path;
+  const pending = pendingReads.get(key);
+  if (pending) return pending as Promise<T>;
+  const request = api<T>(path).finally(() => pendingReads.delete(key));
+  pendingReads.set(key, request);
+  return request;
+}
 export function useLoad<T>(path: string) {
+  const { session } = useConsole();
+  const workspace = session?.workspace.id ?? '';
+  const stateKey = workspace + ':' + path;
   const [state, setState] = useState<{
     path: string;
     data: T | null;
@@ -8,28 +23,28 @@ export function useLoad<T>(path: string) {
     pending: boolean;
   }>({ path: '', data: null, error: '', pending: true });
   const reload = useCallback(async () => {
-    setState({ path, data: null, error: '', pending: true });
+    setState({ path: stateKey, data: null, error: '', pending: true });
     try {
-      setState({ path, data: await api<T>(path), error: '', pending: false });
+      setState({ path: stateKey, data: await api<T>(path), error: '', pending: false });
     } catch (e) {
       setState({
-        path,
+        path: stateKey,
         data: null,
         error: e instanceof Error ? e.message : 'Could not load this information.',
         pending: false,
       });
     }
-  }, [path]);
+  }, [path, stateKey]);
   useEffect(() => {
     let active = true;
-    api<T>(path)
+    loadShared<T>(workspace, path)
       .then((data) => {
-        if (active) setState({ path, data, error: '', pending: false });
+        if (active) setState({ path: stateKey, data, error: '', pending: false });
       })
       .catch((e) => {
         if (active)
           setState({
-            path,
+            path: stateKey,
             data: null,
             error: e instanceof Error ? e.message : 'Could not load this information.',
             pending: false,
@@ -38,11 +53,11 @@ export function useLoad<T>(path: string) {
     return () => {
       active = false;
     };
-  }, [path]);
+  }, [path, stateKey, workspace]);
   return {
-    data: state.path === path ? state.data : null,
-    error: state.path === path ? state.error : '',
-    loading: state.path !== path || state.pending,
+    data: state.path === stateKey ? state.data : null,
+    error: state.path === stateKey ? state.error : '',
+    loading: state.path !== stateKey || state.pending,
     reload,
   };
 }
@@ -127,14 +142,16 @@ export function Loading() {
 export function Badge({ children, tone = 'neutral' }: { children: ReactNode; tone?: string }) {
   return <span className={`badge ${tone}`}>{children}</span>;
 }
-export function CopyButton({ text, label = 'Copy' }: { text: string; label?: string }) {
+export function CopyButton({ text, label = 'Copy' }: { text: string | (() => string); label?: string }) {
   const [status, setStatus] = useState('');
   async function copy() {
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(typeof text === 'function' ? text() : text);
       setStatus('Copied');
     } catch {
-      setStatus('Copy unavailable; select the text.');
+      setStatus(
+        typeof text === 'function' ? 'Clipboard unavailable.' : 'Copy unavailable; select the text.',
+      );
     }
   }
   return (
@@ -155,7 +172,7 @@ export function Meter({
 }: {
   label: string;
   value: number;
-  limit: number;
+  limit: number | null;
   displayLimit?: string;
   note: string;
 }) {
@@ -165,18 +182,20 @@ export function Meter({
       <span className="metric-label">{label}</span>
       <div className="metric-value">
         {label === 'Audio delivered' ? formatBytes(value) : value.toLocaleString()}
-        <span> / {displayLimit || limit.toLocaleString()}</span>
+        <span> / {displayLimit ?? limit?.toLocaleString() ?? 'Unlimited'}</span>
       </div>
-      <div
-        className="meter-track"
-        role="progressbar"
-        aria-label={label}
-        aria-valuenow={value}
-        aria-valuemin={0}
-        aria-valuemax={Math.max(1, limit, value)}
-      >
-        <i style={{ width: `${percent}%` }} />
-      </div>
+      {limit !== null && (
+        <div
+          className="meter-track"
+          role="progressbar"
+          aria-label={label}
+          aria-valuenow={value}
+          aria-valuemin={0}
+          aria-valuemax={Math.max(1, limit, value)}
+        >
+          <i style={{ width: `${percent}%` }} />
+        </div>
+      )}
       <p>{note}</p>
     </article>
   );

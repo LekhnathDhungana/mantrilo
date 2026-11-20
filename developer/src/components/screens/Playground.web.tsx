@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'expo-router';
+import { contentGuides } from '../../data/integrations';
 import { useConsole } from '../Session.web';
 import { mutate } from '../../lib/api';
 import { Badge, CopyButton, Empty, ErrorNotice } from '../ui.web';
@@ -20,7 +21,7 @@ type Result = {
   body: { nextCursor?: string | null; data?: { nextOffset?: number | null } };
 };
 
-// Each endpoint links to its reference row and the Implementation guide that uses it.
+// Each endpoint links to its reference row and the guide that uses it.
 const ENDPOINTS: Endpoint[] = [
   {
     label: 'List mantras',
@@ -101,16 +102,22 @@ function buildPath(
   return query.size ? `${path}?${query}` : path;
 }
 
-export default function Playground() {
+export default function Playground({ preset }: { preset?: string }) {
   const { config, refresh, session } = useConsole();
   const sandboxKey = session ? primaryKey(session, 'sandbox') : undefined,
     liveKey = session ? primaryKey(session, 'production') : undefined;
+  const guide = contentGuides.find((entry) => entry.id === preset);
+  const sampleId = config?.mode === 'demo' ? guide?.demoItem : guide?.library.item;
+  const initialEndpoint = ENDPOINTS.findIndex((entry) => entry.guide === preset);
+  const sampleQuery = new URL(guide?.path ?? '/', 'https://example.invalid').searchParams;
+  const initialLimit =
+    preset === 'quickstart' ? '1' : (sampleQuery.get('limit') ?? (guide ? '' : '5'));
   const [environment, setEnvironment] = useState<Environment | 'other'>('sandbox'),
     [collection, setCollection] = useState('upanishads');
-  const [index, setIndex] = useState(0),
-    [id, setId] = useState(''),
+  const [index, setIndex] = useState(Math.max(0, initialEndpoint)),
+    [id, setId] = useState(guide?.area === 'Books' ? '' : (sampleId ?? '')),
     [chapter, setChapter] = useState('1'),
-    [limit, setLimit] = useState('5'),
+    [limit, setLimit] = useState(initialLimit),
     [deity, setDeity] = useState(''),
     [key, setKey] = useState(''),
     [pending, setPending] = useState(false),
@@ -177,7 +184,7 @@ export default function Playground() {
                     }}
                   >
                     {ENDPOINTS.map((item, i) => (
-                      <option key={item.path} value={i}>
+                      <option key={item.label} value={i}>
                         {item.label} · GET {item.path}
                       </option>
                     ))}
@@ -326,14 +333,14 @@ export default function Playground() {
               </pre>
               <div className="action-row">
                 <CopyButton text={language === 'curl' ? curl : js} />
-                <Link className="text-link" href={`/docs?tab=guide#${endpoint.reference}`}>
+                <Link className="text-link" href={`/docs?tab=reference#${endpoint.reference}`}>
                   Endpoint reference →
                 </Link>
                 <Link
                   className="text-link"
-                  href={{ pathname: '/implementation', params: { guide: endpoint.guide } }}
+                  href={{ pathname: '/docs', params: { guide: endpoint.guide } }}
                 >
-                  Implementation guide →
+                  Guide →
                 </Link>
               </div>
             </section>

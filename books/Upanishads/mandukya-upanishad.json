@@ -1,0 +1,151 @@
+{
+ "title": "Mandukya Upanishad",
+ "content_id": "text-mandukya-0-0-0-invocation",
+ "source_url": "https://app.shlokam.org/api/unified/explain?q=text-mandukya-0-0-0-invocation",
+ "tags": "Upanishad",
+ "verses": [
+  {
+   "key": "0",
+   "chapter": null,
+   "section": null,
+   "section_name": null,
+   "verse": 0,
+   "sanskrit": "ॐ भद्रं कर्णेभिः शृणुयाम देवाः ।\nभद्रं पश्येमाक्षभिर्यजत्राः ।\nस्थिरैरङ्गैस्तुष्टुवागँसस्तनूभिः ।\nव्यशेम देवहितं यदायूः ।\n\nस्वस्ति न इन्द्रो वृद्धश्रवाः ।\nस्वस्ति नः पूषा विश्ववेदाः ।\nस्वस्ति नस्ताक्षर्यो अरिष्टनेमिः ।\nस्वस्ति नो वृहस्पतिर्दधातु ॥\nॐ शान्तिः शान्तिः शान्तिः ॥",
+   "roman": "oṃ bhadraṃ karṇebhiḥ śṛṇuyāma devāḥ .\nbhadraṃ paśyemākṣabhiryajatrāḥ .\nsthirair aṅgais tuṣṭuvāgam̐sas tanūbhiḥ .\nvyaśema devahitaṃ yadāyūḥ .\n\nsvasti na indro vṛddhaśravāḥ .\nsvasti naḥ pūṣā viśvavedāḥ .\nsvasti nastākṣaryo ariṣṭanemiḥ .\nsvasti no vṛhaspatirdadhātu ..\noṃ śāntiḥ śāntiḥ śāntiḥ ..",
+   "colloquial": "om bhadram karnebhih shrinuyaama devaah .\nbhadram pashyema akshabhir yajatraah .\nsthirair angais tushtuvaagamsas tanuubhih .\nvyashema deva hitam yad aayuuh .\n\nsvasti na indro vriddha shravaah .\nsvasti nah puushaa vishva vedaah .\nsvasti nas taaksharyo arishta nemih .\nsvasti no vrihaspatir dadhaatu ..\nom shaantih shaantih shaantih ..",
+   "translation_reworded": "O devas, may our ears (always/only) hear what is auspicious.\nO gods, worthy of sacrifice, may our eyes (always/only) see what is auspicious.\nO gods who are praised, with steady limbs and bodies may we reach the lifespan the gods have set for us.\n\nMay Indra of exalted fame grant us well-being.\nMay the all-knowing Pūṣā grant us well-being.\nMay Tārkṣya, whose wheel rims cannot be destroyed, grant us well-being.\nMay Bṛhaspati grant us well-being.\nOm, peace, peace, peace."
+  },
+  {
+   "key": "1",
+   "chapter": null,
+   "section": null,
+   "section_name": null,
+   "verse": 1,
+   "sanskrit": "हरिः ओम् ।\nओमित्येतदक्षरमिदं सर्वं तस्योपव्याख्यानं भूतं भवद्भविष्यदिति सर्वमोङ्कार एव |\nयच्चान्यत्त्रिकालातीतं तदप्योङ्कार एव ॥ १ ॥",
+   "roman": "hariḥ om |\nomityetadakṣaramidaṃ sarvaṃ tasyopavyākhyānaṃ bhūtaṃ bhavadbhaviṣyaditi sarvamoṅkāra eva |\nyaccānyattrikālātītaṃ tadapyoṅkāra eva || 1 ||",
+   "colloquial": "harih om |\nom ity etad aksharam idam sarvam tasya upavyaakhyaanam bhuutam bhavad bhavishyad iti sarvam onkaara eva |\nyac ca anyat trikaala atiitam tad apy onkaara eva || 1 ||",
+   "translation_reworded": "Hariḥ Aum. The word Aum is all this. Here is a clear explanation of it. Everything past, present, and future is truly Aum. And whatever lies beyond this threefold idea of time is also truly Aum."
+  },
+  {
+   "key": "2",
+   "chapter": null,
+   "section": null,
+   "section_name": null,
+   "verse": 2,
+   "sanskrit": "सर्वं ह्येतद् ब्रह्मायमात्मा ब्रह्म सोऽयमात्मा चतुष्पात् ॥ २ ॥",
+   "roman": "sarvaṃ hyetad brahmāyamātmā brahma so 'yamātmā catuṣpāt || 2 ||",
+   "colloquial": "sarvam hi etad brahma ayam aatmaa brahma so ayam aatmaa catushpaat || 2 ||",
+   "translation_reworded": "All of this is truly Brahman. This Ātman is Brahman. This Ātman has four quarters."
+  },
+  {
+   "key": "3",
+   "chapter": null,
+   "section": null,
+   "section_name": null,
+   "verse": 3,
+   "sanskrit": "जागरितस्थानो बहिष्प्रज्ञः सप्ताङ्ग एकोनविंशतिमुखः स्थूलभुग्वैश्वानरः प्रथमः पादः ॥ ३ ॥",
+   "roman": "Jāgaritasthāno bahiṣprajñaḥ saptāṅga ekonaviṃśatimukhaḥ sthūlabhugvaiśvānaraḥ prathamaḥ pādaḥ || 3 ||",
+   "colloquial": "jaagarita sthaano bahishprajnah saptaanga ekona vimshati mukhah sthuula bhug vaishvaanarah prathamah paadah || 3 ||",
+   "translation_reworded": "The first quarter (Pāda) is Vaiśvānara. Its field of activity is the waking state. It is aware of outer objects, has seven limbs and nineteen mouths, and experiences gross, material objects."
+  },
+  {
+   "key": "4",
+   "chapter": null,
+   "section": null,
+   "section_name": null,
+   "verse": 4,
+   "sanskrit": "स्वप्नस्थानोऽन्तःप्रज्ञः सप्ताङ्ग एकोनविंशतिमुखः प्रविविक्तभुक्तैजसो द्वितीयः पादः ॥ ४ ॥",
+   "roman": "svapnasthāno'ntaḥprajñaḥ saptāṅga ekonaviṃśatimukhaḥ praviviktabhuktaijaso dvitīyaḥ pādaḥ || 4 ||",
+   "colloquial": "svapna sthaano antah prajnah sapta anga ekona vimshati mukhah pravivikta bhuk taijaso dvitiiyah paadah || 4 ||",
+   "translation_reworded": "The second quarter (Pāda) is Taijasa. Its field of activity is the dream state. It is aware of inner objects, has seven limbs and nineteen mouths, and experiences subtle objects."
+  },
+  {
+   "key": "5",
+   "chapter": null,
+   "section": null,
+   "section_name": null,
+   "verse": 5,
+   "sanskrit": "यत्र सुप्तो न कञ्चन कामं कामयते न कञ्चन स्वप्नं पश्यति तत्सुषुप्तम् ।\nसुषुप्तस्थान एकीभूतः प्रज्ञानघन एवाऽऽनन्दमयो ह्यानन्दभुक् चेतोमुखः प्राज्ञस्तृतीयः पादः ॥ ५ ॥",
+   "roman": "yatra supto na kañcana kāmaṃ kāmayate na kañcana svapnaṃ paśyati tatsuṣuptam |\nsuṣuptasthāna ekībhūtaḥ prajñānaghana evā''nandamayo hyānandabhuk cetomukhaḥ prājñastṛtīyaḥ pādaḥ || 5 ||",
+   "colloquial": "yatra supto na kanchana kaamam kaamayate na kanchana svapnam pashyati tat sushuptam |\nsushupta sthaana ekii bhuutah prajnaana ghana eva aanandamayo hi aananda bhuk ceto mukhah praajnas tritiiyah paadah || 5 ||",
+   "translation_reworded": "Deep sleep is the state in which the sleeper neither desires any object nor sees any dream. The third quarter (Pāda) is Prājña, whose field is deep sleep. In it all experiences become unified, or undifferentiated. It is truly one whole mass of consciousness, full of bliss and experiencing bliss, and it is the path that leads to knowledge of the other two states."
+  },
+  {
+   "key": "6",
+   "chapter": null,
+   "section": null,
+   "section_name": null,
+   "verse": 6,
+   "sanskrit": "एष सर्वेश्वरः एष सर्वज्ञ एषोऽन्तर्याम्येष योनिः सर्वस्य प्रभवाप्ययौ हि भूतानाम् ॥ ६ ॥",
+   "roman": "eṣa sarveśvaraḥ eṣa sarvajña eṣo'ntaryāmyeṣa yoniḥ sarvasya prabhavāpyayau hi bhūtānām || 6 ||",
+   "colloquial": "esha sarveshvarah esha sarvajna esho antaryaamy esha yonih sarvasya prabhava apyayau hi bhuutaanaam || 6 ||",
+   "translation_reworded": "This is the Lord of all. This is the knower of all. This is the inner controller. This is the source of all. From this all things arise, and in this they finally vanish."
+  },
+  {
+   "key": "7",
+   "chapter": null,
+   "section": null,
+   "section_name": null,
+   "verse": 7,
+   "sanskrit": "नान्तःप्रज्ञं न बहिःप्रज्ञं नोभयतःप्रज्ञं न प्रज्ञानघनं न प्रज्ञं नाप्रज्ञम् |\nअदृष्टमव्यवहार्यमग्राह्यमलक्षणं अचिन्त्यमव्यपदेश्यमेकात्मप्रत्ययसारं प्रपञ्चोपशमं शान्तं शिवमद्वैतं चतुर्थं मन्यन्ते स आत्मा स विज्ञेयः ॥ ७ ॥",
+   "roman": "nāntaḥprajñaṃ na bahiḥprajñaṃ nobhayataḥprajñaṃ na prajñānaghanaṃ na prajñaṃ nāprajñam |\nadṛṣṭamavyavahāryamagrāhyamalakṣaṇaṃ acintyamavyapadeśyamekātmapratyayasāraṃ prapañcopaśamaṃ śāntaṃ śivamadvaitaṃ caturthaṃ manyante sa ātmā sa vijñeyaḥ || 7 ||",
+   "colloquial": "na antah prajnam na bahih prajnam na ubhayatah prajnam na prajnaana ghanam na prajnam na aprajnam |\nadrishtam avyavahaaryam agraahyam alakshanam acintyam avyapadeshyam eka aatma pratyaya saaram prapanca upashamam shaantam shivam advaitam caturtham manyante sa aatmaa sa vijneyah || 7 ||",
+   "translation_reworded": "Turīya is not what is aware of the inner, subjective world, nor what is aware of the outer, objective world, nor what is aware of both. It is not a mass of sentience, not simple consciousness, and not insentient. It is unseen by any sense organ, unrelated to anything, beyond the mind's grasp, beyond inference, beyond thought, and beyond description. Its essence is the Consciousness that is the Self alone. It is the negation of all phenomena, the Peaceful, all Bliss, the Non-dual. This is what is known as the fourth (Turīya). This is the Ātman, and it must be realized."
+  },
+  {
+   "key": "8",
+   "chapter": null,
+   "section": null,
+   "section_name": null,
+   "verse": 8,
+   "sanskrit": "सोऽयमात्माध्यक्षरमोङ्कारोऽधिमात्रं पादा मात्रा मात्राश्च पादा अकार उकारो मकार इति ॥ ८ ॥",
+   "roman": "so'yamātmādhyakṣaramoṅkāro'dhimātraṃ pādā mātrā mātrāśca pādā akāra ukāro makāra iti || 8 ||",
+   "colloquial": "so ayam aatmaa adhyaksharam onkaaro adhimaatram paadaa maatraa maatraashcha paadaa akaara ukaaro makaara iti || 8 ||",
+   "translation_reworded": "This same Ātman, described above as having four quarters, is also Aum when considered as a syllable (akṣaram). Aum with its parts is considered in terms of its sounds (letters, mātrāḥ). The quarters are the letters (parts), and the letters are the quarters. The letters here are A, U, and M."
+  },
+  {
+   "key": "9",
+   "chapter": null,
+   "section": null,
+   "section_name": null,
+   "verse": 9,
+   "sanskrit": "जागरितस्थानो वैश्वानरोऽकारः प्रथमा मात्राऽऽप्तेरादिमत्त्वाद्वाप्नोति ह वै सर्वान्कामानादिश्च भवति य एवं वेद ॥ ९ ॥",
+   "roman": "jāgaritasthāno vaiśvānaro'kāraḥ prathamā mātrā''pterādimattvādvāpnoti ha vai sarvāṅkāmānādiśca bhavati ya evaṃ veda || 9 ||",
+   "colloquial": "jaagarita sthaano vaishvaanaro akaarah prathamaa maatraa aapter aadimattvaad vaapnoti ha vai sarvaan kaamaan aadish cha bhavati ya evam veda || 9 ||",
+   "translation_reworded": "Vaiśvānara, whose field of activity is the waking state, is A, the first letter of Aum, because of its all-pervasiveness or because it comes first; these features are common to both. Whoever knows this gains the fulfillment of all desires and becomes the first of all."
+  },
+  {
+   "key": "10",
+   "chapter": null,
+   "section": null,
+   "section_name": null,
+   "verse": 10,
+   "sanskrit": "स्वप्नस्थानस्तैजस उकारो द्वितीया मात्रोत्कर्षादुभयत्वाद्वोत्कर्षति ह वै ज्ञानसन्ततिं समानश्च भवति नास्याब्रह्मवित्कुले भवति य एवं वेद ॥ १० ॥",
+   "roman": "svapnasthānastaijasa ukāro dvitīyā mātrotkarṣādubhayatvādvotkarṣati ha vai jñānasantatiṃ samānaśca bhavati nāsyābrahmavitkule bhavati ya evaṃ veda || 10 ||",
+   "colloquial": "svapna sthaana staijasa ukaaro dvitiiyaa maatra utkarshaad ubhayatvaad va utkarshati ha vai jnaana santatim samaanashcha bhavati na asya abrahmavit kule bhavati ya evam veda || 10 ||",
+   "translation_reworded": "Taijasa, whose field of activity is the dream state, is U (उ), the second letter of Aum, because of its superiority or because it stands between the other two. Whoever knows this gains superior knowledge, is regarded equally by everyone, and has no one in his family line who does not know Brahman."
+  },
+  {
+   "key": "11",
+   "chapter": null,
+   "section": null,
+   "section_name": null,
+   "verse": 11,
+   "sanskrit": "सुषुप्तस्थानः प्राज्ञो मकारस्तृतीया मात्रा मितेरपीतेर्वा मिनोति ह वा इदं सर्वमपीतिश्च भवति य एवं वेद ॥ ११ ॥",
+   "roman": "suṣuptasthānaḥ prājño makārastṛtīyā mātrā miterapītervā minoti ha vā idaṃ sarvamapītiśca bhavati ya evaṃ veda || 11 ||",
+   "colloquial": "sushupta sthaanah praajno makaaras tritiiyaa maatraa miter apiiter vaa minoti ha vaa idam sarvam apiitish ca bhavati ya evam veda || 11 ||",
+   "translation_reworded": "Prājña, whose field is deep sleep, is M (म), the third part (letter) of Aum, because it is both the measure and that in which all become one. Whoever knows this identity of Prājña and M can measure all, that is, realize the true nature of the world, and also holds all within himself."
+  },
+  {
+   "key": "12",
+   "chapter": null,
+   "section": null,
+   "section_name": null,
+   "verse": 12,
+   "sanskrit": "अमात्रश्चतुर्थोऽव्यवहार्यः प्रपञ्चोपशमः शिवोऽद्वैत एवमोङ्कार आत्मैव संविशत्यात्मनाऽऽत्मानं य एवं वेद ॥ १२ ॥",
+   "roman": "amātraścaturtho'vyavahāryaḥ prapañcopaśamaḥ śivo'dvaita evamoṅkāra ātmaiva saṃviśatyātmanā''tmānaṃ ya evaṃ veda || 12 ||",
+   "colloquial": "amaatrash caturtho avyavahaaryah prapanca upashamah shivo advaita evam onkaara aatmaiva samvishaty aatmanaa aatmaanam ya evam veda || 12 ||",
+   "translation_reworded": "That which has no parts (is soundless), which the senses cannot comprehend, which is the end of all phenomena, all bliss, and non-dual, is Aum: it is the fourth and truly the same as the Ātman. Whoever knows this merges his self in the Self."
+  }
+ ]
+}

@@ -1,0 +1,226 @@
+{
+  "bhagavad-gita": {
+    "apiId": "bhagavadGita",
+    "title": "Bhagavad Gita",
+    "aliases": "Bhagavad Gītā, Gita, Geeta",
+    "author": "Traditionally attributed to Vyāsa",
+    "collection": "bhagavad-gita",
+    "files": "Bhagavad-Gita/chapter-*.json",
+    "chapterTerm": "Chapter",
+    "sandbox": true,
+    "guide": "book-reader",
+    "intro": "The Bhagavad Gita is a dialogue between Krishna and Arjuna on the battlefield of Kurukshetra, set within the Mahabharata. Across eighteen chapters it teaches action without attachment, knowledge of the Self, meditation and devotion."
+  },
+  "isha-upanishad": {
+    "apiId": "ishaUpanishad",
+    "title": "Isha Upanishad",
+    "aliases": "Īśāvāsya Upaniṣad, Ishavasya Upanishad, Ishopanishad",
+    "author": "Attributed in the catalog to the Vedic rishis",
+    "collection": "upanishads",
+    "files": "Upanishads/isha-upanishad.json",
+    "chapterTerm": "Chapter",
+    "sandbox": true,
+    "guide": "upanishads",
+    "intro": "One of the shortest principal Upanishads, the Isha Upanishad forms the last chapter of the Shukla Yajurveda. Its eighteen verses open by seeing the divine in everything and reconcile action in the world with knowledge of the Self."
+  },
+  "kena-upanishad": {
+    "apiId": "kenaUpanishad",
+    "title": "Kena Upanishad",
+    "aliases": "Kena Upaniṣad, Kenopanishad",
+    "author": "Attributed in the catalog to the Vedic rishis",
+    "collection": "upanishads",
+    "files": "Upanishads/kenopanishad.json",
+    "chapterTerm": "Khanda",
+    "guide": "upanishads",
+    "intro": "The Kena Upanishad of the Sama Veda opens by asking what directs the mind, speech and senses. Its first two khandas pursue the question directly; the last two tell the story of the gods, the mysterious yaksha and Uma."
+  },
+  "katha-upanishad": {
+    "apiId": "kathaUpanishad",
+    "title": "Katha Upanishad",
+    "aliases": "Kaṭha Upaniṣad, Kathopanishad",
+    "author": "Attributed in the catalog to the Vedic rishis",
+    "collection": "upanishads",
+    "files": "Upanishads/kathopanishad.json",
+    "chapterTerm": "Adhyaya",
+    "guide": "upanishads",
+    "intro": "The Katha Upanishad tells of the boy Nachiketa, who goes to Yama, the lord of death, and asks what happens after a person dies. Its two adhyayas, each of three vallis, teach the imperishable Self and the path to it."
+  },
+  "prashna-upanishad": {
+    "apiId": "prashnaUpanishad",
+    "title": "Prashna Upanishad",
+    "aliases": "Praśna Upaniṣad, Prashnopanishad",
+    "author": "Attributed in the catalog to the Vedic rishis",
+    "collection": "upanishads",
+    "files": "Upanishads/prashnopanishad.json",
+    "chapterTerm": "Question",
+    "guide": "upanishads",
+    "intro": "In the Prashna Upanishad of the Atharva Veda, six seekers each bring one question to the sage Pippalada, on the origin of beings, the life force, sleep, the meaning of Om and the Self with its sixteen parts."
+  },
+  "mundaka-upanishad": {
+    "apiId": "mundakaUpanishad",
+    "title": "Mundaka Upanishad",
+    "aliases": "Muṇḍaka Upaniṣad, Mundakopanishad",
+    "author": "Attributed in the catalog to the Vedic rishis",
+    "collection": "upanishads",
+    "files": "Upanishads/mundaka-upanishad.json",
+    "chapterTerm": "Mundaka",
+    "guide": "upanishads",
+    "intro": "The Mundaka Upanishad of the Atharva Veda distinguishes lower knowledge from the higher knowledge of the imperishable. Its third mundaka contains the phrase Satyameva Jayate, the national motto of India."
+  },
+  "mandukya-upanishad": {
+    "apiId": "mandukyaUpanishad",
+    "title": "Mandukya Upanishad",
+    "aliases": "Māṇḍūkya Upaniṣad, Mandukyopanishad",
+    "author": "Attributed in the catalog to the Vedic rishis",
+    "collection": "upanishads",
+    "files": "Upanishads/mandukya-upanishad.json",
+    "chapterTerm": "Chapter",
+    "guide": "upanishads",
+    "intro": "The shortest of the principal Upanishads, the Mandukya identifies Om with all that exists and uses its sounds to describe waking, dreaming, deep sleep and the fourth state beyond them."
+  },
+  "taittiriya-upanishad": {
+    "apiId": "taittiriyaUpanishad",
+    "title": "Taittiriya Upanishad",
+    "aliases": "Taittirīya Upaniṣad, Taittiriyopanishad",
+    "author": "Attributed in the catalog to the Vedic rishis",
+    "collection": "upanishads",
+    "files": "Upanishads/taittiriya-upanishad.json",
+    "chapterTerm": "Valli",
+    "chapterNames": { "1": "Shiksha Valli", "2": "Brahmananda Valli", "3": "Bhrigu Valli" },
+    "guide": "upanishads",
+    "intro": "The Taittiriya Upanishad of the Krishna Yajurveda moves from instruction in recitation and conduct to the five sheaths of the person and the bliss of Brahman, ending with Bhrigu's search taught by his father Varuna."
+  },
+  "chandogya-upanishad": {
+    "apiId": "chandogyaUpanishad",
+    "title": "Chandogya Upanishad",
+    "aliases": "Chāndogya Upaniṣad, Chandogyopanishad",
+    "author": "Attributed in the catalog to the Vedic rishis",
+    "collection": "upanishads",
+    "files": "Upanishads/chandogya-upanishad.json",
+    "chapterTerm": "Prapathaka",
+    "guide": "upanishads",
+    "intro": "One of the oldest and longest Upanishads, the Chandogya belongs to the Sama Veda. Its eight prapathakas range from meditations on the chant to Uddalaka's teaching to his son Shvetaketu: tat tvam asi, you are that."
+  },
+  "kaivalya-upanishad": {
+    "apiId": "kaivalyaUpanishad",
+    "title": "Kaivalya Upanishad",
+    "aliases": "Kaivalya Upaniṣad, Kaivalyopanishad",
+    "author": "Attributed in the catalog to the Vedic rishis",
+    "collection": "upanishads",
+    "files": "Upanishads/kaivalya-upanishad.json",
+    "chapterTerm": "Chapter",
+    "guide": "upanishads",
+    "intro": "In the Kaivalya Upanishad, Brahma teaches the sage Ashvalayana the path to kaivalya, liberation, through faith, devotion and meditation on the Self as one with Shiva."
+  },
+  "yoga-sutras": {
+    "apiId": "yogaSutra",
+    "title": "Yoga Sutras of Patanjali",
+    "aliases": "Yoga Sūtra, Yogasutra, Pātañjala Yoga Sūtra",
+    "author": "Traditionally attributed to Patanjali",
+    "collection": "yoga",
+    "files": "Sutras/yogasutra.json",
+    "chapterTerm": "Pada",
+    "chapterNames": {
+      "1": "Samadhi Pada",
+      "2": "Sadhana Pada",
+      "3": "Vibhuti Pada",
+      "4": "Kaivalya Pada"
+    },
+    "guide": "book-reader",
+    "intro": "The Yoga Sutras set out classical yoga in 196 short aphorisms across four padas: concentration, practice including the eight limbs, the powers that arise, and liberation. The second sutra defines yoga as the stilling of the mind's activity."
+  },
+  "brahma-sutras": {
+    "apiId": "brahmaSutras",
+    "title": "Brahma Sutras",
+    "aliases": "Brahma Sūtras, Vedanta Sutras",
+    "author": "Traditionally attributed to Badarayana",
+    "collection": "vedanta",
+    "files": "Sutras/brahma-sutras.json",
+    "chapterTerm": "Adhyaya",
+    "chapterNames": {
+      "1": "Samanvaya Adhyaya",
+      "2": "Avirodha Adhyaya",
+      "3": "Sadhana Adhyaya",
+      "4": "Phala Adhyaya"
+    },
+    "guide": "book-reader",
+    "intro": "The Brahma Sutras systematize the teaching of the Upanishads in terse aphorisms. Their four adhyayas establish Brahman as the Upanishads' subject, answer objections, describe the means to knowledge and set out its result."
+  },
+  "ashtavakra-gita": {
+    "apiId": "ashtavakraGita",
+    "title": "Ashtavakra Gita",
+    "aliases": "Aṣṭāvakra Gītā, Ashtavakra Samhita",
+    "author": "Traditionally attributed to the sage Ashtavakra",
+    "collection": "advaita-vedanta-prakarana-granthas",
+    "files": "Gitas/ashtavakra-gita.json",
+    "chapterTerm": "Chapter",
+    "guide": "book-reader",
+    "intro": "The Ashtavakra Gita is a dialogue in which the sage Ashtavakra teaches King Janaka that the Self is already free. Its twenty chapters state non-dual Advaita teaching directly, without ritual or gradual practice."
+  },
+  "avadhuta-gita": {
+    "apiId": "avadhutaGita",
+    "title": "Avadhuta Gita",
+    "aliases": "Avadhūta Gītā",
+    "author": "Traditionally attributed to Dattatreya",
+    "collection": "advaita-vedanta-prakarana-granthas",
+    "files": "Gitas/avadhuta-gita.json",
+    "chapterTerm": "Chapter",
+    "guide": "book-reader",
+    "intro": "The Avadhuta Gita gives the songs of an avadhuta, one who has cast off all worldly concerns, traditionally identified with Dattatreya. Its eight chapters declare the Self to be beyond all distinctions."
+  },
+  "vivekachudamani": {
+    "apiId": "vivekachudamani",
+    "title": "Vivekachudamani",
+    "aliases": "Vivekacūḍāmaṇi, Crest-Jewel of Discrimination",
+    "author": "Traditionally attributed to Adi Shankaracharya",
+    "collection": "advaita-vedanta-prakarana-granthas",
+    "files": "Prakarana-Granthas/vivekachudamani.json",
+    "chapterTerm": "Chapter",
+    "guide": "book-reader",
+    "intro": "The Vivekachudamani, the crest-jewel of discrimination, is a dialogue between a teacher and a disciple on the qualifications of a seeker, the distinction between the Self and the non-Self, and liberation while living."
+  },
+  "atmabodha": {
+    "apiId": "atmabodha",
+    "title": "Atmabodha",
+    "aliases": "Ātmabodha, Knowledge of the Self",
+    "author": "Traditionally attributed to Adi Shankaracharya",
+    "collection": "advaita-vedanta-prakarana-granthas",
+    "files": "Prakarana-Granthas/atmabodha.json",
+    "chapterTerm": "Chapter",
+    "guide": "book-reader",
+    "intro": "Atmabodha, knowledge of the Self, is a short introductory work of Advaita Vedanta in verse. Through images such as the rope mistaken for a snake, it explains how knowledge alone removes ignorance of the Self."
+  },
+  "tattvabodha": {
+    "apiId": "tattvabodha",
+    "title": "Tattvabodha",
+    "aliases": "Tattvabodha, Knowledge of Truth",
+    "author": "Traditionally attributed to Adi Shankaracharya",
+    "collection": "advaita-vedanta-prakarana-granthas",
+    "files": "Prakarana-Granthas/tattvabodha.json",
+    "chapterTerm": "Chapter",
+    "guide": "book-reader",
+    "intro": "Tattvabodha is a primer of Vedanta terms in question and answer form. It defines the fourfold qualifications of a seeker, the three bodies, the five sheaths, the three states and the creation of the elements."
+  },
+  "aparokshanubhuti": {
+    "apiId": "aparokshanubhuti",
+    "title": "Aparokshanubhuti",
+    "aliases": "Aparokṣānubhūti, Direct Experience",
+    "author": "Traditionally attributed to Adi Shankaracharya",
+    "collection": "advaita-vedanta-prakarana-granthas",
+    "files": "Prakarana-Granthas/aparokshanubhuti.json",
+    "chapterTerm": "Chapter",
+    "guide": "book-reader",
+    "intro": "Aparokshanubhuti, direct experience, explains how a seeker comes to know the Self immediately rather than as an idea. It also sets out a fifteen-step Raja Yoga reinterpreted in terms of Advaita."
+  },
+  "upadesa-saaram": {
+    "apiId": "upadesaSaaram",
+    "title": "Upadesa Saaram",
+    "aliases": "Upadeśa Sāram, Essence of Instruction",
+    "author": "Ramana Maharshi",
+    "collection": "advaita-vedanta-prakarana-granthas",
+    "files": "Ramana-Maharshi/upadesa-saaram.json",
+    "chapterTerm": "Chapter",
+    "guide": "book-reader",
+    "intro": "Upadesa Saaram, the essence of instruction, is Ramana Maharshi's thirty-verse summary of the paths of action, devotion, yoga and knowledge, culminating in self-inquiry into the source of the I-thought."
+  }
+}

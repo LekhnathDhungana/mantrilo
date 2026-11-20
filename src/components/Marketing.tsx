@@ -11,16 +11,13 @@ export default function Marketing() {
         A Hindu content API for developers building apps and websites. Astrology calculations are
         included in every plan.
       </Text>
-      <Link style={styles.link} href="/access">
+      <Link style={styles.link} href="/contact">
         Request API access ↗
       </Link>
       {[
-        [
-          'Mantras',
-          'Original text, transliteration, translation, meaning, and source references where available.',
-        ],
+        ['Mantras', 'Original Sanskrit, transliteration, and source references where available.'],
         ['Sacred audio', 'Recordings linked to relevant content.'],
-        ['Shastras & books', 'Books by collection, chapter and verse, including the Upanishads.'],
+        ['Books', 'Sanskrit scriptures and English retellings of the Ramayana and Mahabharata.'],
       ].map(([title, copy]) => (
         <View style={styles.card} key={title}>
           <Text style={styles.heading}>{title}</Text>
@@ -40,7 +37,7 @@ export default function Marketing() {
             {p.catalog} · {p.products} customer products{'\n'}
             {p.support}
           </Text>
-          <Link style={styles.link} href={`/access?plan=${p.name}`}>
+          <Link style={styles.link} href="/contact">
             Request {p.name} access ↗
           </Link>
         </View>

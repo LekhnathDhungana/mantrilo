@@ -17,7 +17,7 @@ import {
 } from '../api/usage.mjs';
 import { createApiServer } from '../api/server.mjs';
 import { createAstrologyService } from '../server/astrology/service.mjs';
-import { demoPustak } from '../server/pustak.mjs';
+import { demoPustak, FirestorePustak } from '../server/pustak.mjs';
 
 const mantra = (n, extra = {}) => ({
   id: `mantra-${String(n).padStart(2, '0')}`,
@@ -127,6 +127,55 @@ test('requests without a valid, active key are rejected and not charged', async 
   assert.equal((await f.call('/v1/mantras', f.keys.sandbox, { method: 'POST' })).status, 405);
 });
 
+test('prose books return chapter sections with source references', async (t) => {
+  const header = {
+    chapter: 1,
+    name: 'The opening',
+    format: 'prose',
+    source: 'Ramayana — Bala Kanda',
+    sectionCount: 1,
+    verseCount: 0,
+  };
+  const sections = [{ sectionNumber: 1, title: 'Ayodhya', paragraphs: ['The story begins.'] }];
+  const docs = {
+    'pustak_metadata/catalogue': {
+      books: [
+        { id: 'ramayana', isLive: true, format: 'prose', language: 'en', totalVerses: 0 },
+      ],
+    },
+    'pustak/ramayana': { isLive: true, chapterIndex: [header] },
+    'pustak/ramayana/chapters/1': { ...header, sections },
+  };
+  const books = new FirestorePustak({
+    doc(path) {
+      assert.ok(docs[path]);
+      return {
+        get: async () => ({
+          exists: true,
+          get: (key) => docs[path][key],
+          data: () => docs[path],
+        }),
+      };
+    },
+  });
+  const f = await fixture(t, { books });
+  const path = '/v1/books/ramayana';
+  const book = await f.call(path, f.keys.live);
+  assert.equal(book.status, 200);
+  assert.equal(book.body.data.format, 'prose');
+  assert.equal(book.body.data.language, 'en');
+  assert.equal(book.body.data.chapters[0].source, header.source);
+  assert.equal(book.body.data.chapters[0].sections, undefined);
+
+  const chapter = await f.call(`${path}/chapters/1`, f.keys.live);
+  assert.equal(chapter.status, 200);
+  assert.deepEqual(chapter.body.data.sections, sections);
+  assert.deepEqual(chapter.body.data.verses, []);
+  assert.equal(chapter.body.data.nextOffset, null);
+  assert.equal((await f.call(`${path}/chapters/1?offset=30`, f.keys.live)).status, 404);
+  assert.equal((await f.call(path, f.keys.sandbox)).status, 404);
+});
+
 test('book discovery and reading honor authentication, previews, and usage', async (t) => {
   const f = await fixture(t, { books: demoPustak });
   const discovery = await f.call('/v1');
@@ -181,6 +230,13 @@ test('live keys need a paid plan; sandbox keys read the sample on every plan', a
 
 test('lists paginate with an opaque cursor and filter by deity', async (t) => {
   const f = await fixture(t);
+  const sample = await f.call('/v1/mantras?limit=1', f.keys.sandbox);
+  assert.ok(sample.body.nextCursor);
+  const sampleNext = await f.call(
+    `/v1/mantras?limit=1&cursor=${sample.body.nextCursor}`,
+    f.keys.sandbox,
+  );
+  assert.equal(sampleNext.body.data[0].id, 'mantra-02');
   const first = await f.call('/v1/mantras?limit=5', f.keys.live);
   assert.equal(first.status, 200);
   assert.deepEqual(
@@ -206,7 +262,8 @@ test('lists paginate with an opaque cursor and filter by deity', async (t) => {
 test('responses use the public shape and never expose storage paths or links', async (t) => {
   const f = await fixture(t);
   const detail = await f.call('/v1/mantras/mantra-01', f.keys.live);
-  assert.equal(detail.body.data.verses[0].wordMeanings[0].meaning, 'the sacred syllable');
+  assert.equal(detail.body.data.verses[0].translation, null);
+  assert.deepEqual(detail.body.data.verses[0].wordMeanings, []);
   assert.equal(detail.body.data.audio.href, '/v1/mantras/mantra-01/audio');
   assert.equal(detail.body.data.description, 'Short example');
   assert.ok(!('seoDescription' in detail.body.data));
@@ -308,6 +365,56 @@ test('the Free plan stops at 500 calls a month, and rate limits apply', async (t
   assert.equal(limited.status, 429);
   assert.equal(limited.body.error.code, 'rate_limited');
   assert.ok(Number(limited.headers.get('retry-after')) >= 1);
+});
+
+test('an unlimited workspace can exceed both request quotas and still records successful calls', async (t) => {
+  const f = await fixture(t, { rate: { rate: 1000, burst: 1000 } });
+  const limit = allowance(getPlan('Starter')).requests;
+  for (const lane of ['sandbox', 'live']) {
+    await f.sink.add({
+      workspaceId: 'w1',
+      period: currentPeriod(),
+      lane,
+      requests: limit,
+      audioBytes: lane === 'sandbox' ? SANDBOX_AUDIO_BYTES : 0,
+    });
+    const blocked = await f.call('/v1/mantras', f.keys[lane]);
+    assert.equal(blocked.status, 429);
+    assert.equal(blocked.body.error.code, 'quota_exceeded');
+  }
+  await f.store.transact('w1', (w) => {
+    w.unlimitedRequestsSince = new Date().toISOString();
+  });
+  for (const lane of ['sandbox', 'live']) {
+    const result = await f.call('/v1/mantras', f.keys[lane]);
+    assert.equal(result.status, 200);
+    assert.equal(result.headers.get('x-quota-requests-remaining'), 'unlimited');
+    assert.equal(net(f.sink, lane), limit + 1);
+  }
+  const audio = await f.call('/v1/mantras/mantra-01/audio', f.keys.sandbox);
+  assert.equal(audio.status, 429);
+  assert.equal(audio.body.error.code, 'audio_quota_exceeded');
+  assert.equal(audio.headers.get('x-quota-requests-remaining'), 'unlimited');
+  assert.equal(net(f.sink, 'sandbox'), limit + 1);
+
+  await f.store.transact('w1', (w) => {
+    delete w.unlimitedRequestsSince;
+  });
+  assert.equal((await f.call('/v1/mantras', f.keys.live)).body.error.code, 'quota_exceeded');
+});
+
+test('only an explicit live promo grants a free workspace production catalog access', async (t) => {
+  const f = await fixture(t, { plan: 'Free' });
+  const get = () => f.call('/v1/mantras/mantra-12', f.keys.live);
+  await f.store.transact('w1', (w) => { w.unlimitedRequestsSince = new Date().toISOString(); });
+  assert.equal((await get()).body.error.code, 'plan_inactive');
+  await f.store.transact('w1', (w) => { w.promoLiveAccess = true; });
+  const result = await get();
+  assert.equal(result.status, 200);
+  assert.equal(result.headers.get('x-quota-requests-remaining'), 'unlimited');
+  assert.equal(result.headers.get('x-ratelimit-limit'), '2');
+  await f.store.transact('w1', (w) => { delete w.unlimitedRequestsSince; });
+  assert.equal((await get()).body.error.code, 'plan_inactive');
 });
 
 test('Vedic operations are authenticated, normalized, and refunded on upstream errors', async (t) => {
@@ -846,7 +953,7 @@ test('book collections are callable directly and paginate with limit and cursor'
     ...extra,
   });
   const catalogue = [
-    book('ishaUpanishad', 'Upanishads'),
+    book('ishaUpanishad', '', { category: '' }),
     book('kenaUpanishad', 'Upanishads'),
     book('kathaUpanishad', 'Upanishads', { shortDescription: '' }),
     book('bhagavadGita', 'Bhagavad Gita'),

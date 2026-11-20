@@ -1,11 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, router, useLocalSearchParams } from 'expo-router';
 import { Arrow, KeyButton } from './Chrome.web';
 import { CodePanel } from './Code.web';
+import { useHydrated } from './useHydrated';
 import { AREAS, type Area, type Item } from '../../data/library';
+import { astrologySlug } from '../../data/astrology-pages';
 
 // The catalog used by /library and /astrology-api. Search, area, facet and the open item all live
 // in the URL, so links are shareable and browser back returns to the same filtered list.
+
+// Every astrology capability has its own reference page; other items open in place.
+const itemPage = (item: Item) =>
+  item.area === 'astrology'
+    ? `/astrology-api/${astrologySlug(item.id.replace(/^astrology-/, ''))}`
+    : null;
 
 type Params = { q?: string; area?: string; facet?: string; item?: string };
 
@@ -47,15 +55,21 @@ export function CatalogBrowser({
   placeholder?: string;
   intro?: (area: Area | undefined) => React.ReactNode;
 }) {
-  const params = useCatalogParams();
+  const routeParams = useCatalogParams();
+  const hydrated = useHydrated();
+  const params = hydrated ? routeParams : {};
+
   const area = (fixedArea ?? AREAS.find((a) => a.id === params.area)?.id) as Area | undefined;
-  // The box filters immediately; the URL follows so back and shared links restore it.
-  const [text, setText] = useState(params.q ?? '');
-  const setQuery = (value: string) => {
-    setText(value);
-    router.setParams({ q: value || undefined });
-  };
-  const q = text.trim().toLowerCase();
+  const urlQuery = params.q ?? '';
+  const [draft, setDraft] = useState<{ value: string; initialQuery: string }>();
+  const draftValue = draft?.initialQuery === urlQuery ? draft.value : undefined;
+  const text = draftValue ?? urlQuery;
+  useEffect(() => {
+    if (draftValue === undefined || draftValue === urlQuery) return;
+    const timer = setTimeout(() => router.setParams({ q: draftValue || undefined }), 200);
+    return () => clearTimeout(timer);
+  }, [draftValue, urlQuery]);
+  const q = useDeferredValue(text.trim().toLowerCase());
   const inArea = useMemo(() => items.filter((item) => !area || item.area === area), [items, area]);
   const facets = useMemo(() => [...new Set(inArea.map((item) => item.facet))], [inArea]);
   const facet = area && facets.includes(params.facet ?? '') ? params.facet : undefined;
@@ -95,7 +109,7 @@ export function CatalogBrowser({
             type="search"
             placeholder={placeholder}
             value={text}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => setDraft({ value: event.target.value, initialQuery: urlQuery })}
           />
         </label>
         {!fixedArea && (
@@ -158,7 +172,12 @@ export function CatalogBrowser({
             <li key={item.id}>
               <Link
                 push
-                href={{ pathname, params: { ...listParams, item: item.id } }}
+                href={
+                  itemPage(item) ?? {
+                    pathname,
+                    params: { ...listParams, item: item.id },
+                  }
+                }
                 className="mh-result"
               >
                 <span className={`mh-type mh-type-${item.area}`}>{item.type}</span>
@@ -187,7 +206,6 @@ export function CatalogBrowser({
             type="button"
             className="mh-btn mh-btn-ghost"
             onClick={() => {
-              setText('');
               router.setParams({ q: undefined, facet: undefined });
             }}
           >
@@ -242,8 +260,8 @@ export function ItemDetail({
           )}
           {item.limited && (
             <p className="mh-callout mh-callout-warn">
-              Limited: this operation depends on an upstream provider and may be unavailable. It
-              returns 503 astrology_operation_unavailable when it is, and is not charged.
+              Limited: this Mantrilo operation may be unavailable. It returns 503
+              astrology_operation_unavailable when it is, and is not charged.
             </p>
           )}
           <div className="mh-actions">

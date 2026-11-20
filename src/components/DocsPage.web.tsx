@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Link } from 'expo-router';
-import { Callout, DataTable, KeyButton, SiteFrame } from './site/Chrome.web';
+import { Link, Redirect, useLocalSearchParams } from 'expo-router';
+import { guideHref } from '../data/public-guides';
+import { useHydrated } from './site/useHydrated';
+import type { Guide } from '../../developer/src/data/integrations';
+import { Arrow, Callout, DataTable, KeyButton, SiteFrame } from './site/Chrome.web';
+import { GOALS, GuideView, findGuide, guideSandboxHref } from './site/Guides.web';
 import { CodePanel } from './site/Code.web';
 import { plans } from '../data/plans';
+import { consoleUrl, consoleSandboxUrl } from '../data/site';
 import { astrologyPositionsExample, errors, rateLimits } from '../data/api-reference';
+import { epicBooks } from '../../developer/src/data/epic-books';
 import {
   audioResponse,
   bookResponse,
@@ -18,7 +24,8 @@ import {
   mantraResponse,
 } from '../data/examples';
 
-// Public API reference. Each endpoint keeps its parameters, request and response together.
+// Public docs: guides by goal (/docs?guide=…) and the API reference, under one sidebar. Each
+// endpoint keeps its parameters, request and response together.
 // Contracts mirror developer/api/server.mjs, developer/api/content.mjs and developer/server/pustak.mjs.
 
 type Param = [name: string, where: string, rule: string];
@@ -107,13 +114,14 @@ const ENDPOINTS: Endpoint[] = [
     ],
     request: collectionRequest('upanishads'),
     response: collectionResponse,
-    notes: 'Sandbox keys list only the sample books: Isha Upanishad and the Bhagavad Gita.',
+    notes:
+      'Sandbox keys list Isha Upanishad and the Bhagavad Gita. Other collections may return no sandbox titles.',
   },
   {
     id: 'get-book',
     method: 'GET',
     path: '/v1/books/{id}',
-    summary: 'A book summary with its chapter index. Use the chapter numbers to read verses.',
+    summary: 'A book summary with its chapter index. Use the chapter numbers to request text.',
     params: [['id', 'path', 'The book id from a list response.']],
     request: curlGet('/v1/books/ishaUpanishad'),
     response: bookResponse,
@@ -128,21 +136,27 @@ const ENDPOINTS: Endpoint[] = [
     id: 'get-chapter',
     method: 'GET',
     path: '/v1/books/{id}/chapters/{chapter}',
-    summary: 'One page of a chapter’s verses, up to 30 at a time.',
+    summary: 'A page of up to 30 verses or a complete chapter of a prose retelling.',
     params: [
       ['id', 'path', 'The book id.'],
       ['chapter', 'path', 'A chapter number from the book’s chapter index.'],
-      ['offset', 'query', 'The nextOffset from the previous page. A multiple of the page size.'],
+      ['offset', 'query', 'For verses, pass nextOffset from the previous page. Omit for prose.'],
     ],
     request: curlGet('/v1/books/ishaUpanishad/chapters/1'),
     response: chapterResponse,
-    notes: 'Sandbox keys read the first three verses of the opening chapter.',
+    notes: (
+      <>
+        Sandbox keys read the first three verses of the opening chapter of sample books.{' '}
+        <a href="#epic-retellings">Ramayana and Mahabharata</a> require a live key.
+      </>
+    ),
   },
   {
     id: 'astrology-catalog',
     method: 'GET',
     path: '/v1/astrology',
-    summary: 'Every astrology operation with its id, category, availability and sample input.',
+    summary:
+      'The current operation catalog, with IDs, categories, and sample inputs where available.',
     params: [],
     key: false,
     request: 'curl "$MANTRILO_API_URL/v1/astrology"',
@@ -188,6 +202,7 @@ const GROUPS: { title: string; links: [string, string][] }[] = [
     title: 'Get started',
     links: [
       ['quickstart', 'Quickstart'],
+      ['guides', 'Guides by goal'],
       ['authentication', 'Authentication'],
       ['environments', 'Sandbox and live'],
     ],
@@ -196,6 +211,7 @@ const GROUPS: { title: string; links: [string, string][] }[] = [
     title: 'Concepts',
     links: [
       ['pagination', 'Pagination'],
+      ['epic-retellings', 'Ramayana and Mahabharata'],
       ['errors', 'Errors'],
       ['limits', 'Usage limits'],
     ],
@@ -227,11 +243,11 @@ function useActiveSection(ids: string[]) {
   return active;
 }
 
-function DocsNav() {
+function DocsNav({ guide }: { guide?: string }) {
   const [query, setQuery] = useState('');
   const input = useRef<HTMLInputElement>(null);
   const ids = useMemo(() => GROUPS.flatMap((g) => g.links.map(([id]) => id)), []);
-  const active = useActiveSection(ids);
+  const active = useActiveSection(guide ? [] : ids);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
@@ -247,6 +263,7 @@ function DocsNav() {
     ...g,
     links: g.links.filter(([, label]) => !q || label.toLowerCase().includes(q)),
   })).filter((g) => g.links.length);
+  const goals = GOALS.filter((g) => !q || g.goal.toLowerCase().includes(q));
   return (
     <nav className="mh-docs-nav" aria-label="Documentation">
       <label className="mh-search">
@@ -271,32 +288,47 @@ function DocsNav() {
         />
         <kbd aria-hidden="true">⌘K</kbd>
       </label>
-      {groups.map((group) => (
-        <div key={group.title} className="mh-docs-group">
-          <p>{group.title}</p>
+      {goals.length > 0 && (
+        <div className="mh-docs-group">
+          <p>Guides</p>
           <ul>
-            {group.links.map(([id, label]) => (
-              <li key={id}>
-                <a href={`#${id}`} aria-current={active === id ? 'location' : undefined}>
-                  {label}
-                </a>
+            {goals.map((g) => (
+              <li key={g.id}>
+                <Link
+                  push
+                  href={guideHref(g.id)}
+                  aria-current={guide === g.id ? 'page' : undefined}
+                >
+                  {g.goal}
+                </Link>
               </li>
             ))}
           </ul>
         </div>
+      )}
+      {groups.map((group) => (
+        <div key={group.title} className="mh-docs-group">
+          <p>{group.title}</p>
+          <ul>
+            {group.links.map(([id, label]) =>
+              guide ? (
+                <li key={id}>
+                  <Link href={`/docs#${id}`}>{label}</Link>
+                </li>
+              ) : (
+                <li key={id}>
+                  <a href={`#${id}`} aria-current={active === id ? 'location' : undefined}>
+                    {label}
+                  </a>
+                </li>
+              ),
+            )}
+          </ul>
+        </div>
       ))}
-      {!groups.length && <p className="mh-docs-none">No sections match “{query}”.</p>}
-      <div className="mh-docs-group">
-        <p>Guides</p>
-        <ul>
-          <li>
-            <Link href="/implementation">Implementation guides</Link>
-          </li>
-          <li>
-            <Link href="/library">Content library</Link>
-          </li>
-        </ul>
-      </div>
+      {!groups.length && !goals.length && (
+        <p className="mh-docs-none">No sections match “{query}”.</p>
+      )}
     </nav>
   );
 }
@@ -344,164 +376,281 @@ function EndpointSection({ endpoint }: { endpoint: Endpoint }) {
       </div>
       <div className="mh-endpoint-code">
         <CodePanel title="Request" method={endpoint.method} code={endpoint.request} />
+        {endpoint.method === 'GET' && (
+          <a className="mh-back" href={`${consoleUrl}/docs?tab=try`}>
+            Open the sandbox request tester <Arrow />
+          </a>
+        )}
+        {endpoint.method === 'POST' && endpoint.id === 'astrology-calculate' && (
+          <a className="mh-back" href={`${consoleUrl}/docs?tab=astrology&operation=positions`}>
+            Try planetary positions in the sandbox <Arrow />
+          </a>
+        )}
         <CodePanel title="Response" status={endpoint.status ?? '200 OK'} json={endpoint.response} />
       </div>
     </section>
   );
 }
 
+export function GuideDocument({ guide, path }: { guide: Guide; path: string }) {
+  const sandbox = guideSandboxHref(guide);
+  return (
+    <SiteFrame path={path}>
+      <div className="mh-wrap mh-docs">
+        <DocsNav guide={guide.id} />
+        <article className="mh-docs-main" key={guide.id}>
+          <header className="mh-docs-head">
+            <p className="mh-eyebrow">
+              <Link href="/docs#guides">Guides</Link> · {guide.area}
+              {guide.limited && ' · Limited'}
+            </p>
+            <h1>{guide.name}</h1>
+            <p className="mh-page-lede">{guide.summary}</p>
+            {sandbox && <KeyButton href={sandbox}>Try this request in the sandbox</KeyButton>}
+          </header>
+          <GuideView guide={guide} />
+        </article>
+      </div>
+    </SiteFrame>
+  );
+}
+
 export default function DocsPage() {
-  const quickstart = curlGet('/v1/mantras?limit=1');
+  const { guide: requested } = useLocalSearchParams<{ guide?: string }>();
+  const hydrated = useHydrated();
+  const guide = hydrated ? findGuide(requested) : undefined;
+  if (guide) {
+    const destination = guideHref(guide.id);
+    if (destination.startsWith('/docs/guides/')) return <Redirect href={destination} />;
+    return <GuideDocument guide={guide} path="/docs" />;
+  }
   return (
     <SiteFrame path="/docs">
       <div className="mh-wrap mh-docs">
         <DocsNav />
-        <article className="mh-docs-main">
-          <header className="mh-docs-head">
-            <p className="mh-eyebrow">API reference</p>
-            <h1>Mantrilo API documentation</h1>
-            <p className="mh-page-lede">
-              One REST API for mantras, sacred audio, scripture books and astrology. Every example
-              uses the real request and response format.
-            </p>
-          </header>
-
-          <Section id="quickstart" title="Quickstart">
-            <div className="mh-docs-split">
-              <ol className="mh-steps">
-                <li>
-                  <b>Get a key.</b> Every account starts with a sandbox key.{' '}
-                  <KeyButton className="mh-inline-link">Get API key</KeyButton>
-                </li>
-                <li>
-                  <b>Keep it on your server.</b> Set <code>MANTRILO_API_KEY</code> and{' '}
-                  <code>MANTRILO_API_URL</code> in your backend’s environment.
-                </li>
-                <li>
-                  <b>Make a request.</b> List one mantra, then follow{' '}
-                  <a href="#list-mantras">the endpoint reference</a> or a{' '}
-                  <Link href="/implementation">guide for your goal</Link>.
-                </li>
-              </ol>
-              <CodePanel title="Your first request" method="GET" code={quickstart} />
-            </div>
-          </Section>
-
-          <Section id="authentication" title="Authentication">
-            <p>
-              Send your key on every request as <code>Authorization: Bearer YOUR_KEY</code>. The API
-              blocks browser cross-origin calls, so call it from your server and pass only the
-              content to your app. Never put a key in a web bundle, mobile app or repository. If a
-              key leaks, regenerate it in the console; the old key stops working within a minute.
-            </p>
-          </Section>
-
-          <Section id="environments" title="Sandbox and live">
-            <DataTable
-              label="Key environments"
-              head={['Environment', 'Key prefix', 'What it reads']}
-              codeFirst={false}
-              rows={[
-                [
-                  <span key="s" className="mh-chip mh-chip-accent">
-                    Sandbox
-                  </span>,
-                  <code key="p">mtr_sbx_</code>,
-                  'Five sample mantras, the sample books’ opening verses, and every astrology operation. Every account has one.',
-                ],
-                [
-                  <span key="l" className="mh-chip mh-chip-ok">
-                    Live
-                  </span>,
-                  <code key="p">mtr_live_</code>,
-                  'The full available catalog. Issued with a paid plan.',
-                ],
-              ]}
-            />
-            <p className="mh-muted">
-              Sandbox and live keep separate usage totals. A sandbox request for an item outside the
-              sample returns <code>403 sandbox_sample_only</code>.
-            </p>
-          </Section>
-
-          <Section id="pagination" title="Pagination">
-            <div className="mh-docs-split">
-              <div>
-                <p>
-                  List endpoints return <code>nextCursor</code>. Pass it back as <code>cursor</code>{' '}
-                  to read the next page. It is <code>null</code> on the last page. Set the page size
-                  with <code>limit</code> (1–100).
-                </p>
-                <p>
-                  Chapter pages return <code>nextOffset</code>. Pass it back as <code>offset</code>{' '}
-                  to read more verses of the same chapter.
-                </p>
-              </div>
-              <CodePanel
-                title="Next page of the Upanishads"
-                method="GET"
-                code={collectionRequest('upanishads', `&cursor=${collectionResponse.nextCursor}`)}
-              />
-            </div>
-          </Section>
-
-          <Section id="errors" title="Errors">
-            <div className="mh-docs-split">
-              <p>
-                Every error has the same shape. The <code>code</code> is stable; the{' '}
-                <code>message</code> explains what to fix. Only successful responses count toward
-                your plan.
-              </p>
-              <CodePanel
-                title="Error"
-                status="401"
-                json={{
-                  error: { code: 'invalid_api_key', message: 'Send a valid API key.' },
-                  requestId: 'request-id',
-                }}
-              />
-            </div>
-            <DataTable label="API errors" head={['Status', 'Code', 'What to do']} rows={errors} />
-          </Section>
-
-          <Section id="limits" title="Usage limits">
-            <p>
-              Allowances apply to your whole workspace, not to each key, and reset monthly in UTC.
-              Each successful content response or astrology calculation is one request. Each audio
-              link also counts the file’s size.
-            </p>
-            <DataTable
-              label="Plan limits"
-              head={['Plan', 'Requests a month', 'Audio', 'Rate', 'Burst']}
-              codeFirst={false}
-              rows={plans.map((plan) => {
-                const rate = rateLimits.find(([name]) => name === plan.name);
-                return [plan.name, plan.requests, plan.audio, rate?.[1] ?? '—', rate?.[2] ?? '—'];
-              })}
-            />
-            <p className="mh-muted">
-              Responses include <code>X-RateLimit-Limit</code>, <code>X-RateLimit-Remaining</code>,{' '}
-              <code>X-Quota-Requests-Remaining</code> and <code>X-Request-Id</code>. A{' '}
-              <code>rate_limited</code> response adds <code>Retry-After</code>. Sandbox keys always
-              use the Free rate. <Link href="/pricing">Compare plans</Link>
-            </p>
-          </Section>
-
-          <div className="mh-docs-ref">
-            <p className="mh-eyebrow">Endpoint reference</p>
-            {ENDPOINTS.map((endpoint) => (
-              <EndpointSection key={endpoint.id} endpoint={endpoint} />
-            ))}
-          </div>
-
-          <Callout>
-            Building something specific? The{' '}
-            <Link href="/implementation">Implementation guides</Link> start from a working request
-            for each goal, and the <Link href="/library">Library</Link> shows what each content type
-            returns.
-          </Callout>
-        </article>
+        <Reference />
       </div>
     </SiteFrame>
+  );
+}
+
+function Reference() {
+  const quickstart = curlGet('/v1/mantras?limit=1');
+  // Arriving from a guide via a sidebar link (/docs#errors), jump to that section once the
+  // navigation has settled; the router otherwise keeps the guide's scroll position.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const id = decodeURIComponent(window.location.hash.slice(1));
+      if (id) document.getElementById(id)?.scrollIntoView();
+    }, 60);
+    return () => clearTimeout(timer);
+  }, []);
+  return (
+    <article className="mh-docs-main">
+      <header className="mh-docs-head">
+        <p className="mh-eyebrow">Docs</p>
+        <h1>Make your first Mantrilo API request</h1>
+        <p className="mh-page-lede">
+          One REST API for mantras, sacred audio, scripture books and astrology. Start from a guide
+          for what you’re building, or look up any endpoint. Examples show the response format. Some
+          use excerpts or placeholders.
+        </p>
+      </header>
+
+      <Section id="quickstart" title="Quickstart">
+        <div className="mh-docs-split">
+          <ol className="mh-steps">
+            <li>
+              <b>Get a key.</b> Every account starts with a sandbox key.{' '}
+              <KeyButton
+                href={consoleSandboxUrl({ preset: 'quickstart' })}
+                className="mh-inline-link"
+              >
+                Open the sandbox quickstart
+              </KeyButton>
+            </li>
+            <li>
+              <b>Keep it on your server.</b> Set <code>MANTRILO_API_KEY</code> and{' '}
+              <code>MANTRILO_API_URL</code> in your backend’s environment.
+            </li>
+            <li>
+              <b>Make a request.</b> List one mantra, then follow{' '}
+              <a href="#list-mantras">the endpoint reference</a> or a{' '}
+              <a href="#guides">guide for your goal</a>.
+            </li>
+          </ol>
+          <CodePanel
+            title="Your first request"
+            method="GET"
+            code={quickstart.replace('$MANTRILO_API_URL', 'https://api.mantrilo.com')}
+          />
+        </div>
+      </Section>
+
+      <Section id="guides" title="Start from your goal">
+        <p>
+          Each guide starts with a request you can run, then shows the server code, pagination and
+          quota.
+        </p>
+        <div className="mh-docs-goals">
+          {GOALS.map((g) => (
+            <Link
+              key={g.id}
+              push
+              href={guideHref(g.id)}
+              className="mh-card mh-card-pad mh-card-link"
+            >
+              <h3>{g.goal}</h3>
+              <p>{findGuide(g.id)?.summary}</p>
+              <span>
+                Open guide <Arrow />
+              </span>
+            </Link>
+          ))}
+        </div>
+        <p className="mh-muted">
+          Astrology has a guide for every capability.{' '}
+          <Link href="/astrology-api">Browse astrology capabilities</Link>
+        </p>
+      </Section>
+
+      <Section id="authentication" title="Authentication">
+        <p>
+          Send your key on every request as <code>Authorization: Bearer YOUR_KEY</code>. The API
+          blocks browser cross-origin calls, so call it from your server and pass only the content
+          to your app. Never put a key in a web bundle, mobile app or repository. If a key leaks,
+          regenerate it in the console; the old key stops working within a minute.
+        </p>
+      </Section>
+
+      <Section id="environments" title="Sandbox and live">
+        <DataTable
+          label="Key environments"
+          head={['Environment', 'Key prefix', 'What it reads']}
+          codeFirst={false}
+          rows={[
+            [
+              <span key="s" className="mh-chip mh-chip-accent">
+                Sandbox
+              </span>,
+              <code key="p">mtr_sbx_</code>,
+              'Sample mantras, the sample books’ opening verses, and available astrology operations. Every account has one.',
+            ],
+            [
+              <span key="l" className="mh-chip mh-chip-ok">
+                Live
+              </span>,
+              <code key="p">mtr_live_</code>,
+              'The full available catalog. Issued with a paid plan.',
+            ],
+          ]}
+        />
+        <p className="mh-muted">
+          Sandbox and live keep separate usage totals. A sandbox request for an item outside the
+          sample returns <code>403 sandbox_sample_only</code>.
+        </p>
+      </Section>
+
+      <Section id="pagination" title="Pagination">
+        <div className="mh-docs-split">
+          <div>
+            <p>
+              List endpoints return <code>nextCursor</code>. Pass it back as <code>cursor</code> to
+              read the next page. It is <code>null</code> on the last page. Set the page size with{' '}
+              <code>limit</code> (1–100).
+            </p>
+            <p>
+              Chapter pages return <code>nextOffset</code>. Pass it back as <code>offset</code> to
+              read more verses of the same chapter.
+            </p>
+          </div>
+          <CodePanel
+            title="Continue when nextCursor is present"
+            method="GET"
+            code={collectionRequest('upanishads', '&cursor={nextCursor}')}
+          />
+        </div>
+      </Section>
+
+      <Section id="errors" title="Errors">
+        <div className="mh-docs-split">
+          <p>
+            Every error has the same shape. The <code>code</code> is stable; the{' '}
+            <code>message</code> explains what to fix. Only successful responses count toward your
+            plan.
+          </p>
+          <CodePanel
+            title="Error"
+            status="401"
+            json={{
+              error: { code: 'invalid_api_key', message: 'Send a valid API key.' },
+              requestId: 'request-id',
+            }}
+          />
+        </div>
+        <DataTable label="API errors" head={['Status', 'Code', 'What to do']} rows={errors} />
+      </Section>
+
+      <Section id="limits" title="Usage limits">
+        <p>
+          Allowances apply to your whole workspace, not to each key, and reset monthly in UTC. Each
+          successful content response or astrology calculation is one request. Each audio link also
+          counts the file’s size.
+        </p>
+        <DataTable
+          label="Plan limits"
+          head={['Plan', 'Requests a month', 'Audio', 'Rate', 'Burst']}
+          codeFirst={false}
+          rows={plans.map((plan) => {
+            const rate = rateLimits.find(([name]) => name === plan.name);
+            return [plan.name, plan.requests, plan.audio, rate?.[1] ?? '—', rate?.[2] ?? '—'];
+          })}
+        />
+        <p className="mh-muted">
+          Responses include <code>X-RateLimit-Limit</code>, <code>X-RateLimit-Remaining</code>,{' '}
+          <code>X-Quota-Requests-Remaining</code> and <code>X-Request-Id</code>. A{' '}
+          <code>rate_limited</code> response adds <code>Retry-After</code>. Sandbox keys always use
+          the Free rate. If your workspace has no monthly request cap,{' '}
+          <code>X-Quota-Requests-Remaining</code> is <code>unlimited</code>.{' '}
+          <Link href="/pricing">Compare plans</Link>
+        </p>
+      </Section>
+
+      <Section id="epic-retellings" title="Ramayana and Mahabharata">
+        <p>
+          Use a live key to read these English prose retellings. Open a book for its chapter
+          index, then use a chapter number to load the full chapter in one request.
+        </p>
+        {epicBooks.map(({ id, title, chapters }) => (
+          <div key={id} id={`epic-${id}`}>
+            <h3>{title}</h3>
+            <p>{chapters} chapters</p>
+            <CodePanel
+              title={title + ' book and first chapter'}
+              code={[curlGet('/v1/books/' + id), curlGet('/v1/books/' + id + '/chapters/1')].join('\n\n')}
+            />
+          </div>
+        ))}
+        <p>
+          Books return <code>{'format: "prose"'}</code> and <code>{'language: "en"'}</code>. For a chapter,
+          display <code>data.source</code> and iterate over <code>data.sections</code>. Render each
+          section’s <code>title</code> and <code>paragraphs</code> in order. Prose chapters return
+          an empty <code>verses</code> array and <code>nextOffset: null</code>.
+        </p>
+        <Link href="/docs/guides/book-reader">Book reader integration guide</Link>
+      </Section>
+
+      <section className="mh-docs-ref" aria-labelledby="endpoint-reference">
+        <h2 id="endpoint-reference">Endpoint reference</h2>
+        {ENDPOINTS.map((endpoint) => (
+          <EndpointSection key={endpoint.id} endpoint={endpoint} />
+        ))}
+      </section>
+
+      <Callout>
+        Want to see what each content type returns first? Browse the{' '}
+        <Link href="/library">Library</Link>.
+      </Callout>
+    </article>
   );
 }

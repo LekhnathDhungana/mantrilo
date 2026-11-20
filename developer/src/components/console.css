@@ -1,15 +1,16 @@
-/* Mantrilo console. Tokens match the public site (src/components/site/site.css). */
+/* Mantrilo console palette. */
 :root {
-  --paper: #fffbf5;
+  --paper: #ffffff;
   --surface: #ffffff;
-  --soft: #fdf4e8;
+  --soft: #f7f7f8;
   --ink: #1a1523;
   --ink-2: #4a4351;
   --ink-3: #6b6270;
   --ink-4: #9a919f;
   --muted: #6b6270;
-  --line: #efe3d3;
-  --line-2: #e3d2bd;
+  --line: #e7e5e9;
+  --line-2: #d8d5dc;
+  --track: #ecebee;
   --accent: #f28c28;
   --accent-hover: #e57c14;
   --accent-soft: #fdebd6;
@@ -45,6 +46,7 @@
     --muted: #a99fae;
     --line: #2a2333;
     --line-2: #3a3145;
+    --track: #2a2333;
     --accent: #f5993d;
     --accent-hover: #ffaa55;
     --accent-soft: #3a2414;
@@ -74,6 +76,7 @@
   --muted: #a99fae;
   --line: #2a2333;
   --line-2: #3a3145;
+  --track: #2a2333;
   --accent: #f5993d;
   --accent-hover: #ffaa55;
   --accent-soft: #3a2414;
@@ -183,9 +186,23 @@ em {
 }
 .brand {
   display: block;
+  position: relative;
   width: 146px;
   max-width: 100%;
   aspect-ratio: 640 / 162;
+}
+.brand-original,
+.brand-light-lettering {
+  position: absolute;
+  inset: 0;
+}
+.brand-original {
+  clip-path: var(--brand-original-clip, none);
+}
+.brand-light-lettering {
+  display: var(--brand-light-lettering, none);
+  clip-path: inset(0 0 0 26%);
+  filter: brightness(0) invert(1);
 }
 .button {
   display: inline-flex;
@@ -551,35 +568,18 @@ em {
   align-items: center;
   gap: 10px;
 }
-.environment-pill,
 .plan-pill {
   display: inline-flex;
   align-items: center;
   gap: 7px;
   font-size: 13px;
   font-weight: 600;
-  border: 1px solid var(--accent-line);
+  border: 1px solid var(--line);
   padding: 4px 12px;
   border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent-text);
-  white-space: nowrap;
-}
-.environment-pill.env-live {
-  border-color: var(--ok-line);
-  background: var(--ok-soft);
-  color: var(--ok-text);
-}
-.plan-pill {
-  border-color: var(--line);
   background: var(--surface);
   color: var(--ink-2);
-}
-.environment-pill i {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: currentColor;
+  white-space: nowrap;
 }
 .topbar-link {
   font-size: 12.5px;
@@ -704,7 +704,7 @@ em {
 }
 .meter-track {
   height: 4px;
-  background: var(--soft);
+  background: var(--track);
   border-radius: 10px;
   margin-top: 20px;
   overflow: hidden;
@@ -1051,8 +1051,8 @@ td code {
   display: block;
   font-size: 15px;
   padding: 18px;
-  background: var(--accent-soft);
-  border: 1px solid var(--accent-line);
+  background: var(--surface);
+  border: 1px solid var(--line-2);
   overflow-wrap: anywhere;
   word-break: break-all;
   border-radius: 10px;
@@ -1425,6 +1425,24 @@ td code {
   font-size: 11.5px;
   padding: 9px 7px;
   min-height: 38px;
+}
+.plan-checkout {
+  width: min(420px, calc(100% - 32px));
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+}
+.plan-checkout::backdrop {
+  background: rgb(0 0 0 / 45%);
+}
+.plan-checkout form {
+  display: grid;
+  gap: 16px;
+}
+.plan-checkout input {
+  width: 100%;
 }
 .addon-grid {
   display: grid;
@@ -1899,7 +1917,7 @@ td code {
   .topbar > div {
     gap: 0;
   }
-  .environment-pill {
+  .plan-pill {
     font-size: 11px;
     padding: 4px 7px;
   }
@@ -2387,6 +2405,9 @@ td code {
 }
 .tab-row {
   margin-bottom: 22px;
+}
+.try-switch {
+  margin-bottom: 20px;
 }
 @media (max-width: 640px) {
   .setup-steps {
@@ -2882,6 +2903,14 @@ button.library-row:hover {
   cursor: pointer;
   font-weight: 600;
 }
+.integration-prompt summary {
+  cursor: pointer;
+  margin: 8px 0;
+}
+.integration-prompt pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 .library-guide-link {
   margin: 0 0 14px;
 }
@@ -2961,7 +2990,7 @@ button.library-row:hover {
   display: block;
   height: 6px;
   border-radius: 6px;
-  background: var(--soft);
+  background: var(--track);
   overflow: hidden;
   margin: 4px 0 2px;
 }
@@ -3145,11 +3174,10 @@ button.library-row:hover {
   }
 }
 
-/* The logo image has a dark wordmark. Invert it in dark mode and rotate the hue back so the
-   saffron mark keeps its colour. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) .brand {
-    filter: invert(1) hue-rotate(180deg) brightness(1.05);
+    --brand-light-lettering: block;
+    --brand-original-clip: inset(0 74% 0 0);
   }
   :root:not([data-theme='light']) .type-audio {
     background: #3a1724;
@@ -3168,5 +3196,6 @@ button.library-row:hover {
   }
 }
 :root[data-theme='dark'] .brand {
-  filter: invert(1) hue-rotate(180deg) brightness(1.05);
+  --brand-light-lettering: block;
+  --brand-original-clip: inset(0 74% 0 0);
 }

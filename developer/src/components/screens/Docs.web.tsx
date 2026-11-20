@@ -1,6 +1,7 @@
 import { Link, router, useLocalSearchParams } from 'expo-router';
 import AstrologyCalculator from '../AstrologyCalculator.web';
 import Playground from './Playground.web';
+import { GuideIndex, GuidePage } from './Guides.web';
 import { useConsole } from '../Session.web';
 import { CopyButton, ErrorNotice, PageTitle, useLoad } from '../ui.web';
 import type { Plan } from '../../lib/types';
@@ -91,45 +92,60 @@ function Table({ head, rows }: { head: string[]; rows: (string | number)[][] }) 
   );
 }
 
+// Docs is one place for everything about calling the API: guides by goal, a request runner,
+// and the reference. Older links used tab=guide for the reference and /implementation for guides.
 const TABS = [
-  ['try', 'API Explorer'],
-  ['astrology', 'Astrology explorer'],
-  ['guide', 'Reference'],
-];
+  ['guides', 'Guides'],
+  ['try', 'Try it'],
+  ['reference', 'Reference'],
+] as const;
+const ALIASES: Record<string, string> = { guide: 'reference', astrology: 'try' };
 
 export default function Docs() {
-  const { tab: requested, operation } = useLocalSearchParams<{
-    tab?: string;
-    operation?: string;
-  }>();
-  const tab = TABS.some(([id]) => id === requested) ? requested! : 'try';
-  const setTab = (tab: string) => router.setParams({ tab, operation: undefined });
+  const {
+    tab: requested = 'guides',
+    operation,
+    guide,
+    preset,
+  } = useLocalSearchParams<{ tab?: string; operation?: string; guide?: string; preset?: string }>();
+  const tab = ALIASES[requested] ?? (TABS.some(([id]) => id === requested) ? requested : 'guides');
+  const astrology = requested === 'astrology';
+  const go = (next: string) =>
+    router.setParams({ tab: next, operation: undefined, guide: undefined, preset: undefined });
+  if (guide) return <GuidePage id={guide} />;
   return (
     <>
       <PageTitle
         eyebrow="DOCS"
-        title="API Explorer and docs"
-        copy="Run requests with your sandbox or live key, then read the contract behind them."
+        title="Docs"
+        copy="Pick what you’re building, run the request with your key, and look up any endpoint."
       />
       <div className="segmented tab-row" role="group" aria-label="Docs section">
         {TABS.map(([id, label]) => (
-          <button key={id} aria-pressed={tab === id} onClick={() => setTab(id)}>
+          <button key={id} aria-pressed={tab === id} onClick={() => go(id)}>
             {label}
           </button>
         ))}
       </div>
-      {tab === 'guide' && <Guide onTry={setTab} />}
-      {tab === 'try' && <Playground />}
-      {tab === 'astrology' && (
+      {tab === 'guides' && <GuideIndex onTry={() => go('try')} />}
+      {tab === 'try' && (
         <>
-          <p className="library-guide-link">
-            <Link href={{ pathname: '/library', params: { type: 'astrology', item: operation } }}>
-              ← Astrology Library
-            </Link>
-          </p>
-          <AstrologyCalculator key={operation} initialOperation={operation} />
+          <div className="segmented compact try-switch" role="group" aria-label="What to run">
+            <button aria-pressed={!astrology} onClick={() => go('try')}>
+              Content API
+            </button>
+            <button aria-pressed={astrology} onClick={() => go('astrology')}>
+              Astrology calculator
+            </button>
+          </div>
+          {astrology ? (
+            <AstrologyCalculator key={operation} initialOperation={operation} />
+          ) : (
+            <Playground key={preset} preset={preset} />
+          )}
         </>
       )}
+      {tab === 'reference' && <Guide onTry={go} />}
     </>
   );
 }
@@ -138,44 +154,16 @@ function Guide({ onTry }: { onTry: (tab: string) => void }) {
   const { config } = useConsole();
   const { data, error } = useLoad<DocsConfig>('/api/config');
   const base = config?.apiUrl ?? 'https://api.mantrilo.com';
-  const quickstart = `curl '${base}/v1/mantras?limit=5' \\\n  -H "Authorization: Bearer $MANTRILO_API_KEY"`;
   const astrology = `curl --request POST '${base}/v1/astrology/calculate' \\\n  -H "Authorization: Bearer $MANTRILO_API_KEY" \\\n  -H 'Content-Type: application/json' \\\n  --data '{"operation":"chart","birth":{"datetime":"1995-06-20T12:30:00+05:30","latitude":28.6139,"longitude":77.209,"timezone":"Asia/Kolkata"},"divisions":[1,9]}'`;
   return (
     <>
-      {!config?.apiUrl && (
-        <div className="notice">
-          The API isn’t connected to this console yet, so these requests may not work here.
-        </div>
-      )}
-      <section className="panel prose">
-        <h2>Quick start</h2>
-        <ol>
-          <li>
-            Copy your sandbox key from <Link href="/">Home</Link>. Every account has one from the
-            start.
-          </li>
-          <li>Store it in your server’s environment or a secret manager.</li>
-          <li>Run this request:</li>
-        </ol>
-        <pre>
-          <code>{quickstart}</code>
-        </pre>
-        <CopyButton text={quickstart} />
-        <p>
-          Prefer to try it here?{' '}
-          <button className="text-button" onClick={() => onTry('try')}>
-            Try the API →
-          </button>
-        </p>
-        <h2>Keep keys on your server</h2>
-        <p>
-          Never put a key in a mobile app, website or Git repository. Call Mantrilo from your own
-          backend and pass only the content to your app. Audio links are safe to pass along, because
-          they expire after 15 minutes. Browser calls to the API are blocked.
-        </p>
-      </section>
       <section className="panel prose">
         <h2>Authentication</h2>
+        <p>
+          Call Mantrilo from your own backend and pass only the content to your app. Never put a key
+          in a mobile app, website or Git repository; browser calls to the API are blocked. Audio
+          links are safe to pass along, because they expire after 15 minutes.
+        </p>
         <p>
           Send your key on every request as <code>Authorization: Bearer YOUR_KEY</code>.
         </p>
@@ -249,7 +237,9 @@ function Guide({ onTry }: { onTry: (tab: string) => void }) {
         <p>
           Responses include <code>X-RateLimit-Limit</code>, <code>X-RateLimit-Remaining</code>,{' '}
           <code>X-Quota-Requests-Remaining</code> and <code>X-Request-Id</code>. A{' '}
-          <code>rate_limited</code> response also includes <code>Retry-After</code>.
+          <code>rate_limited</code> response also includes <code>Retry-After</code>. Workspaces with
+          the unlimited requests promo receive <code>unlimited</code> in{' '}
+          <code>X-Quota-Requests-Remaining</code>.
         </p>
       </section>
       <section className="panel prose">

@@ -54,9 +54,9 @@ export default function AstrologyLibrary({
               <div className="integration-actions">
                 <Link
                   className="button primary"
-                  href={{ pathname: '/implementation', params: { guide: detail.id } }}
+                  href={{ pathname: '/docs', params: { guide: detail.id } }}
                 >
-                  Implementation guide →
+                  Guide →
                 </Link>
                 {runnable.has(item) && <SandboxLink operation={item} />}
               </div>

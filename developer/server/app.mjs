@@ -2,6 +2,9 @@ import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { promisify } from 'node:util';
+import indiaPrices from '../../shared/india-prices.json' with { type: 'json' };
+import { brotliCompress, gzip, constants as zlib } from 'node:zlib';
 import {
   ApiError,
   insist,
@@ -10,7 +13,11 @@ import {
   hash,
   cleanText,
   plans,
+  FREE_PLAN,
   allowance,
+  hasLiveAccess,
+  hasUnlimitedRequests,
+  requestsRemaining,
   publicWorkspace,
   usage,
   mergeUsage,
@@ -37,6 +44,23 @@ import { readBookListQuery, readPustakLibrary } from './pustak.mjs';
 import { createAstrologyService } from './astrology/service.mjs';
 import { RATE_LIMITS, RateLimiter, UsageMeter, limitsFor } from '../api/usage.mjs';
 import { ENTITLED_STATUSES, PAID_PLANS, syncFromEvent, syncWorkspace } from './billing.mjs';
+
+const compressBrotli = promisify(brotliCompress);
+const compressGzip = promisify(gzip);
+
+function assetEncoding(header = '') {
+  const accepted = new Map(
+    header.split(',').map((value) => {
+      const [name, ...parameters] = value.trim().toLowerCase().split(';');
+      const weight = parameters.find((part) => part.trim().startsWith('q='));
+      return [name, weight === undefined ? 1 : Number(weight.trim().slice(2))];
+    }),
+  );
+  const brotli = accepted.get('br') ?? accepted.get('*') ?? 0;
+  const gzip = accepted.get('gzip') ?? accepted.get('*') ?? 0;
+  if (brotli > 0 && brotli >= gzip) return 'br';
+  return gzip > 0 ? 'gzip' : null;
+}
 
 function cookies(request) {
   return Object.fromEntries(
@@ -104,6 +128,7 @@ export function createConsoleServer({
   mailer = null,
   apiUrl = null,
   billing = null,
+  promo = null,
   // Which Stripe mode's entitlements this deployment reads and writes (see planFor).
   billingMode = 'live',
   content = null,
@@ -112,13 +137,18 @@ export function createConsoleServer({
   astrologyService = createAstrologyService(),
   phoneCodes = false,
   trustProxy = false,
+  redirectFromHost = null,
+  basePath = '',
+  hostingSession = false,
   codeThrottle = new Throttle({ limit: 20, windowMs: 60 * 60 * 1000 }),
   staticRoot = path.resolve('dist'),
 }) {
+  const compressedAssets = new Map();
   const astrologyMeter = new UsageMeter(store.usageSink, { ttlMs: 0 });
   const astrologyLimiter = new RateLimiter();
+  const promoThrottle = new Throttle({ limit: 8, windowMs: 15 * 60_000 });
   const cookie = (name, value, maxAge) =>
-    `${name}=${value}; HttpOnly; Path=/; SameSite=Strict; Max-Age=${maxAge}${secureCookies ? '; Secure' : ''}`;
+    `${name}=${value}; HttpOnly; Path=${hostingSession ? basePath || '/' : '/'}; SameSite=Strict; Max-Age=${maxAge}${secureCookies ? '; Secure' : ''}`;
   const sessionName = secureCookies ? '__Host-mantrilo_session' : 'mantrilo_session';
   const csrfName = secureCookies ? '__Host-mantrilo_csrf' : 'mantrilo_csrf';
   return createServer(async (request, response) => {
@@ -130,7 +160,8 @@ export function createConsoleServer({
     response.setHeader('X-Request-Id', requestId);
     response.setHeader('X-Robots-Tag', 'noindex, nofollow');
     response.setHeader('X-Content-Type-Options', 'nosniff');
-    response.setHeader('Referrer-Policy', 'no-referrer');
+    // Keep the console's origin available to browser POSTs while withholding referrers off-site.
+    response.setHeader('Referrer-Policy', 'same-origin');
     response.setHeader('Cache-Control', 'no-store');
     response.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
     response.setHeader('X-Frame-Options', 'DENY');
@@ -146,12 +177,27 @@ export function createConsoleServer({
       );
     }
     try {
-      const url = new URL(request.url, 'http://localhost'),
-        route = url.pathname,
-        method = request.method;
-      if (route === '/healthz') return send(200, { ok: true });
+      const url = new URL(request.url, 'http://localhost');
+      const method = request.method;
+      if (url.pathname === '/healthz') return send(200, { ok: true });
+      if (basePath && url.pathname !== basePath && !url.pathname.startsWith(`${basePath}/`)) {
+        return send(404, { error: { code: 'not_found', message: 'Not found.' } });
+      }
+      const route = url.pathname.slice(basePath.length) || '/';
       if (route.startsWith('/api/')) {
         const jar = cookies(request);
+        // Firebase Hosting forwards only __session. Keep both values in that cookie when proxied.
+        const [csrf, session] = hostingSession
+          ? (jar.__session || '').split(':', 2)
+          : [jar[csrfName], jar[sessionName]];
+        function writeSession(value, maxAge) {
+          response.setHeader(
+            'Set-Cookie',
+            hostingSession
+              ? cookie('__session', `${csrf}:${value}`, value ? maxAge : 8 * 3600)
+              : cookie(sessionName, value, maxAge),
+          );
+        }
         // Stripe proves itself with a signature instead.
         const browserOnly = route !== '/api/billing/webhook';
         if (!['GET', 'HEAD'].includes(method) && browserOnly) {
@@ -162,7 +208,7 @@ export function createConsoleServer({
             'The request origin is not allowed.',
           );
           insist(
-            equal(jar[csrfName], request.headers['x-csrf-token']),
+            equal(csrf, request.headers['x-csrf-token']),
             403,
             'csrf_failed',
             'Refresh the page and try again.',
@@ -197,8 +243,14 @@ export function createConsoleServer({
             phoneCodes: mode === 'firebase' && phoneCodes,
           });
         if (route === '/api/auth/csrf' && method === 'GET') {
+          if (hostingSession && csrf) return send(200, { csrfToken: csrf });
           const token = secret();
-          response.setHeader('Set-Cookie', cookie(csrfName, token, 8 * 3600));
+          response.setHeader(
+            'Set-Cookie',
+            hostingSession
+              ? cookie('__session', `${token}:`, 8 * 3600)
+              : cookie(csrfName, token, 8 * 3600),
+          );
           return send(200, { csrfToken: token });
         }
         if (route === '/api/auth/demo' && method === 'POST') {
@@ -217,7 +269,7 @@ export function createConsoleServer({
             'Choose a demo role.',
           );
           const token = await sessions.createDemo(input.role);
-          response.setHeader('Set-Cookie', cookie(sessionName, token, 8 * 3600));
+          writeSession(token, 8 * 3600);
           return send(200, { ok: true, demo: true });
         }
         if (route === '/api/auth/session' && method === 'POST') {
@@ -241,7 +293,7 @@ export function createConsoleServer({
             if (error instanceof ApiError) throw error;
             throw new ApiError(401, 'invalid_login', 'Sign in again to create a session.');
           }
-          response.setHeader('Set-Cookie', cookie(sessionName, token, 5 * 24 * 3600));
+          writeSession(token, 5 * 24 * 3600);
           return send(200, { ok: true });
         }
         if (route === '/api/auth/email/request' && method === 'POST') {
@@ -307,7 +359,7 @@ export function createConsoleServer({
             'Choose text, audio, or books.',
           );
           const result = await store.transact(workspaceId, (w) =>
-            chargeRequest(w, keyHash, `demo/catalog/${type}`, requestId),
+            chargeRequest(w, keyHash, `demo/catalog/${type}`, requestId, billingMode),
           );
           return send(200, {
             data: catalog[type],
@@ -316,17 +368,15 @@ export function createConsoleServer({
               contentRequests: 1,
               audioBytes: 0,
               billable: false,
-              remaining:
-                allowance(planFor(await store.getWorkspace(workspaceId), billingMode)).requests -
-                result.meter.contentRequests,
+              remaining: result.remaining,
             },
           });
         }
-        actor = await sessions.get(jar[sessionName]);
+        actor = await sessions.get(session);
         insist(actor, 401, 'session_required', 'Sign in to continue.');
         if (route === '/api/auth/logout' && method === 'POST') {
-          await sessions.delete(jar[sessionName]);
-          response.setHeader('Set-Cookie', cookie(sessionName, '', 0));
+          await sessions.delete(session);
+          writeSession('', 0);
           return send(200, { ok: true });
         }
         let profile = await store.getUser(actor.uid);
@@ -358,18 +408,30 @@ export function createConsoleServer({
         }
         const verified = mode === 'demo' || actor.verified === true;
         const plan = planFor(workspace, billingMode),
-          paid = plan.price > 0,
+          liveAccess = hasLiveAccess(workspace, billingMode),
           liveLane = usageLane('production', billingMode);
+        const unlimitedRequests = hasUnlimitedRequests(workspace);
+        const promoEligible =
+          promo?.eligible({
+            workspaceId,
+            email: actor.email,
+            emailVerified: mode === 'demo' || actor.emailVerified === true,
+          }) === true;
         // Usage per lane. Sandbox includes the console's own demo and astrology calls.
         const laneUsage = async (lane, w = workspace, period = currentPeriod()) =>
           lane === 'sandbox'
             ? mergeUsage(usage(w, period), await store.apiUsage(w.id, period, lane))
             : store.apiUsage(w.id, period, lane);
-        // The lane the plan is about: live once paid, sandbox before that.
+        // Use the live lane as the primary view when the workspace has live access.
         const primaryLane = (w = workspace) =>
-          planFor(w, billingMode).price > 0 ? liveLane : 'sandbox';
+          hasLiveAccess(w, billingMode) ? liveLane : 'sandbox';
         const liveUsage = async (w = workspace) => laneUsage(primaryLane(w), w);
-        if (route === '/api/me' && method === 'GET')
+        if (route === '/api/me' && method === 'GET') {
+          const [activity, sandboxUsage, productionUsage] = await Promise.all([
+            store.keyActivity(workspaceId),
+            laneUsage('sandbox'),
+            liveAccess ? laneUsage(liveLane) : undefined,
+          ]);
           return send(200, {
             user: {
               uid: actor.uid,
@@ -379,25 +441,23 @@ export function createConsoleServer({
               name: profile.name || '',
               onboarded: mode === 'demo' || Boolean(profile.onboardedAt),
             },
-            workspace: publicWorkspace(
-              workspace,
-              await store.keyActivity(workspaceId),
-              billingMode,
-            ),
+            workspace: publicWorkspace(workspace, activity, billingMode),
             mode,
             billingMode,
             period: currentPeriod(),
-            usage: await liveUsage(),
+            usage: productionUsage ?? sandboxUsage,
             usageLane: primaryLane(),
             usageByLane: {
-              sandbox: await laneUsage('sandbox'),
-              ...(paid ? { live: await laneUsage(liveLane) } : {}),
+              sandbox: sandboxUsage,
+              ...(productionUsage ? { live: productionUsage } : {}),
             },
             plan,
+            liveAccess,
             allowance: {
               ...allowance(plan),
-              ...limitsFor(plan, paid ? 'production' : 'sandbox'),
+              ...limitsFor(plan, liveAccess ? 'production' : 'sandbox', unlimitedRequests),
             },
+            promo: { canRedeem: promoEligible && !unlimitedRequests },
             resetsAt: resetDate(),
             accountingPolicy,
             integrations: {
@@ -408,10 +468,39 @@ export function createConsoleServer({
             },
             billingPeriod: null,
           });
+        }
+        if (route === '/api/promo/redeem' && method === 'POST') {
+          operation = '/api/promo/redeem';
+          insist(promoEligible, 403, 'promo_unavailable', 'This promotion is unavailable.');
+          insist(
+            promoThrottle.take(workspaceId),
+            429,
+            'promo_rate_limited',
+            'Too many attempts. Try again in 15 minutes.',
+          );
+          const input = await body(request);
+          insist(
+            promo.matches(input?.code),
+            400,
+            'invalid_promo_code',
+            'This promo code is invalid.',
+          );
+          await store.transact(workspaceId, (w) => {
+            if (hasUnlimitedRequests(w)) return;
+            w.unlimitedRequestsSince = new Date().toISOString();
+            log(w, {
+              type: 'promo_redeemed',
+              message: 'Activated unlimited monthly API requests.',
+              status: 200,
+            });
+          });
+          return send(200, { ok: true });
+        }
         if (route === '/api/config' && method === 'GET') {
           return send(200, {
             plans,
             rateLimits: RATE_LIMITS,
+            indiaPrices,
             accountingPolicy,
           });
         }
@@ -501,7 +590,7 @@ export function createConsoleServer({
               chapter,
               cursor: url.searchParams.get('cursor'),
               offset: url.searchParams.get('offset'),
-              sampleOnly: !paid,
+              sampleOnly: !liveAccess,
               ...(id ? {} : readBookListQuery(url.searchParams)),
             }),
           );
@@ -518,7 +607,7 @@ export function createConsoleServer({
             content,
             media,
             id: libraryAudio[1],
-            sampleOnly: !paid,
+            sampleOnly: !liveAccess,
             request,
             response,
           });
@@ -527,7 +616,7 @@ export function createConsoleServer({
         if (libraryRoute && method === 'GET') {
           insist(content, 503, 'library_unavailable', 'The library is not connected here.');
           const [, resource, id] = libraryRoute,
-            sampleOnly = !paid;
+            sampleOnly = !liveAccess;
           return send(
             200,
             id
@@ -541,7 +630,7 @@ export function createConsoleServer({
         }
         // The console calculator is a test bench: it counts in the sandbox lane.
         if (route === '/api/astrology' && method === 'GET') {
-          const limit = limitsFor(plan, 'sandbox').requests,
+          const limit = limitsFor(plan, 'sandbox', unlimitedRequests).requests,
             used = (await laneUsage('sandbox')).contentRequests;
           return send(200, {
             status: 'available',
@@ -549,7 +638,7 @@ export function createConsoleServer({
             availableOperations: astrologyService.operations,
             allowance: limit,
             used,
-            balance: Math.max(0, limit - used),
+            balance: requestsRemaining(limit, used),
             requestCost: 1,
           });
         }
@@ -561,7 +650,7 @@ export function createConsoleServer({
             response.setHeader('Retry-After', String(rate.retryAfter));
             throw new ApiError(429, 'rate_limited', 'Too many calculations. Try again shortly.');
           }
-          const limit = limitsFor(plan, 'sandbox').requests;
+          const limit = limitsFor(plan, 'sandbox', unlimitedRequests).requests;
           const endpoint = `astrology.${calculation.operation}`;
           const reservation = await astrologyMeter.reserve({
             workspaceId,
@@ -569,7 +658,7 @@ export function createConsoleServer({
             lane: 'sandbox',
             endpoint,
             limit,
-            margin: limit,
+            margin: limit ?? 0,
           });
           insist(
             reservation.ok,
@@ -598,7 +687,7 @@ export function createConsoleServer({
           );
           return send(200, {
             data,
-            usage: { contentRequests: 1, remaining: limit - reservation.used },
+            usage: { contentRequests: 1, remaining: requestsRemaining(limit, reservation.used) },
             calculated: true,
           });
         }
@@ -792,20 +881,25 @@ export function createConsoleServer({
           }
           await store.deleteWorkspace(workspaceId);
           await sessions.deleteAccount(actor.uid);
-          response.setHeader('Set-Cookie', cookie(sessionName, '', 0));
+          writeSession('', 0);
           return send(200, { ok: true });
         }
         if (route === '/api/billing' && method === 'GET')
           return send(200, {
             plan,
-            monthlyTotal: plan.price,
+            monthlyTotal: billingFor(workspace, billingMode)?.currency === 'inr' ? indiaPrices[plan.name] : plan.price,
+            currency: billingFor(workspace, billingMode)?.currency ?? 'usd',
             period: null,
             invoices: [],
             renewalAt: billingFor(workspace, billingMode)?.currentPeriodEnd ?? null,
             billingMode,
             setupRequired: !billing,
             provider: billing ? 'stripe' : null,
-            purchasable: billing ? PAID_PLANS : [],
+            portalAvailable: (await billing?.portalAvailable()) ?? false,
+            promotionPlans: billing?.promotionPlans ?? [],
+            purchasable: billing ? await billing.availablePlans() : [],
+            indiaPurchasable:
+              billing && workspace.indiaPricing === true ? await billing.availablePlans('IN') : [],
             notice: billing
               ? 'Payments are handled securely by Stripe.'
               : 'Subscription management is not configured. No checkout or entitlement upgrades are active.',
@@ -813,15 +907,25 @@ export function createConsoleServer({
         if (route === '/api/billing/checkout' && method === 'POST') {
           insist(billing, 503, 'billing_unconfigured', 'Billing is not configured.');
           insist(verified, 403, 'email_unverified', 'Verify your email before subscribing.');
-          const { plan } = await body(request);
+          const { plan, promotionCode, market } = (await body(request)) ?? {};
           insist(PAID_PLANS.includes(plan), 400, 'invalid_plan', 'Choose a paid plan.');
+          insist(market === undefined || market === 'IN', 400, 'invalid_market', 'Unknown billing market.');
+          if (market === 'IN') {
+            insist(workspace.indiaPricing === true, 403, 'regional_pricing_unavailable', 'Contact billing to verify your India billing address.');
+            insist(plan !== 'Business', 400, 'contact_billing', 'Contact billing for an India Business quote.');
+            insist(promotionCode === undefined, 400, 'invalid_promotion_code', 'Promo codes are unavailable on India pricing.');
+          }
+          billing.outreachPromotion(plan, promotionCode);
+          // Checked alongside the subscription lookup below; usually answered from cache.
+          const priceReady = billing.requirePlanPrice(plan, market);
+          priceReady.catch(() => {});
           let customerId = billingFor(workspace, billingMode)?.customerId;
           if (customerId)
             insist(
               !(await billing.hasLiveSubscription(customerId)),
               409,
               'already_subscribed',
-              'This workspace already has a subscription. Use Manage subscription to change it.',
+              'This workspace already has a subscription. Manage it from Billing or contact hello@mantrilo.com.',
             );
           else {
             customerId = await billing.createCustomer(workspaceId, actor.email);
@@ -835,8 +939,9 @@ export function createConsoleServer({
               });
             });
           }
+          await priceReady;
           return send(200, {
-            url: await billing.checkoutUrl({ workspaceId, customerId, plan }),
+            url: await billing.checkoutUrl({ workspaceId, customerId, plan, promotionCode, market }),
           });
         }
         if (route === '/api/billing/sync' && method === 'POST') {
@@ -846,8 +951,22 @@ export function createConsoleServer({
         }
         if (route === '/api/billing/portal' && method === 'POST') {
           insist(billing, 503, 'billing_unconfigured', 'Billing is not configured.');
+          const { plan: targetPlan } = (await body(request)) ?? {};
           const customerId = billingFor(workspace, billingMode)?.customerId;
           insist(customerId, 409, 'no_subscription', 'This workspace has no billing account yet.');
+          if (targetPlan !== undefined) {
+            insist(
+              targetPlan === FREE_PLAN || PAID_PLANS.includes(targetPlan),
+              400,
+              'invalid_plan',
+              'Choose an available plan.',
+            );
+            if (targetPlan !== FREE_PLAN)
+              insist(verified, 403, 'email_unverified', 'Verify your email before changing plans.');
+            return send(200, {
+              url: await billing.planPortalUrl({ workspaceId, customerId, plan: targetPlan }),
+            });
+          }
           return send(200, { url: await billing.portalUrl(customerId) });
         }
         if (route.startsWith('/api/admin/')) {
@@ -892,6 +1011,14 @@ export function createConsoleServer({
         throw new ApiError(404, 'not_found', 'API operation not found.');
       }
       insist(['GET', 'HEAD'].includes(method), 405, 'method_not_allowed', 'Method not allowed.');
+      if (redirectFromHost && request.headers.host === redirectFromHost) {
+        const canonical = new URL(appOrigin);
+        canonical.pathname = route;
+        canonical.search = url.search;
+        response.writeHead(307, { Location: canonical.href });
+        response.end();
+        return;
+      }
       if (route === '/robots.txt') {
         response.setHeader('Content-Type', 'text/plain');
         response.end('User-agent: *\nDisallow: /\n');
@@ -929,6 +1056,34 @@ export function createConsoleServer({
         '.json': 'application/json',
       };
       response.setHeader('Content-Type', mime[path.extname(file)] || 'application/octet-stream');
+      // Only content-hashed build assets are shared across users and safe to cache.
+      if (
+        response.statusCode === 200 &&
+        /^\/_expo\/static\/.+-[a-f0-9]{16,}\.(?:js|css)$/.test(route)
+      ) {
+        response.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        response.setHeader('Vary', 'Accept-Encoding');
+        const encoding = assetEncoding(request.headers['accept-encoding']);
+        if (encoding) {
+          const key = file + ':' + encoding;
+          if (!compressedAssets.has(key)) {
+            const buffer =
+              encoding === 'br'
+                ? compressBrotli(data, { params: { [zlib.BROTLI_PARAM_QUALITY]: 4 } })
+                : compressGzip(data);
+            compressedAssets.set(
+              key,
+              buffer.catch((error) => {
+                compressedAssets.delete(key);
+                throw error;
+              }),
+            );
+          }
+          data = await compressedAssets.get(key);
+          response.setHeader('Content-Encoding', encoding);
+        }
+      }
+      response.setHeader('Content-Length', data.length);
       response.end(method === 'HEAD' ? undefined : data);
     } catch (error) {
       if (workspaceId && error instanceof ApiError && error.status >= 400) {

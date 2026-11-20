@@ -3,6 +3,7 @@ import { Link, Redirect, Slot, usePathname, router } from 'expo-router';
 import Brand from './Brand.web';
 import { useConsole } from './Session.web';
 import { mutate } from '../lib/api';
+import { requestedConsolePage } from '../lib/console-return';
 // Line icons, 24px grid, drawn with currentColor.
 const ICONS = {
   home: 'M4 11l8-7 8 7M6 9.5V20h12V9.5',
@@ -38,9 +39,8 @@ export function NavIcon({ name }: { name: keyof typeof ICONS }) {
 export const navigation = [
   ['/', 'home', 'Overview'],
   ['/keys', 'key', 'API keys'],
-  ['/docs', 'play', 'API Explorer & docs'],
+  ['/docs', 'docs', 'Docs'],
   ['/library', 'library', 'Library'],
-  ['/implementation', 'guide', 'Implementation'],
   ['/billing', 'usage', 'Usage & billing'],
 ] as const;
 
@@ -70,7 +70,8 @@ export default function Shell() {
         <Link href="/login">Return to sign in</Link>
       </div>
     );
-  if (!session || !session.user.onboarded) return <Redirect href="/login" />;
+  if (!session || !session.user.onboarded)
+    return <Redirect href={{ pathname: '/login', params: { next: requestedConsolePage() } }} />;
   async function logout() {
     try {
       await mutate('/api/auth/logout', 'POST');
@@ -165,16 +166,8 @@ export default function Shell() {
               : navigation.find((n) => n[0] === pathname)?.[2] || 'Settings'}
           </span>
           <div>
-            <Link
-              href="/keys"
-              className={`environment-pill env-${session.usageLane === 'sandbox' ? 'sandbox' : 'live'}`}
-              aria-label={`Environment: ${environmentLabel(session.usageLane)}. Open API keys`}
-            >
-              <i />
-              {environmentLabel(session.usageLane)}
-            </Link>
             <Link href="/billing" className="plan-pill">
-              {session.plan.name} plan
+              {session.allowance.requests === null ? 'Unlimited requests' : `${session.plan.name} plan`}
             </Link>
           </div>
         </header>

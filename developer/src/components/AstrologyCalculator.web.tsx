@@ -7,9 +7,9 @@ import { Badge, CopyButton, ErrorNotice, Loading, Meter, useLoad } from './ui.we
 type Budget = {
   status: string;
   engineVersion: string;
-  allowance: number;
+  allowance: number | null;
   used: number;
-  balance: number;
+  balance: number | null;
   requestCost: number;
   availableOperations: {
     id: string;
@@ -48,7 +48,7 @@ type Calculation = {
       moonRashi: { name: string };
     };
   };
-  usage: { contentRequests: number; remaining: number };
+  usage: { contentRequests: number; remaining: number | null };
   requestId: string;
   responseTimeMs: number;
 };
@@ -144,8 +144,12 @@ export default function AstrologyCalculator({ initialOperation }: { initialOpera
             <Meter
               label="Content requests used"
               value={budget.data?.used || 0}
-              limit={budget.data?.allowance || 0}
-              note={`${(budget.data?.balance || 0).toLocaleString()} remaining this month`}
+              limit={budget.data ? budget.data.allowance : 0}
+              note={
+                budget.data?.balance === null
+                  ? 'No monthly request limit'
+                  : `${(budget.data?.balance ?? 0).toLocaleString()} remaining this month`
+              }
             />
             <section className="metric-card">
               <span className="metric-label">ENGINE STATUS</span>
@@ -275,7 +279,7 @@ export default function AstrologyCalculator({ initialOperation }: { initialOpera
                   disabled={
                     pending ||
                     !budget.data ||
-                    budget.data.balance <= 0 ||
+                    (budget.data.balance !== null && budget.data.balance <= 0) ||
                     !selectedOperation ||
                     selectedOperation.availability === 'limited'
                   }

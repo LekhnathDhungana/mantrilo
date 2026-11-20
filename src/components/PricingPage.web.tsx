@@ -1,20 +1,38 @@
-import { Link } from 'expo-router';
+import { useState } from 'react';
+import { Link, useLocalSearchParams } from 'expo-router';
 import { Arrow, Callout, CtaBand, PageHero, SiteFrame } from './site/Chrome.web';
-import { PlanAction, PlanCards, comparisonRows } from './site/Plans.web';
+import { PlanAction, PlanCards, comparisonRows, planPrice } from './site/Plans.web';
 import { plans } from '../data/plans';
+import { useHydrated } from './site/useHydrated';
 
 export default function PricingPage() {
+  const [marketChoice, setIndia] = useState<boolean | null>(null);
+  const { market } = useLocalSearchParams<{ market?: string }>();
+  const hydrated = useHydrated();
+  const india = marketChoice ?? (hydrated && market === 'IN');
   return (
     <SiteFrame path="/pricing">
       <PageHero
         crumb="Pricing"
         eyebrow="Pricing"
-        title="Start free. Pay as your product grows."
-        lede="Every account starts with a sandbox key. Subscribe for a live key, the full catalog and higher limits. Monthly billing in USD; allowances reset monthly in UTC."
+        title="Mantrilo API plans and limits"
+        lede="Every account starts with a sandbox key. Subscribe for a live key, the full catalog and higher limits. Allowances reset monthly in UTC."
       />
       <section className="mh-section-sm">
         <div className="mh-wrap">
-          <PlanCards />
+          <h2 className="mh-sr">Plans</h2>
+          <div role="group" aria-label="Pricing market" className="mh-actions">
+            <button type="button" className={india ? 'mh-btn mh-btn-outline' : 'mh-btn mh-btn-primary'} aria-pressed={!india} onClick={() => setIndia(false)}>
+              Global · USD
+            </button>
+            <button type="button" className={india ? 'mh-btn mh-btn-primary' : 'mh-btn mh-btn-outline'} aria-pressed={india} onClick={() => setIndia(true)}>
+              India · INR
+            </button>
+          </div>
+          <p className="mh-muted" aria-live="polite">
+            {india ? 'India pricing is available for workspaces with a verified India billing address.' : 'Global prices are billed monthly in USD.'}
+          </p>
+          <PlanCards india={india} />
         </div>
       </section>
       <section className="mh-section-sm">
@@ -42,7 +60,7 @@ export default function PricingPage() {
                       className={p.name === 'Growth' ? 'is-featured' : undefined}
                     >
                       {p.name}
-                      <span>{p.price ? `$${p.price}/mo` : 'Free'}</span>
+                      <span>{india && p.name === 'Business' ? planPrice(p, india) : p.price ? `${planPrice(p, india)}/mo` : 'Free'}</span>
                     </th>
                   ))}
                 </tr>
@@ -67,7 +85,7 @@ export default function PricingPage() {
                   </th>
                   {plans.map((p) => (
                     <td key={p.name} className={p.name === 'Growth' ? 'is-featured' : undefined}>
-                      <PlanAction plan={p} featured={p.name === 'Growth'} />
+                      <PlanAction plan={p} featured={p.name === 'Growth'} india={india} />
                     </td>
                   ))}
                 </tr>
@@ -75,9 +93,9 @@ export default function PricingPage() {
             </table>
           </div>
           <Callout>
-            A customer product is an app or website covered by your plan. Audio allowances measure
-            data delivered, not storage. Each successful astrology calculation counts as one
-            request; failed requests are never counted. Commercial use is subject to the{' '}
+            A customer product is an app or website covered by your plan. Each issued audio link
+            counts the recording’s file size toward the audio allowance. Each successful astrology
+            calculation counts as one request. Commercial use is subject to the{' '}
             <Link href="/license">content license</Link>.
           </Callout>
         </div>
@@ -98,13 +116,37 @@ export default function PricingPage() {
               Usage limits <Arrow />
             </span>
           </Link>
-          <Link href="/implementation" className="mh-card mh-card-pad mh-card-link">
+          <Link href="/docs#guides" className="mh-card mh-card-pad mh-card-link">
             <h3>Scope the integration</h3>
             <p>Guides by goal, each with a working request and its quota behavior.</p>
             <span>
-              Implementation guides <Arrow />
+              Guides by goal <Arrow />
             </span>
           </Link>
+        </div>
+      </section>
+      <section className="mh-section-sm">
+        <div className="mh-wrap mh-prose">
+          <h2>What can I try on the Free plan?</h2>
+          <p>
+            The Free plan includes a sandbox key, sample catalog access, and {plans[0].requests}{' '}
+            requests per month. You do not need a payment card to start.
+          </p>
+          <ul>
+            <li>Five sample mantras and the recordings available for those samples.</li>
+            <li>
+              The opening chapter and first three stored rows of the{' '}
+              <Link href="/library/books/bhagavad-gita">Bhagavad Gita</Link> and{' '}
+              <Link href="/library/books/isha-upanishad">Isha Upanishad</Link>.
+            </li>
+            <li>
+              Astrology calculations marked available in the{' '}
+              <Link href="/astrology-api">operation catalog</Link>.
+            </li>
+          </ul>
+          <p>
+            <Link href="/docs#environments">Compare sandbox and live access</Link>
+          </p>
         </div>
       </section>
       <CtaBand

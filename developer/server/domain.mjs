@@ -90,9 +90,15 @@ export function setEntitlement(workspace, mode, { plan, billing }) {
 export const USAGE_LANES = ['sandbox', 'live', 'live-test'];
 export const usageLane = (environment, mode = 'live') =>
   environment === 'sandbox' ? 'sandbox' : mode === 'test' ? 'live-test' : 'live';
-export function allowance(plan) {
+export const hasUnlimitedRequests = (workspace) => Boolean(workspace.unlimitedRequestsSince);
+export const hasLiveAccess = (workspace, mode = 'live') =>
+  planFor(workspace, mode).price > 0 ||
+  (mode === 'live' && hasUnlimitedRequests(workspace) && workspace.promoLiveAccess === true);
+export const requestsRemaining = (limit, used) =>
+  limit === null ? null : Math.max(0, limit - used);
+export function allowance(plan, unlimitedRequests = false) {
   return {
-    requests: Number(plan.requests.replaceAll(',', '')),
+    requests: unlimitedRequests ? null : Number(plan.requests.replaceAll(',', '')),
     audioBytes: plan.price ? Number(plan.audio.split(' ')[0]) * 1e9 : 0,
     products: plan.price ? Number(plan.products) : null,
   };
@@ -124,9 +130,9 @@ export const primaryKey = (workspace, environment) =>
   workspace.keys.find(
     (key) => key.status === 'active' && key.secret && keyEnvironment(key) === environment,
   ) || null;
-const isPaid = (workspace, mode) => planFor(workspace, mode).price > 0;
-// Every workspace has a sandbox key; a workspace paid in this billing mode also has a live key.
-const wantedKeys = (workspace, mode) => (isPaid(workspace, mode) ? ENVIRONMENTS : ['sandbox']);
+// Live access can come from a subscription or an explicit private promo grant.
+const wantedKeys = (workspace, mode) =>
+  hasLiveAccess(workspace, mode) ? ENVIRONMENTS : ['sandbox'];
 function issueKey(workspace, environment) {
   const rawKey = newApiKey(environment);
   const key = {
@@ -178,10 +184,10 @@ export function rotateKey(workspace, environment, mode = 'live') {
     'Choose the sandbox or live key.',
   );
   insist(
-    environment === 'sandbox' || isPaid(workspace, mode),
+    environment === 'sandbox' || hasLiveAccess(workspace, mode),
     403,
     'production_plan_required',
-    'Live keys come with a paid plan.',
+    'A paid plan or a live-access promo is required for a live key.',
   );
   const current = primaryKey(workspace, environment);
   if (current) {
@@ -277,7 +283,7 @@ export function mergeUsage(...meters) {
   }
   return total;
 }
-export function chargeRequest(workspace, keyHash, endpoint, requestId) {
+export function chargeRequest(workspace, keyHash, endpoint, requestId, billingMode = 'live') {
   const key = workspace.keys.find((key) => key.hash === keyHash && key.status === 'active');
   insist(key, 401, 'invalid_api_key', 'The API key is invalid or revoked.');
   insist(
@@ -286,13 +292,12 @@ export function chargeRequest(workspace, keyHash, endpoint, requestId) {
     'sandbox_only',
     'This demo endpoint accepts sandbox keys only.',
   );
-  const plan = getPlan(workspace.plan),
-    limits = allowance(plan),
+  const limits = allowance(planFor(workspace, billingMode), hasUnlimitedRequests(workspace)),
     period = currentPeriod(),
     today = new Date().toISOString().slice(0, 10);
   const meter = usage(workspace, period);
   insist(
-    meter.contentRequests < limits.requests,
+    limits.requests === null || meter.contentRequests < limits.requests,
     429,
     'quota_exceeded',
     'The monthly content request allowance has been reached.',
@@ -313,7 +318,7 @@ export function chargeRequest(workspace, keyHash, endpoint, requestId) {
     cost: { contentRequests: 1, audioBytes: 0 },
     billable: false,
   });
-  return { meter, period };
+  return { meter, period, remaining: requestsRemaining(limits.requests, meter.contentRequests) };
 }
 export const accountingPolicy =
   'Each successful API request or astrology calculation uses one content request, and each audio link also counts the file size toward audio delivery. Sandbox and live keys are metered separately, each against the plan’s monthly allowance, and all keys of one kind share it. Refused requests (invalid input, unknown ids, bad keys, rate limits, an exhausted allowance) and server errors are refunded and cost nothing, as do key management and console browsing.';

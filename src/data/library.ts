@@ -4,7 +4,8 @@ import {
   productionApi,
   type Guide,
 } from '../../developer/src/data/integrations';
-import { consoleUrl } from './site';
+import { consoleSandboxUrl } from './site';
+import { guideHref } from './public-guides';
 import {
   audioResponse,
   bookResponse,
@@ -19,6 +20,8 @@ import {
   mantraListResponse,
   mantraResponse,
 } from './examples';
+
+export { guideHref } from './public-guides';
 
 // The public catalog behind /library and /astrology-api. Everything here is static: requests and
 // responses come from the shared guide data the console uses, so the two stay in step.
@@ -53,8 +56,6 @@ export type Item = {
   steps?: { label: string; request: string; response?: unknown }[];
 };
 
-const sandboxHref = (path: string) => (consoleUrl ? `${consoleUrl}${path}` : null);
-export const guideHref = (id: string) => `/implementation?guide=${id}`;
 const content = (id: string) => contentGuides.find((guide) => guide.id === id)!;
 
 function astrologyItem(guide: Guide): Item {
@@ -76,7 +77,7 @@ function astrologyItem(guide: Guide): Item {
     usage: guide.usage,
     docs: '/docs#astrology-calculate',
     guide: guideHref(guide.id),
-    sandbox: guide.limited ? null : sandboxHref(`/docs?tab=astrology&operation=${op}`),
+    sandbox: guide.limited ? null : consoleSandboxUrl({ operation: op }),
     limited: guide.limited,
   };
 }
@@ -110,7 +111,7 @@ export const contentItems: Item[] = [
     usage: search.usage,
     docs: '/docs#list-mantras',
     guide: guideHref(search.id),
-    sandbox: sandboxHref('/docs?tab=try'),
+    sandbox: consoleSandboxUrl({ preset: 'search-mantras' }),
   },
   {
     id: `mantra-${MANTRA_ID}`,
@@ -129,7 +130,7 @@ export const contentItems: Item[] = [
     usage: featured.usage,
     docs: '/docs#get-mantra',
     guide: guideHref(featured.id),
-    sandbox: sandboxHref('/docs?tab=try'),
+    sandbox: consoleSandboxUrl({ preset: 'featured-mantra' }),
   },
   {
     id: 'recording',
@@ -148,7 +149,7 @@ export const contentItems: Item[] = [
     usage: audio.usage,
     docs: '/docs#mantra-audio',
     guide: guideHref(audio.id),
-    sandbox: sandboxHref('/docs?tab=try'),
+    sandbox: consoleSandboxUrl({ preset: 'sacred-audio' }),
   },
   ...collections.map((collection): Item => ({
     id: `collection-${collection.id}`,
@@ -164,13 +165,16 @@ export const contentItems: Item[] = [
       collection.id === 'upanishads'
         ? collectionResponse
         : { data: [{ '…': '…', collection: { id: collection.id, name: collection.name } }] },
-    responseLabel: 'Response shape, titles elided',
+    responseLabel:
+      collection.id === 'upanishads'
+        ? 'Sandbox collection response'
+        : 'Illustrative collection response',
     inputs: upanishads.inputs,
     render: upanishads.render,
     usage: upanishads.usage,
     docs: '/docs#list-books',
     guide: guideHref(collection.id === 'upanishads' ? upanishads.id : reader.id),
-    sandbox: sandboxHref('/docs?tab=try'),
+    sandbox: collection.id === 'upanishads' ? consoleSandboxUrl({ preset: 'upanishads' }) : null,
     steps: [
       {
         label: 'Next page',

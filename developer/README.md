@@ -103,7 +103,7 @@ Customers subscribe through Stripe Checkout and manage plans, cards and invoices
 
 1. Set `STRIPE_SECRET_KEY` and the three `STRIPE_PRICE_*` values from `.env.example` on the console, using a Stripe sandbox first.
 2. Add `STRIPE_WEBHOOK_SECRET` and a webhook endpoint for `https://YOUR_CONSOLE/api/billing/webhook` with `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated` and `customer.subscription.deleted`.
-3. In the Customer Portal settings, allow cancelling, card updates, invoice history, and switching between the three plans.
+3. In the default Customer Portal configuration for each Stripe mode, enable subscription cancellation and price changes. Add the exact prices configured as `STRIPE_PRICE_STARTER`, `STRIPE_PRICE_GROWTH`, and `STRIPE_PRICE_BUSINESS` to the subscription update product list. Set proration and cancellation timing in Stripe. Home and Usage & billing open Stripe Checkout for a new subscription and the confirmation screen for the selected price or cancellation for existing subscriptions.
 
 To test locally, run `stripe listen --forward-to localhost:4190/api/billing/webhook` and use the `whsec_` secret it prints.
 
@@ -123,3 +123,72 @@ Verified demo login/logout, named key creation and one-time secret hiding, a rea
 ## Working astrology engine
 
 Open `/astrology` to calculate planetary positions or instant Panchang elements. The engine runs on the backend without an external provider. The same calculation is available at `POST /v1/astrology/calculate` with any API key. Each success counts as one content request on the workspace's plan. See [the engine contract, methodology, privacy and extension guide](server/astrology/README.md). The default Lahiri offset is explicitly approximate; custom ayanamsa values are supported.
+
+## Personal promo for unlimited monthly requests
+
+Generate a private code with `openssl rand -hex 24`. Set the console server's
+`MANTRILO_UNLIMITED_PROMO` to a JSON object with the generated `code` and either the recipient's
+exact `workspaceId` or their verified Mantrilo account `email`. For local demo testing, use the
+email `developer@demo.invalid` and put the setting
+in the developer console's ignored `.env.local`. For production, set the
+`mantrilo-unlimited-promo` Secret Manager secret and bind it as `MANTRILO_UNLIMITED_PROMO` on
+the serving Cloud Run console (including `mantrilo-console-hosting` when using Firebase Hosting).
+The public API reads the redeemed entitlement from Firestore and does not need the secret.
+
+Sign in to the designated workspace (or with the matching verified email) and go to
+**Usage & billing → Redeem a promo code**.
+Redemption removes the monthly request cap for the workspace across the API and console.
+Paid plans normally control live key eligibility and catalog access. Rate and audio byte limits
+still apply. Rotating or removing the configured code stops future redemptions; it does not
+undo an existing grant. To revoke a grant, remove `unlimitedRequestsSince` from the workspace
+document. Allow up to one minute for cached API keys to reflect the change.
+
+A workspace with an unlimited promo can separately be granted live access by setting
+`promoLiveAccess: true` on its workspace record. The console provisions a live key on the next
+sign-in or refresh. This does not start a subscription or increase the plan's rate or audio limit.
+
+## First month outreach code
+
+`STARTER99` gives eligible new customers a first month for $0.99 USD on Starter, Growth, or
+Business. The selected plan renews at its regular monthly price. Customers choose their
+plan in Usage & billing and enter the code before continuing to Stripe Checkout.
+
+Each plan uses its own Stripe promotion ID and a fixed amount coupon that applies once,
+restricted to that plan's product. Configure the IDs through `STRIPE_STARTER_PROMOTION_ID`,
+`STRIPE_GROWTH_PROMOTION_ID`, and `STRIPE_BUSINESS_PROMOTION_ID`. The console verifies the
+Stripe quote before returning the Checkout link.
+
+## Mantrilo billing portal branding
+
+Mantrilo leaves the Stripe-hosted customer portal off by default. The console gives existing
+subscribers a Mantrilo billing support link for invoices, payment updates, and subscription changes.
+
+To opt into Stripe's hosted layout with Mantrilo branding:
+
+1. On the Stripe account that bills Mantrilo, set the customer-facing business name to **Mantrilo**
+   in [Public business information](https://dashboard.stripe.com/settings/public). If that Stripe
+   account also bills another brand, use a dedicated Mantrilo account and plan the customer and
+   subscription migration before changing production Stripe credentials.
+2. In [Branding](https://dashboard.stripe.com/account/branding), upload `mantrilo-logo.png` and
+   `mantrilo-icon.png` from `developer/assets`. Set the background to `#ffffff` and buttons to
+   `#f28c28`. Preview in a Stripe sandbox before changing the live account.
+3. Use an [active non-default portal configuration](https://docs.stripe.com/api/customer_portal/configurations/create)
+   titled **Mantrilo Customer Portal** in its customer-facing headline. Verify the invoice,
+   payment method, and cancellation settings. Set the serving console's
+   `STRIPE_MANTRILO_PORTAL_CONFIGURATION` to its `bpc_...` ID.
+
+The console checks the configuration and the account's branding before creating a portal
+session. Leave that setting unset to keep the hosted portal disabled. The application never
+creates an unbranded checkout session if Stripe rejects the Mantrilo branding.
+
+### India billing
+
+India pricing uses separate monthly INR Stripe prices for Starter and Growth. Configure
+`STRIPE_IN_PRICE_STARTER` and `STRIPE_IN_PRICE_GROWTH` in the console service, and keep their
+amounts in sync with `shared/india-prices.json`. For `deployment/deploy.sh`, set the matching
+`STRIPE_LIVE_IN_PRICE_STARTER` and `STRIPE_LIVE_IN_PRICE_GROWTH` values in `developer/.env.local`.
+
+When a customer requests India pricing, verify the billing address and run
+`node scripts/india-pricing.mjs <workspace-id> enable` from the developer directory.
+The workspace can then select India and subscribe in INR. Use `disable` to remove eligibility
+for future checkouts. Handle INR plan changes and Business quotes through billing support.

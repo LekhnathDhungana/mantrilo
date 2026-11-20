@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
 import { useConsole } from '../Session.web';
 import { mutate } from '../../lib/api';
 import { authErrorMessage } from '../../lib/auth-errors';
@@ -14,9 +15,11 @@ type Step = 'options' | 'password' | 'email' | 'phone' | 'code';
 // Sign-in and sign-up are one path: a correct code opens the account or creates it.
 export default function AuthFlow() {
   const { config, refresh } = useConsole();
+  // The public site's "Get API key" links here with ?mode=signup to open on account creation.
+  const { mode } = useLocalSearchParams<{ mode?: string }>();
   const codesEnabled = Boolean(config?.emailCodes || config?.phoneCodes);
   const [step, setStep] = useState<Step>(codesEnabled ? 'options' : 'password'),
-    [creating, setCreating] = useState(false),
+    [creating, setCreating] = useState(mode === 'signup'),
     [password, setPassword] = useState(''),
     [channel, setChannel] = useState<'email' | 'phone'>('email'),
     [email, setEmail] = useState(''),

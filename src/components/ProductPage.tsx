@@ -19,7 +19,7 @@ export default function ProductPage({ slug }: { slug: ProductSlug }) {
           {s.copy}
         </Text>
       ))}
-      <Link href="/access" style={styles.link}>
+      <Link href="/contact" style={styles.link}>
         Prepare an access request →
       </Link>
     </ScrollView>

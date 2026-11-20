@@ -2,7 +2,7 @@
 
 **Positioning update:** Astrology no longer carries a Planned badge in the website or console. This supersedes the planned-positioning descriptions in the original audit below. The console now includes a real server-side positions and instant Panchang engine, included in every plan at one content request per calculation. Its sidereal default is explicitly approximate. See `developer/server/astrology/README.md`.
 
-**Launch route update:** `/sacred-audio-api`, `/shastra-books-api`, and `/library` are noindex until recording rights, a books endpoint, and cleared catalog examples exist. Indexable routes are set per page in `src/data/seo-pages.json`, which supersedes the counts below.
+**Current route settings:** The production sitemap is generated from `src/data/seo-pages.json` and the public guide registry. The Books API is at `/books-api`.
 
 ## Scope and evidence
 

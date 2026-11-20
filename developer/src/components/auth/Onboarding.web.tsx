@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { useConsole } from '../Session.web';
 import { mutate } from '../../lib/api';
 import { authErrorMessage } from '../../lib/auth-errors';
 
 // First sign-in only: who you are, what the workspace is called, then usage alerts.
-export default function Onboarding() {
+export default function Onboarding({ destination }: { destination: Href }) {
   const { session, refresh } = useConsole();
   const defaultWorkspace =
     session?.workspace.name === 'My workspace' ? '' : session?.workspace.name;
@@ -20,7 +20,7 @@ export default function Onboarding() {
     try {
       await mutate('/api/onboarding', 'POST', { name, workspaceName, emailNotifications });
       await refresh();
-      router.replace('/');
+      router.replace(destination);
     } catch (e) {
       setError(authErrorMessage(e));
     } finally {

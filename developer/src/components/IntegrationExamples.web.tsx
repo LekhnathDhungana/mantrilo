@@ -11,12 +11,12 @@ import { useConsole } from './Session.web';
 import { CopyButton, useLoad } from './ui.web';
 
 export function useAstrologyCatalog() {
-  const { data } = useLoad<{ availableOperations: Operation[] }>('/api/astrology');
+  const { data, error } = useLoad<{ availableOperations: Operation[] }>('/api/astrology');
   const operations = data?.availableOperations ?? [];
   return {
     guides: astrologyGuides(operations),
     runnable: new Set(operations.filter((op) => op.availability !== 'limited').map((op) => op.id)),
-    loaded: Boolean(data),
+    loaded: Boolean(data || error),
   };
 }
 

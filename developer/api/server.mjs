@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
-import { ApiError, readJson, usageLane } from '../server/domain.mjs';
+import { ApiError, readJson, requestsRemaining, usageLane } from '../server/domain.mjs';
 import { createAstrologyService } from '../server/astrology/service.mjs';
 import { readBookListQuery, readPustakLibrary } from '../server/pustak.mjs';
 import { readKey } from './keys.mjs';
@@ -49,6 +49,15 @@ export function createApiServer({
 }) {
   return createServer(async (request, response) => {
     const requestId = randomUUID();
+    const durations = {};
+    async function timed(name, run) {
+      const started = performance.now();
+      try {
+        return await run();
+      } finally {
+        durations[name] = performance.now() - started;
+      }
+    }
     response.setHeader('X-Request-Id', requestId);
     response.setHeader('X-Robots-Tag', 'noindex');
     response.setHeader('Cache-Control', 'no-store');
@@ -56,8 +65,13 @@ export function createApiServer({
     response.setHeader('Referrer-Policy', 'no-referrer');
     const send = (status, body) => {
       response.setHeader('Content-Type', 'application/json; charset=utf-8');
+      const started = performance.now();
+      const json = JSON.stringify({ ...body, requestId });
+      durations.json = performance.now() - started;
+      const timing = Object.entries(durations).map(([name, ms]) => `${name};dur=${ms.toFixed(1)}`);
+      response.setHeader('Server-Timing', timing.join(', '));
       response.writeHead(status);
-      response.end(JSON.stringify({ ...body, requestId }));
+      response.end(json);
     };
     // Cloud Run appends the real client address last; anything before it is caller-supplied.
     // Put a load balancer in front and this must skip that hop too.
@@ -112,11 +126,13 @@ export function createApiServer({
         );
       let principal;
       try {
-        principal = await keys.resolve(readKey(request), {
-          beforeLookup() {
-            if (!authLimiter.available(clientIp(), FAILED_AUTH_LIMIT)) throw tooManyFailures();
-          },
-        });
+        principal = await timed('auth', () =>
+          keys.resolve(readKey(request), {
+            beforeLookup() {
+              if (!authLimiter.available(clientIp(), FAILED_AUTH_LIMIT)) throw tooManyFailures();
+            },
+          }),
+        );
       } catch (error) {
         if (error.status === 401 && !authLimiter.take(clientIp(), FAILED_AUTH_LIMIT).ok)
           throw tooManyFailures();
@@ -163,37 +179,48 @@ export function createApiServer({
       // 4. Reserve one request against this lane's monthly allowance, at the account level across
       // all of its keys. Near the limit this is exact even under concurrent calls.
       const lane = usageLane(principal.environment, billingMode),
-        limits = limitsFor(principal.plan, principal.environment),
-        reservation = await meter.reserve({
-          workspaceId: principal.workspaceId,
-          keyId: principal.keyId,
-          lane,
-          endpoint,
-          limit: limits.requests,
-          margin: exactMargin(rate, { ttlMs: meter.ttlMs, instances }),
-        });
+        limits = limitsFor(principal.plan, principal.environment, principal.unlimitedRequests),
+        reservation = await timed('quota', () =>
+          meter.reserve({
+            workspaceId: principal.workspaceId,
+            keyId: principal.keyId,
+            lane,
+            endpoint,
+            limit: limits.requests,
+            margin: exactMargin(rate, { ttlMs: meter.ttlMs, instances }),
+          }),
+        );
       if (!reservation.ok)
         throw new ApiError(
           429,
           'quota_exceeded',
           'The monthly request allowance for this plan has been reached.',
         );
-      response.setHeader('X-Quota-Requests-Remaining', String(limits.requests - reservation.used));
+      response.setHeader(
+        'X-Quota-Requests-Remaining',
+        String(requestsRemaining(limits.requests, reservation.used) ?? 'unlimited'),
+      );
 
       // 5. Serve. Anything that fails from here on is refunded, so only successes count.
       try {
-        if (astrology) return send(200, { data: await calculation.run(), calculated: true });
+        if (astrology)
+          return send(200, {
+            data: await timed('calculation', () => calculation.run()),
+            calculated: true,
+          });
         if (bookRoute) {
           if (!books) throw new ApiError(503, 'books_unavailable', 'Books are unavailable here.');
           const [, bookId, chapter] = bookRoute;
-          const result = await readPustakLibrary(books, {
-            id: bookId,
-            chapter,
-            cursor: url.searchParams.get('cursor'),
-            offset: url.searchParams.get('offset'),
-            sampleOnly,
-            ...listQuery,
-          });
+          const result = await timed(chapter ? 'chapter' : 'books', () =>
+            readPustakLibrary(books, {
+              id: bookId,
+              chapter,
+              cursor: url.searchParams.get('cursor'),
+              offset: url.searchParams.get('offset'),
+              sampleOnly,
+              ...listQuery,
+            }),
+          );
           return send(200, { ...result, ...(sampleOnly ? { sandbox: true } : {}) });
         }
 
@@ -201,12 +228,15 @@ export function createApiServer({
           const { limit, after, deity } = listQuery;
           let docs, hasMore;
           if (sampleOnly) {
-            docs = (await content.sample(resource))
-              .filter((doc) => !deity || spec.matchesDeity(doc, deity))
-              .filter((doc) => !after || doc.id > after)
-              .slice(0, limit);
-            hasMore = false;
-          } else ({ docs, hasMore } = await content.page(resource, { limit, after, deity }));
+            const matches = (await timed('content', () => content.sample(resource))).filter(
+              (doc) => (!deity || spec.matchesDeity(doc, deity)) && (!after || doc.id > after),
+            );
+            docs = matches.slice(0, limit);
+            hasMore = matches.length > limit;
+          } else
+            ({ docs, hasMore } = await timed('content', () =>
+              content.page(resource, { limit, after, deity }),
+            ));
           return send(200, {
             data: docs.map(spec.summary),
             nextCursor: hasMore ? encodeCursor(docs.at(-1).id) : null,
@@ -215,10 +245,10 @@ export function createApiServer({
         }
 
         const doc = sampleOnly
-          ? (await content.sample(resource)).find((d) => d.id === id)
-          : await content.get(resource, id);
+          ? (await timed('content', () => content.sample(resource))).find((d) => d.id === id)
+          : await timed('content', () => content.get(resource, id));
         if (!doc) {
-          if (sampleOnly && (await content.get(resource, id)))
+          if (sampleOnly && (await timed('content', () => content.get(resource, id))))
             throw new ApiError(
               403,
               'sandbox_sample_only',
@@ -230,7 +260,10 @@ export function createApiServer({
           return send(200, { data: spec.detail(doc), ...(sampleOnly ? { sandbox: true } : {}) });
 
         // Audio: count the file size against the allowance, then hand out a short-lived link.
-        const info = doc.hasAudio && doc.audioPath ? await media.describe(doc.audioPath) : null;
+        const info =
+          doc.hasAudio && doc.audioPath
+            ? await timed('media', () => media.describe(doc.audioPath))
+            : null;
         if (!info) throw new ApiError(404, 'audio_unavailable', 'This mantra has no recording.');
         const totals = await meter.totals(principal.workspaceId, lane);
         if (totals.audioBytes + info.bytes > limits.audioBytes)
@@ -239,7 +272,7 @@ export function createApiServer({
             'audio_quota_exceeded',
             'The monthly audio allowance for this plan has been reached.',
           );
-        const signed = await media.sign(doc.audioPath);
+        const signed = await timed('sign', () => media.sign(doc.audioPath));
         meter
           .record({
             workspaceId: principal.workspaceId,
@@ -267,7 +300,7 @@ export function createApiServer({
           .catch((failure) => logger.error(`usage refund failed ${requestId}: ${failure.message}`));
         response.setHeader(
           'X-Quota-Requests-Remaining',
-          String(limits.requests - reservation.used + 1),
+          String(requestsRemaining(limits.requests, reservation.used - 1) ?? 'unlimited'),
         );
         throw error;
       }

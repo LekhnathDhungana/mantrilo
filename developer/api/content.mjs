@@ -32,11 +32,9 @@ function mantraDetail(doc) {
       title: text(verse.title),
       sanskrit: text(verse.sanskrit),
       transliteration: text(verse.transliteration),
-      translation: text(verse.translation),
-      wordMeanings: (verse.wordMeaning || []).map((w) => ({
-        word: text(w.word),
-        meaning: text(w.meaning),
-      })),
+      // Preserve the contract without distributing stored translations or their glosses.
+      translation: null,
+      wordMeanings: [],
     })),
   };
 }

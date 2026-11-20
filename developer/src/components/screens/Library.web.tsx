@@ -5,6 +5,7 @@ import { api } from '../../lib/api';
 import { Badge, CopyButton, Empty, ErrorNotice, Loading, PageTitle, useLoad } from '../ui.web';
 import AstrologyLibrary from './AstrologyLibrary.web';
 import { astrologyGuides } from '../../data/integrations';
+import { epicBooks } from '../../data/epic-books';
 
 type Kind = 'mantras' | 'books';
 type LibraryTab = 'all' | 'mantras' | 'audio' | 'books' | 'astrology';
@@ -16,6 +17,7 @@ type Summary = {
   category?: string | null;
   deity?: { id: string; name: string | null } | null;
   verseCount?: number | null;
+  format?: 'prose';
   audio?: { href: string } | null;
   author?: string | null;
   subcategory?: string | null;
@@ -42,7 +44,13 @@ type Chapter = {
   verseCount: number | null;
 };
 type Book = Summary & { chapters: Chapter[]; preview: boolean };
-type ChapterPage = Chapter & { verses: Verse[]; nextOffset: number | null };
+type ChapterPage = Chapter & {
+  verses: Verse[];
+  nextOffset: number | null;
+  format?: 'prose';
+  source?: string | null;
+  sections?: { sectionNumber: number; title: string; paragraphs: string[] }[];
+};
 
 const TABS: { id: LibraryTab; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -134,7 +142,7 @@ export default function Library() {
         title="Library"
         copy="Search mantras, recordings, book collections and astrology capabilities, then open any item to see exactly what the API returns."
       />
-      {type !== 'astrology' && !item && !session.plan.price && (
+      {type !== 'astrology' && !item && !session.liveAccess && (
         <div className="notice">
           You’re seeing the free sample, the same items your sandbox key returns.{' '}
           <Link href="/billing">Upgrade</Link> for the full catalog.
@@ -184,10 +192,32 @@ export default function Library() {
         <AstrologyLibrary item={item} onOpen={open} onBack={back} />
       ) : (
         <div hidden={Boolean(item)}>
+          {type === 'books' && !collection && !search.trim() && (
+            <div className="notice">
+              <strong>English epic retellings</strong>
+              <ul>
+                {epicBooks.map(({ id, title, chapters }) => (
+                  <li key={id}>
+                    <Link
+                      href={
+                        session.liveAccess
+                          ? { pathname: '/library', params: { type: 'books', item: id } }
+                          : { pathname: '/docs', params: { guide: 'book-reader' } }
+                      }
+                    >
+                      {title}
+                    </Link>{' '}
+                    · {chapters} chapters
+                  </li>
+                ))}
+              </ul>
+              {!session.liveAccess && 'Available with live access.'}
+            </div>
+          )}
           <p className="small muted library-guide-link">
             <Link
               href={{
-                pathname: '/implementation',
+                pathname: '/docs',
                 params: {
                   guide:
                     type === 'books'
@@ -200,7 +230,7 @@ export default function Library() {
                 },
               }}
             >
-              See the implementation guide →
+              See the guide →
             </Link>
           </p>
           <FilterBar
@@ -458,7 +488,7 @@ function Results({
               <>
                 <span>Author</span>
                 <span>Collection</span>
-                <span>Verses</span>
+                <span>Content</span>
               </>
             )}
           </div>
@@ -487,7 +517,13 @@ function Results({
                       <span data-label="Collection">
                         {[record.category, record.subcategory].filter(Boolean).join(' / ') || '—'}
                       </span>
-                      <span data-label="Verses">{record.verseCount ?? '—'}</span>
+                      <span data-label="Content">
+                        {record.format === 'prose'
+                          ? 'English prose'
+                          : record.verseCount == null
+                            ? '—'
+                            : `${record.verseCount} verses`}
+                      </span>
                     </>
                   )}
                 </button>
@@ -582,7 +618,7 @@ function RecordDetail({ id }: { id: string }) {
             aria-label={`Play recording for ${record.title || record.id}`}
             controls
             preload="none"
-            src={`/api/library/mantras/${encodeURIComponent(id)}/audio`}
+            src={`${process.env.EXPO_PUBLIC_CONSOLE_BASE_PATH || ''}/api/library/mantras/${encodeURIComponent(id)}/audio`}
             onError={() => setAudioError(true)}
           />
         )}
@@ -634,13 +670,13 @@ function RecordDetail({ id }: { id: string }) {
             <Field label="Audio">{record.audio ? 'Yes' : 'No'}</Field>
           </dl>
           <p>
-            <Link href={{ pathname: '/implementation', params: { guide: 'featured-mantra' } }}>
+            <Link href={{ pathname: '/docs', params: { guide: 'featured-mantra' } }}>
               Featured mantra guide →
             </Link>
           </p>
           {record.audio && (
             <p>
-              <Link href={{ pathname: '/implementation', params: { guide: 'sacred-audio' } }}>
+              <Link href={{ pathname: '/docs', params: { guide: 'sacred-audio' } }}>
                 Audio playback guide →
               </Link>
             </p>
@@ -804,10 +840,14 @@ function BookDetail({ id }: { id: string }) {
               </Field>
             )}
             <Field label="Chapters">{book.chapters.length}</Field>
-            {book.verseCount != null && <Field label="Verses">{book.verseCount}</Field>}
+            {book.format === 'prose' ? (
+              <Field label="Format">English prose retelling</Field>
+            ) : (
+              book.verseCount != null && <Field label="Verses">{book.verseCount}</Field>
+            )}
           </dl>
           <p>
-            <Link href={{ pathname: '/implementation', params: { guide: 'book-reader' } }}>
+            <Link href={{ pathname: '/docs', params: { guide: 'book-reader' } }}>
               Book reader guide →
             </Link>
           </p>
@@ -826,6 +866,20 @@ function BookChapter({ id, chapter, preview }: { id: string; chapter: number; pr
   const page = data?.data;
   if (loading || error || !page)
     return <LoadState loading={loading} error={error} reload={reload} />;
+  if (page.format === 'prose')
+    return (
+      <>
+        {page.source && <p className="library-description">Source · {page.source}</p>}
+        {page.sections?.map(({ sectionNumber, title, paragraphs }) => (
+          <section className="book-reader" key={sectionNumber}>
+            <h3>{title}</h3>
+            {paragraphs.map((paragraph, index) => (
+              <p key={index}>{paragraph}</p>
+            ))}
+          </section>
+        ))}
+      </>
+    );
   return (
     <>
       {page.description && <p className="library-description">{page.description}</p>}

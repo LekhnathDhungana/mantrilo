@@ -1,9 +1,11 @@
-import Screen from '../../components/Screen';
+import { Redirect, useLocalSearchParams } from 'expo-router';
 
+// Implementation guides now live under Docs. Keep old links and bookmarks working.
 export default function Page() {
-  return <Screen page="implementation" />;
+  const { guide } = useLocalSearchParams<{ guide?: string }>();
+  return <Redirect href={guide ? { pathname: '/docs', params: { guide } } : '/docs'} />;
 }
 
 export function generateMetadata() {
-  return { title: 'Implementation | Mantrilo Console', robots: 'noindex,nofollow' };
+  return { title: 'Docs | Mantrilo Console', robots: 'noindex,nofollow' };
 }

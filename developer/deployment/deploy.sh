@@ -98,7 +98,7 @@ build "$CONSOLE_IMAGE" developer/deployment/Dockerfile
 
 ENV_VARS="FIREBASE_PROJECT_ID=$PROJECT,MANTRILO_APP_ORIGIN=$CONSOLE_ORIGIN,MANTRILO_API_URL=$API_URL"
 ENV_VARS+=",MANTRILO_API_SIGNER=$CONSOLE_SA"
-for name in FIREBASE_WEB_API_KEY FIREBASE_AUTH_DOMAIN FIREBASE_WEB_APP_ID MANTRILO_EMAIL_FROM; do
+for name in FIREBASE_WEB_API_KEY FIREBASE_AUTH_DOMAIN FIREBASE_WEB_APP_ID MANTRILO_EMAIL_FROM STRIPE_MANTRILO_PORTAL_CONFIGURATION STRIPE_STARTER_PROMOTION_ID STRIPE_GROWTH_PROMOTION_ID STRIPE_BUSINESS_PROMOTION_ID; do
   value="$(local_value "$name" || true)"
   [[ -z "$value" ]] || ENV_VARS+=",$name=$value"
 done
@@ -108,6 +108,10 @@ ENV_VARS+=",MANTRILO_BILLING_MODE=live"
 for plan in STARTER GROWTH BUSINESS; do
   value="$(local_value "STRIPE_LIVE_PRICE_$plan" || true)"
   [[ -z "$value" ]] || ENV_VARS+=",STRIPE_PRICE_$plan=$value"
+done
+for plan in STARTER GROWTH; do
+  value="$(local_value "STRIPE_LIVE_IN_PRICE_$plan" || true)"
+  [[ -z "$value" ]] || ENV_VARS+=",STRIPE_IN_PRICE_$plan=$value"
 done
 
 # Secrets live in Secret Manager and are attached only once they exist.
@@ -121,6 +125,7 @@ attach_secret() {
 attach_secret STRIPE_SECRET_KEY stripe-secret-key
 attach_secret STRIPE_WEBHOOK_SECRET stripe-webhook-secret
 attach_secret RESEND_API_KEY resend-api-key
+attach_secret MANTRILO_UNLIMITED_PROMO mantrilo-unlimited-promo
 if [[ -n "$ASTROLOGY_BINDING" ]]; then
   SECRETS+="${SECRETS:+,}$ASTROLOGY_BINDING"
 fi

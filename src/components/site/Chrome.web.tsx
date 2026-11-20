@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, usePathname } from 'expo-router';
 import Seo from '../Seo.web';
+import type { PageMeta } from '../../data/metadata';
 import Brand, { Rosette } from '../Brand.web';
-import { consoleUrl } from '../../data/site';
+import { signInUrl, signUpUrl } from '../../data/site';
+import { rememberConsoleChannel, tagConsoleEntry } from './consoleSource.web';
 import './site.css';
 
 // Shared frame for every public page: fonts, theme, header, footer and scroll reveals.
@@ -10,12 +12,8 @@ import './site.css';
 const THEME_KEY = 'mantrilo-theme';
 type Theme = 'light' | 'dark';
 
-export const getKeyHref = consoleUrl ? `${consoleUrl}/login` : '/access';
-const external = Boolean(consoleUrl);
-
 const nav: [string, string][] = [
   ['/docs', 'Docs'],
-  ['/implementation', 'Guides'],
   ['/library', 'Library'],
   ['/astrology-api', 'Astrology'],
   ['/pricing', 'Pricing'],
@@ -61,25 +59,32 @@ export function Divider() {
   );
 }
 
-// "Get API key": the console's sign-up when its URL is configured, else the access request.
-export function KeyButton({ className = 'mh-btn mh-btn-primary', children = 'Get API key' }) {
-  return external ? (
-    <a href={getKeyHref} className={className}>
+// "Get API key" opens sign-up in the developer console.
+export function KeyButton({
+  className = 'mh-btn mh-btn-primary',
+  children = 'Get API key',
+  href = signUpUrl,
+}: {
+  className?: string;
+  children?: ReactNode;
+  href?: string;
+}) {
+  return (
+    <a href={href} className={className}>
       {children} <Arrow />
     </a>
-  ) : (
-    <Link href="/access" className={className}>
-      {children} <Arrow />
-    </Link>
   );
 }
 
 export function SiteFrame({
   path,
+  meta,
   notFound = false,
   children,
 }: {
   path: string;
+  /** Metadata for a generated page that is not listed in seo-pages.json. */
+  meta?: PageMeta;
   notFound?: boolean;
   children: ReactNode;
 }) {
@@ -94,6 +99,7 @@ export function SiteFrame({
       if ((saved === 'light' || saved === 'dark') && root.current)
         root.current.dataset.theme = saved;
     } catch {}
+    rememberConsoleChannel();
     const onScroll = () => setScrolled(window.scrollY > 8);
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -143,15 +149,14 @@ export function SiteFrame({
   const active = (href: string) => pathname === href || pathname.startsWith(href + '/');
 
   return (
-    <div className="mh" ref={root}>
-      <Seo path={path} notFound={notFound} />
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-      <link
-        rel="stylesheet"
-        precedence="default"
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Tiro+Devanagari+Sanskrit:ital@0;1&display=swap"
-      />
+    <div
+      className="mh"
+      ref={root}
+      onClickCapture={(event) => {
+        if (!notFound) tagConsoleEntry(event.target, path);
+      }}
+    >
+      <Seo path={path} meta={meta} notFound={notFound} />
       <a className="mh-skip" href="#main">
         Skip to content
       </a>
@@ -159,7 +164,7 @@ export function SiteFrame({
       <header className={scrolled ? 'mh-header is-scrolled' : 'mh-header'}>
         <div className="mh-wrap mh-nav">
           <Link href="/" aria-label="Mantrilo home" className="mh-logo">
-            <Brand adaptToTheme />
+            <Brand />
           </Link>
           <nav
             id="mh-navigation"
@@ -176,21 +181,17 @@ export function SiteFrame({
                 {label}
               </Link>
             ))}
-            {external && (
-              <a href={`${consoleUrl}/login`} className="mh-links-signin">
-                Sign in
-              </a>
-            )}
+            <a href={signInUrl} className="mh-links-signin">
+              Sign in
+            </a>
             <span className="mh-links-cta">
               <KeyButton className="mh-btn mh-btn-primary" />
             </span>
           </nav>
           <div className="mh-nav-actions">
-            {external && (
-              <a href={`${consoleUrl}/login`} className="mh-signin">
-                Sign in
-              </a>
-            )}
+            <a href={signInUrl} className="mh-signin">
+              Sign in
+            </a>
             <button
               type="button"
               className="mh-icon-btn"
@@ -243,35 +244,32 @@ export function SiteFrame({
             <p>Sacred content, thoughtfully connected.</p>
           </div>
           <nav aria-label="Products">
-            <h3>Products</h3>
+            <p className="mh-footer-label">Products</p>
             <Link href="/mantra-api">Mantras</Link>
             <Link href="/sacred-audio-api">Sacred audio</Link>
-            <Link href="/shastra-books-api">Books & collections</Link>
+            <Link href="/books-api">Books</Link>
             <Link href="/astrology-api">Astrology</Link>
           </nav>
           <nav aria-label="Developers">
-            <h3>Developers</h3>
+            <p className="mh-footer-label">Developers</p>
             <Link href="/docs">API docs</Link>
-            <Link href="/implementation">Implementation guides</Link>
+            <Link href="/docs#guides">Guides by goal</Link>
             <Link href="/library">Content library</Link>
             <Link href="/pricing">Pricing</Link>
-            {external ? (
-              <a href={getKeyHref}>Get API key</a>
-            ) : (
-              <Link href="/access">Get API key</Link>
-            )}
+            <a href={signUpUrl}>Get API key</a>
           </nav>
-          <nav aria-label="Legal">
-            <h3>Legal</h3>
+          <nav aria-label="Company">
+            <p className="mh-footer-label">Company</p>
+            <Link href="/about">About Mantrilo</Link>
             <Link href="/license">Content license</Link>
             <Link href="/privacy">Privacy</Link>
             <Link href="/terms">Terms</Link>
-            <Link href="/access">Contact</Link>
+            <Link href="/contact">Contact</Link>
           </nav>
         </div>
         <div className="mh-wrap mh-footer-base">
           <span>© {new Date().getFullYear()} Mantrilo</span>
-          <span lang="sa" className="mh-deva">
+          <span lang="sa-Deva" className="mh-footer-sanskrit">
             सर्वे भवन्तु सुखिनः
           </span>
         </div>

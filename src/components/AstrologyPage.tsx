@@ -13,7 +13,7 @@ export default function AstrologyPage() {
         calculates real planetary positions and instant Panchang elements. The default sidereal
         offset is approximate, with a custom ayanamsa option.
       </Text>
-      <Link href="/access?interest=astrology" style={styles.link}>
+      <Link href="/contact?interest=astrology" style={styles.link}>
         Request astrology access →
       </Link>
     </ScrollView>

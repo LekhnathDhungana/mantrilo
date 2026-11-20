@@ -4,7 +4,8 @@ import { Rosette } from './Brand.web';
 import { Arrow, Divider, KeyButton, LineIcon, SiteFrame } from './site/Chrome.web';
 import { PlanCards } from './site/Plans.web';
 import { plans } from '../data/plans';
-import catalog from '../data/catalog-samples.json';
+import { consoleSandboxUrl } from '../data/site';
+import catalog from '../../developer/src/data/catalog-samples.json';
 import { astrologyPanchangExample, astrologyPositionsExample } from '../data/api-reference';
 import { CopyButton, JsonCode, MANTRA_ID, SourceCode, snippets, type Lang } from './site/Code.web';
 
@@ -12,11 +13,6 @@ import { CopyButton, JsonCode, MANTRA_ID, SourceCode, snippets, type Lang } from
 // and the astrology responses are engine output for 2026-11-10T12:00:00+05:30.
 const mantra = catalog.mantra.data;
 const verse = mantra.verses[0];
-const words = verse.wordMeanings.map(({ word, meaning }) => {
-  const match = word.match(/^(.*?)\s*\((.*)\)$/);
-  return { deva: match ? match[1] : word, iast: match ? match[2] : '', meaning };
-});
-
 const heroResponse = {
   data: {
     id: mantra.id,
@@ -56,7 +52,7 @@ const demos: Record<
         url: 'https://storage.googleapis.com/mantrilo-media/…?X-Goog-Signature=…',
         expiresAt: '2026-11-10T06:45:00.000Z',
         bytes: catalog.recording.bytes,
-        contentType: 'audio/mp4',
+        contentType: 'audio/x-m4a',
       },
       requestId: 'request-id',
     },
@@ -120,8 +116,8 @@ const features = [
   },
   {
     icon: Icon.words,
-    title: 'Word-by-word meaning',
-    copy: 'Each word paired with its transliteration and gloss, with compounds split where it helps.',
+    title: 'Structured verses',
+    copy: 'Verse numbers and original text let your app build reading and recitation views.',
   },
   {
     icon: Icon.audio,
@@ -143,11 +139,11 @@ const features = [
 const faqs: [string, ReactNode][] = [
   [
     'What content is available today?',
-    'Mantras with Sanskrit, transliteration, translation and word meanings; recordings linked to those mantras; scripture books by collection, chapter and verse; and astrology calculations.',
+    'Mantras with Sanskrit, transliteration and source references; recordings linked to those mantras; scripture books by collection, chapter and verse; and astrology calculations.',
   ],
   [
     'How does the free sandbox work?',
-    'Every account gets a sandbox key with 500 calls a month that reads the first five items of each resource. Paid plans add a live key for the full available catalog.',
+    'Every account gets a sandbox key with 500 calls a month, a sample of mantras and books, and access to available astrology calculations. Paid plans add a live key for the full available catalog.',
   ],
   [
     'Is astrology included?',
@@ -160,9 +156,9 @@ const faqs: [string, ReactNode][] = [
   [
     'Can I use the content commercially?',
     <>
-      Paid plans include the available mantras and sacred audio for commercial integration, subject
-      to the <Link href="/license">documented content license</Link>. The Free plan is for testing
-      only.
+      Paid plans unlock the full available catalog. Before publishing, review the{' '}
+      <Link href="/license">content license status</Link> for the text and recordings you plan to
+      use. The Free plan is for testing.
     </>,
   ],
   [
@@ -177,7 +173,6 @@ const faqs: [string, ReactNode][] = [
 export default function Marketing() {
   const [demo, setDemo] = useState<DemoKey>('mantra');
   const [script, setScript] = useState<'both' | 'deva' | 'iast'>('both');
-  const [word, setWord] = useState(0);
   const [lang, setLang] = useState<Lang>('curl');
 
   const active = demos[demo];
@@ -197,21 +192,23 @@ export default function Marketing() {
           <div className="mh-hero-copy">
             <Link href="/astrology-api" className="mh-pill">
               <span className="mh-pill-tag">Included</span>
-              Vedic astrology on every plan
+              Astrology on every plan
               <Arrow />
             </Link>
             <h1>
-              Sacred texts,
+              Hindu content API
               <br />
-              <span className="mh-h1-accent">programmable.</span>
+              <span className="mh-h1-accent">for developers.</span>
             </h1>
             <p className="mh-lede">
-              One REST API for Sanskrit mantras with transliteration and word-by-word meaning,
-              linked recordings, and Vedic astrology calculations.
+              One REST API for Sanskrit mantras, scripture books and chapters, linked recordings,
+              and astrology calculations.
             </p>
             <div className="mh-actions">
-              <KeyButton className="mh-btn mh-btn-primary" />
-              <Link href="/docs" className="mh-btn mh-btn-ghost">
+              <KeyButton href={consoleSandboxUrl({ preset: 'quickstart' })}>
+                Try the sandbox
+              </KeyButton>
+              <Link href="/docs#quickstart" className="mh-btn mh-btn-ghost">
                 Read the docs <Arrow />
               </Link>
             </div>
@@ -274,8 +271,8 @@ export default function Marketing() {
             <p className="mh-eyebrow">Try it</p>
             <h2>Pick an endpoint. See exactly what comes back.</h2>
             <p>
-              These are real responses: a mantra from the production catalog and output from the
-              astrology engine. Your app gets the same JSON.
+              Explore a production mantra record, an example signed link, and output from the
+              astrology engine.
             </p>
           </div>
 
@@ -319,7 +316,7 @@ export default function Marketing() {
 
             <div className="mh-demo-grid">
               <div className="mh-demo-render" aria-live="polite">
-                <DemoRender demo={demo} script={script} word={word} setWord={setWord} />
+                <DemoRender demo={demo} script={script} />
               </div>
               <div className="mh-window mh-demo-json">
                 <div className="mh-window-bar">
@@ -336,7 +333,65 @@ export default function Marketing() {
         </div>
       </section>
 
-      <Divider />
+      {/* Customer story */}
+      <section id="customers" className="mh-section mh-story-section">
+        <div className="mh-wrap">
+          <figure className="mh-story" data-reveal>
+            <Rosette className="mh-story-ring" />
+            <div className="mh-story-main">
+              <p className="mh-eyebrow">Customer story</p>
+              <svg className="mh-story-mark" viewBox="0 0 48 36" aria-hidden="true">
+                <path d="M0 36V22C0 9.6 6.4 2.2 19 0l2 5.2C14 7 10.6 11 10.2 17H20v19H0zm28 0V22C28 9.6 34.4 2.2 47 0l1 5.2C42 7 38.6 11 38.2 17H48v19H28z" />
+              </svg>
+              <blockquote>
+                <p>
+                  Mantrilo powers the parts of Satyam our users turn to for{' '}
+                  <em>daily practice</em>. It helps them read and listen to Sanskrit mantras,
+                  explore the Bhagavad Gita chapter by chapter, check their local Panchang, and
+                  generate their Vedic birth chart. It’s been a great partner in bringing all of
+                  that into <em>one app</em>.
+                </p>
+              </blockquote>
+              <figcaption>
+                <img src="/customers/satyam.png" alt="" width={52} height={52} />
+                <span className="mh-story-who">
+                  <b>Shrivas</b>
+                  <small>Head of Satyam</small>
+                </span>
+                <a
+                  href="https://satyam.app"
+                  target="_blank"
+                  rel="noopener"
+                  className="mh-textlink mh-story-visit"
+                >
+                  Visit Satyam <Arrow />
+                </a>
+              </figcaption>
+            </div>
+            <aside className="mh-story-side" aria-label="What Satyam builds with Mantrilo">
+              <p className="mh-story-label">Inside Satyam</p>
+              <ul>
+                {[
+                  ['ॐ', 'Mantras with audio', '/v1/mantras/{id}/audio'],
+                  ['गी', 'Bhagavad Gita, by chapter', '/v1/books/{id}/chapters'],
+                  ['☾', 'Local Panchang', '/v1/astrology/calculate'],
+                  ['✦', 'Vedic birth chart', '/v1/astrology/calculate'],
+                ].map(([glyph, title, path]) => (
+                  <li key={title}>
+                    <span className="mh-story-glyph" aria-hidden="true">
+                      {glyph}
+                    </span>
+                    <span>
+                      <b>{title}</b>
+                      <code>{path}</code>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </aside>
+          </figure>
+        </div>
+      </section>
 
       {/* Features */}
       <section id="features" className="mh-section">
@@ -428,12 +483,16 @@ export default function Marketing() {
       </section>
 
       {/* Use cases */}
-      <section id="build" className="mh-section">
+      <section id="library" className="mh-section">
         <div className="mh-wrap">
           <div className="mh-heading" data-reveal>
-            <p className="mh-eyebrow">What you can build</p>
-            <h2>For the apps people open every morning.</h2>
-            <p>The patterns the API was designed around.</p>
+            <p id="build" className="mh-eyebrow">
+              What you can build
+            </p>
+            <h2>Build with the Mantrilo API</h2>
+            <Link href="/library" className="mh-back">
+              Browse the Library <Arrow />
+            </Link>
           </div>
           <div className="mh-uses">
             <article className="mh-card mh-use" data-reveal>
@@ -442,7 +501,12 @@ export default function Marketing() {
                 <small>{verse.transliteration.split('\n')[1]}</small>
               </div>
               <h3>Verse of the day</h3>
-              <p>Home-screen widgets and reading views with script, transliteration and meaning.</p>
+              <p>
+                Display original Sanskrit and transliteration in a daily widget or reading view.
+              </p>
+              <Link href="/docs/guides/search-mantras" className="mh-back">
+                Build a mantra library <Arrow />
+              </Link>
             </article>
             <article className="mh-card mh-use" data-reveal style={{ transitionDelay: '70ms' }}>
               <div className="mh-use-art mh-use-wave" aria-hidden="true">
@@ -451,7 +515,10 @@ export default function Marketing() {
                 ))}
               </div>
               <h3>Chanting & listening</h3>
-              <p>Play the recording beside the text it belongs to, verse by verse.</p>
+              <p>Play an available recording beside its mantra using a temporary link.</p>
+              <Link href="/docs/guides/sacred-audio" className="mh-back">
+                Add audio playback <Arrow />
+              </Link>
             </article>
             <article className="mh-card mh-use" data-reveal style={{ transitionDelay: '140ms' }}>
               <div className="mh-use-art mh-use-panchang" aria-hidden="true">
@@ -466,7 +533,10 @@ export default function Marketing() {
                 </span>
               </div>
               <h3>Panchang calendars</h3>
-              <p>Tithi, nakshatra, yoga and karana for any moment, for festival and puja apps.</p>
+              <p>Show sunrise, tithi, nakshatra and transitions for a local calendar day.</p>
+              <Link href="/astrology-api/daily-panchang" className="mh-back">
+                See the Panchang API <Arrow />
+              </Link>
             </article>
             <article className="mh-card mh-use" data-reveal style={{ transitionDelay: '210ms' }}>
               <div className="mh-use-art mh-use-chart" aria-hidden="true">
@@ -475,8 +545,11 @@ export default function Marketing() {
                   <path d="M6 6l108 108M114 6L6 114M60 6L6 60l54 54 54-54z" />
                 </svg>
               </div>
-              <h3>Kundli & matchmaking</h3>
-              <p>Birth charts, dashas and Guna Milan for astrology and matrimony products.</p>
+              <h3>Scripture and epic readers</h3>
+              <p>Display Sanskrit verses from the Upanishads or English retellings of the Ramayana and Mahabharata.</p>
+              <Link href="/docs#epic-retellings" className="mh-back">
+                Explore the epic retellings <Arrow />
+              </Link>
             </article>
           </div>
         </div>
@@ -500,6 +573,10 @@ export default function Marketing() {
             <Link href="/pricing" className="mh-textlink">
               Compare plans in detail <Arrow />
             </Link>
+            {' · '}
+            <Link href={{ pathname: '/pricing', params: { market: 'IN' } }} className="mh-textlink">
+              View India pricing
+            </Link>
           </p>
         </div>
       </section>
@@ -511,7 +588,7 @@ export default function Marketing() {
             <p className="mh-eyebrow">Questions</p>
             <h2>Good to know.</h2>
             <p>
-              Something else? <Link href="/access">Get in touch</Link>.
+              Something else? <Link href="/contact">Get in touch</Link>.
             </p>
           </div>
           <div className="mh-faq-list" data-reveal>
@@ -559,19 +636,8 @@ export default function Marketing() {
   );
 }
 
-function DemoRender({
-  demo,
-  script,
-  word,
-  setWord,
-}: {
-  demo: DemoKey;
-  script: 'both' | 'deva' | 'iast';
-  word: number;
-  setWord: (i: number) => void;
-}) {
+function DemoRender({ demo, script }: { demo: DemoKey; script: 'both' | 'deva' | 'iast' }) {
   if (demo === 'mantra') {
-    const w = words[word];
     return (
       <div className="mh-render-mantra">
         <div className="mh-render-meta">
@@ -593,28 +659,6 @@ function DemoRender({
               </p>
             ))}
         </div>
-        <p className="mh-render-translation">{verse.translation}</p>
-        <div className="mh-words" role="group" aria-label="Word-by-word meanings">
-          {words.map((x, i) => (
-            <button
-              key={x.deva}
-              type="button"
-              className={i === word ? 'is-active' : ''}
-              aria-pressed={i === word}
-              onClick={() => setWord(i)}
-              lang="sa"
-            >
-              {script === 'iast' ? x.iast : x.deva}
-            </button>
-          ))}
-        </div>
-        <p className="mh-word-meaning">
-          <span lang="sa" className="mh-deva">
-            {w.deva}
-          </span>
-          <em>{w.iast}</em>
-          <span>{w.meaning}</span>
-        </p>
       </div>
     );
   }
@@ -641,11 +685,11 @@ function DemoRender({
           </div>
           <div>
             <dt>Format</dt>
-            <dd>audio/mp4</dd>
+            <dd>audio/x-m4a</dd>
           </div>
           <div>
             <dt>Metered</dt>
-            <dd>Bytes delivered</dd>
+            <dd>File bytes per link</dd>
           </div>
         </dl>
         <p className="mh-render-note">

@@ -5,7 +5,7 @@ export const endpoints = [
   ['GET /v1/mantras', 'Mantras. Accepts limit (1–100), cursor and deity.'],
   [
     'GET /v1/mantras/{id}',
-    'One mantra with its verses: Sanskrit, transliteration, translation, word meanings.',
+    'One mantra with its original Sanskrit verses, transliteration and source details where available.',
   ],
   [
     'GET /v1/mantras/{id}/audio',
@@ -13,7 +13,7 @@ export const endpoints = [
   ],
   ['GET /v1/books', 'Book catalog. Accepts collection, limit (1–100) and cursor.'],
   ['GET /v1/books/{id}', 'Book summary and chapter index.'],
-  ['GET /v1/books/{id}/chapters/{chapter}', 'One page of verses. Accepts offset.'],
+  ['GET /v1/books/{id}/chapters/{chapter}', 'A verse page or a complete prose chapter.'],
   ['GET /v1/astrology', 'Operation ids, categories and sample inputs. No key needed.'],
   ['POST /v1/astrology/calculate', 'Run a Vedic, Western, numerology or sky operation.'],
 ];
@@ -67,8 +67,8 @@ export const mantraVerseExample = {
   title: 'Verse title, or null',
   sanskrit: 'Devanagari text, or null',
   transliteration: 'Transliteration, or null',
-  translation: 'Translation, or null',
-  wordMeanings: [{ word: 'Word', meaning: 'Meaning' }],
+  translation: null,
+  wordMeanings: [],
 };
 
 export const mantraDetailExample = {
@@ -87,8 +87,8 @@ export const mantraDetailExample = {
         title: 'Verse title, or null',
         sanskrit: 'Devanagari text, or null',
         transliteration: 'Transliteration, or null',
-        translation: 'Translation, or null',
-        wordMeanings: [{ word: 'Word', meaning: 'Meaning' }],
+        translation: null,
+        wordMeanings: [],
       },
     ],
   },

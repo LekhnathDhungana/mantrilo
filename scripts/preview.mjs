@@ -1,19 +1,23 @@
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
-const root = path.resolve('dist');
+const root = path.resolve(process.argv[2] ?? 'dist');
 const types = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript',
   '.css': 'text/css',
   '.png': 'image/png',
+  '.woff2': 'font/woff2',
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
+  '.m4a': 'audio/mp4',
   '.json': 'application/json',
   '.xml': 'application/xml; charset=utf-8',
   '.txt': 'text/plain; charset=utf-8',
 };
 const pages = JSON.parse(await readFile('src/data/seo-pages.json', 'utf8'));
+const guides = JSON.parse(await readFile('src/data/public-guides.json', 'utf8'));
+for (const slug of Object.keys(guides)) pages[`/docs/guides/${slug}`] = { indexable: true };
 createServer(async (request, response) => {
   // Local QA stays nonindexable even when testing a production-mode export.
   response.setHeader('X-Robots-Tag', 'noindex, nofollow');
@@ -22,6 +26,10 @@ createServer(async (request, response) => {
   try {
     const url = new URL(request.url, 'http://localhost');
     const pathname = decodeURIComponent(url.pathname);
+    if (pathname === '/shastra-books-api') {
+      response.writeHead(301, { Location: '/books-api' + url.search }).end();
+      return;
+    }
     let canonical =
       pathname === '/index.html' ? '/' : pathname.replace(/\/$/, '').replace(/\.html$/, '');
     if (canonical === '') canonical = '/';
@@ -42,7 +50,12 @@ createServer(async (request, response) => {
       return;
     }
     try {
-      if ((await stat(file)).isDirectory()) file = path.join(file, 'index.html');
+      if ((await stat(file)).isDirectory()) {
+        const html = file + '.html';
+        file = await stat(html)
+          .then(() => html)
+          .catch(() => path.join(file, 'index.html'));
+      }
     } catch {
       if (!path.extname(file)) file += '.html';
     }

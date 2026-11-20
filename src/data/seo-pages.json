@@ -1,56 +1,56 @@
 {
   "/": {
-    "title": "Hindu Content API: Mantras, Audio & Astrology | Mantrilo",
-    "description": "Add Sanskrit mantras, linked audio, and planetary calculations to your app with one REST API. See sample responses, pricing, and content terms.",
+    "title": "Hindu Content API for Developers | Mantrilo",
+    "description": "Add Sanskrit mantras, scripture books, linked audio, and astrology calculations to your app with one REST API. See sample responses, pricing, and content terms.",
     "label": "Home",
     "indexable": true
   },
   "/mantra-api": {
-    "title": "Mantra API for Developers | Mantrilo",
-    "description": "Add Sanskrit verses to your app with a REST API for original text, transliteration, translation, and word meanings. Review the real response format.",
+    "title": "Sanskrit Mantra & Shloka API for Developers | Mantrilo",
+    "description": "Add Sanskrit verses to your app with a REST API for original Sanskrit, transliteration, and source references. Review the real response format.",
     "label": "Mantra API",
     "indexable": true
   },
   "/sacred-audio-api": {
-    "title": "Sacred Audio API for Apps & Websites | Mantrilo",
-    "description": "Connect mantra recordings to your reading experience with short-lived signed links. Review how audio delivery, monthly allowances, and recording rights work.",
+    "title": "Mantra Recording API for Developers | Mantrilo",
+    "description": "Request temporary playback links for mantra recordings. See the response format, link expiry and audio usage limits.",
     "label": "Sacred audio API",
-    "indexable": false
+    "indexable": true
   },
-  "/shastra-books-api": {
-    "title": "Hindu Scripture & Shastra Books API | Mantrilo",
-    "description": "Read Hindu scripture by collection, book, chapter and verse with one REST API. Call the Upanishads or the Bhagavad Gita directly and page through them.",
-    "label": "Shastras & books API",
-    "indexable": false
+  "/books-api": {
+    "title": "Books API for Chapters and Verses | Mantrilo",
+    "description": "Retrieve Sanskrit books and English retellings of the Ramayana and Mahabharata by chapter. Try Bhagavad Gita or Isha Upanishad in the sandbox.",
+    "label": "Books API",
+    "indexable": true
   },
   "/astrology-api": {
-    "title": "Planetary Positions & Nakshatra API | Mantrilo",
-    "description": "Calculate planetary positions, rashis, nakshatras, tithi, yoga, and karana for any instant from 1900 to 2100 with one REST call. See real output and limits.",
+    "title": "Astrology API for Developers: Vedic & Western | Mantrilo",
+    "description": "Build Hindu calendars and Vedic astrology apps with Mantrilo. Explore Panchang, Kundli, planetary positions, matching, sample responses, and API limits.",
     "label": "Astrology API",
     "indexable": true
   },
   "/library": {
-    "title": "Hindu Content Library & API Coverage | Mantrilo",
-    "description": "See which mantras, recordings, and astrology data the Mantrilo API serves, which fields it returns, and what each plan can read.",
-    "label": "Content library",
-    "indexable": false
+    "title": "Hindu Content Library and API Coverage | Mantrilo",
+    "description": "Browse Sanskrit book previews, mantra and recording examples, and astrology capabilities. See what the API returns and what you can try in the sandbox.",
+    "label": "Library",
+    "indexable": true
   },
   "/pricing": {
-    "title": "Mantrilo API Pricing: Free to Business",
+    "title": "Mantrilo API Pricing & Request Limits",
     "description": "Compare Mantrilo’s monthly API plans: Free, $49.99, $149, and $399, with request limits, audio data delivery, catalog access, and customer-product allowances.",
     "label": "Pricing",
     "indexable": true
   },
   "/docs": {
-    "title": "Mantrilo API Documentation: Endpoints & Examples",
-    "description": "Authenticate with the Mantrilo API and read mantras, audio, and astrology calculations. Includes endpoints, response examples, errors, and rate limits.",
+    "title": "Mantrilo API Quickstart & Developer Reference",
+    "description": "Integrate Mantrilo with copyable requests, server examples, authentication, pagination and rate limits for mantras, books, audio and astrology.",
     "label": "API documentation",
     "indexable": true
   },
-  "/access": {
-    "title": "Request Mantrilo API Access",
-    "description": "Request access to Mantrilo’s Hindu content and astrology API. Tell us what you’re building and which plan fits, then send your request by email.",
-    "label": "Request access",
+  "/contact": {
+    "title": "Contact Mantrilo",
+    "description": "Questions about Mantrilo’s Hindu content and astrology API, licensing, recordings or a larger plan? Tell us what you’re building and we’ll reply by email.",
+    "label": "Contact",
     "indexable": false
   },
   "/privacy": {
@@ -61,20 +61,50 @@
   },
   "/terms": {
     "title": "Website Terms Status | Mantrilo",
-    "description": "Review the current status of Mantrilo website and service terms. Access is currently by request, and final service agreements are still being prepared.",
+    "description": "Review the current status of Mantrilo website and service terms. See the status of the public website and developer service terms.",
     "label": "Terms",
     "indexable": false
   },
   "/license": {
     "title": "Content License Status | Mantrilo",
-    "description": "Review Mantrilo’s content-licensing status before commercial integration. Final license documentation and content-specific rights must be confirmed.",
+    "description": "Review reuse guidance for public-domain Sanskrit, modern editions, English retellings, and source attribution in your app.",
     "label": "Content license",
     "indexable": false
   },
-  "/implementation": {
-    "title": "Implementation Guides for the Mantrilo API | Mantrilo",
-    "description": "Guides by goal: load the Upanishads, build a searchable shloka library, play sacred audio, build a book reader and add astrology, each with a working request.",
-    "label": "Implementation",
+  "/astrology-api/planetary-positions": {
+    "title": "Planetary Positions API: Sidereal & Tropical | Mantrilo",
+    "description": "Calculate planetary longitudes, rashis, nakshatras and apparent motion for a UTC instant with the Mantrilo astrology API.",
+    "label": "Planetary Positions API",
+    "indexable": true
+  },
+  "/astrology-api/instant-panchang": {
+    "title": "Instant Panchang API for Tithi and Nakshatra | Mantrilo",
+    "description": "Calculate tithi, nakshatra, yoga and karana for a supplied instant. See the JSON response, supported UTC dates and sidereal calculation method.",
+    "label": "Instant Panchang API",
+    "indexable": true
+  },
+  "/about": {
+    "title": "About Mantrilo: Hindu Content API for Developers",
+    "description": "Learn what Mantrilo provides, how catalog records represent text, translations and recordings, and how to verify source and usage rights.",
+    "label": "About Mantrilo",
+    "indexable": true
+  },
+  "/astrology-api/daily-panchang": {
+    "title": "Daily Panchang API for Hindu Calendar Apps | Mantrilo",
+    "description": "Get local sunrise, sunset, tithi and nakshatra transitions, yoga, karanas and Rahu Kalam for a date, coordinates and time zone.",
+    "label": "Daily Panchang API",
+    "indexable": true
+  },
+  "/library/mantras/aham-vaishvanaro-bhutva": {
+    "title": "Aham Vaishvanaro Bhutva · Bhagavad Gita 15.14 | Mantrilo",
+    "description": "Read Bhagavad Gita 15.14 in Sanskrit with transliteration, listen to the featured recording, and try the mantra in the Mantrilo sandbox.",
+    "label": "Aham Vaishvanaro Bhutva",
+    "indexable": true
+  },
+  "/library/books/upanishads": {
+    "title": "Upanishads Library and Books API | Mantrilo",
+    "description": "Browse Sanskrit Upanishad previews by title, compare chapter coverage, and try the Isha Upanishad example with the Mantrilo Books API.",
+    "label": "Upanishads",
     "indexable": true
   }
 }

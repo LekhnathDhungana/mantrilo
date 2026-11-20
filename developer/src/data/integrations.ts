@@ -1,5 +1,6 @@
 import published from './published-astrology.json';
 import samples from './integration-responses.json';
+import catalog from './catalog-samples.json';
 import { astrologyExcerpts } from './astrology-excerpts';
 
 export const productionApi = 'https://api.mantrilo.com';
@@ -16,7 +17,7 @@ export const coreInputs: Record<string, object> = {
   panchang: instant,
   chart: { birth, divisions: [1, 9], dashaLevels: 1, referenceDate: '2026-11-12' },
   'daily-panchang': {
-    date: '2026-11-12',
+    date: '2026-11-15',
     latitude: birth.latitude,
     longitude: birth.longitude,
     timezone: birth.timezone,
@@ -61,30 +62,32 @@ export type Guide = {
 
 const oneRequest =
   'A successful call uses one content request. Sandbox and live requests have separate usage totals. Failed calculations are refunded.';
-const mantraId = samples.mantra.data.id;
+const mantra = catalog.mantra.data;
+const { verses: _verses, ...mantraSummary } = mantra;
+const mantraId = mantra.id;
 const bookId = samples.books.data[0].id;
-const listMantras = '/v1/mantras?limit=5';
+const listMantras = '/v1/mantras?limit=1';
 const mantraPath = '/v1/mantras/' + mantraId;
 const chapterPath = '/v1/books/' + bookId + '/chapters/1';
-const audioPath = samples.mantra.data.audio.href + '?format=json';
+const audioPath = mantra.audio.href + '?format=json';
 
-// Shape of GET /v1/books?collection=upanishads&limit=3. Titles and descriptions are elided.
+// Isha is the sandbox title in this collection. The live list reports 18 numbered verses.
 export const collectionSample = {
   data: [
     {
       id: 'ishaUpanishad',
-      title: '…',
-      author: '…',
-      category: 'Shruti (The Revealed Texts)',
-      subcategory: 'Upanishads',
+      title: 'Īśāvāsya Upaniṣad',
+      author: 'Vedic Rishis',
+      category: null,
+      subcategory: null,
       collection: { id: 'upanishads', name: 'Upanishads' },
-      description: '…',
+      description:
+        'One of the shortest and most profound Upanishads, revealing the nature of the Supreme Lord who pervades all.',
       verseCount: 18,
     },
-    { id: 'kathaUpanishad', collection: { id: 'upanishads', name: 'Upanishads' }, '…': '…' },
-    { id: 'kenaUpanishad', collection: { id: 'upanishads', name: 'Upanishads' }, '…': '…' },
   ],
-  nextCursor: 'a2VuYVVwYW5pc2hhZA',
+  nextCursor: null,
+  sandbox: true,
   requestId: 'request-id',
 };
 
@@ -96,7 +99,12 @@ export const contentGuides: Guide[] = [
     summary: 'List mantras and shlokas, filter by deity, and search the titles you have loaded.',
     method: 'GET',
     path: listMantras,
-    sample: samples.mantras,
+    sample: {
+      ...samples.mantras,
+      data: [mantraSummary],
+      nextCursor: 'YW5uYXB1cm5hLWFoYW0tdmFpc2h2YW5hcm8tYmh1dGh2YQ',
+    },
+    sampleLabel: 'Sandbox list example',
     library: { type: 'mantras' },
     inputs:
       'Use limit (1–100, default 20), cursor (the previous nextCursor), and optional deity (a deity ID such as annapurna). The Mantras route also serves shlokas. The API has no full-text search parameter. The example filters one loaded page by title and optionally by audio availability. For catalog-wide search, index permitted content in your backend.',
@@ -104,7 +112,7 @@ export const contentGuides: Guide[] = [
       'Display data[].title, deity.name and verseCount. Use nextCursor for the next page. Open a row by passing its id to GET /v1/mantras/{id}.',
     usage:
       'Each successful page, deity-filter request, and detail fetch uses one request. Searching or filtering audio on already loaded results, or serving an entire response from your own cache without calling Mantrilo, uses zero Mantrilo requests.',
-    serverFlow: `const params = new URLSearchParams({ limit: '5' });
+    serverFlow: `const params = new URLSearchParams({ limit: '1' });
 for (const field of ['cursor', 'deity']) {
   const value = incoming.searchParams.get(field);
   if (value) params.set(field, value);
@@ -125,17 +133,18 @@ return {
     id: 'featured-mantra',
     name: 'Add a daily mantra or featured shloka',
     area: 'Mantras',
-    summary: 'Fetch a selected mantra and present its Sanskrit, transliteration and meaning.',
+    summary: 'Fetch a selected mantra and present its original Sanskrit and transliteration.',
     method: 'GET',
     path: mantraPath,
     demoPath: '/v1/mantras/demo-mantra-1',
     demoItem: 'demo-mantra-1',
-    sample: samples.mantra,
+    sample: { ...samples.mantra, data: mantra },
+    sampleLabel: 'Sandbox mantra example',
     library: { type: 'mantras', item: mantraId },
     inputs:
       'Use the stable id from the catalog. Choose or schedule the featured ID in your app. The API supplies the selected entry.',
     render:
-      'Render data.title and the verses array. Display sanskrit, transliteration and translation when present.',
+      'Render data.title and the verses array. Display sanskrit and transliteration when present. The translation field is currently null.',
     usage:
       'Each successful detail fetch uses one request. Reusing an entry already in your backend cache uses no additional request.',
     viewCode: 'const featured = { title: data.title, verse: data.verses?.[0] };',
@@ -150,6 +159,7 @@ return {
     demoPath: '/v1/mantras/demo-mantra-1/audio?format=json',
     demoItem: 'demo-mantra-1',
     sample: samples.audio,
+    sampleLabel: 'Illustrative response with a placeholder URL',
     library: { type: 'mantras', item: mantraId },
     inputs:
       'Use audio.href from the mantra record and append ?format=json. If audio is null, hide the player. The plain endpoint redirects to the recording. JSON mode gives your backend the signed URL.',
@@ -162,18 +172,14 @@ return {
   },
   {
     id: 'upanishads',
-    name: 'Load the Upanishads',
+    name: 'Load the Upanishads into your app',
     area: 'Books',
     summary: 'Call one collection directly, page through it, then open a book, chapter or verse.',
     method: 'GET',
     path: '/v1/books?collection=upanishads&limit=3',
     sample: collectionSample,
-    sampleLabel: 'Collection page excerpt',
+    sampleLabel: 'Sandbox collection response',
     followupPaths: [
-      [
-        'Next page',
-        '/v1/books?collection=upanishads&limit=3&cursor=' + collectionSample.nextCursor,
-      ],
       ['Book and chapter index', '/v1/books/ishaUpanishad'],
       ['First chapter', '/v1/books/ishaUpanishad/chapters/1'],
     ],
@@ -184,7 +190,7 @@ return {
     ],
     library: { type: 'books', item: 'ishaUpanishad' },
     inputs:
-      'collection is a collection id: upanishads, bhagavad-gita, advaita-vedanta-prakarana-granthas, vedanta or yoga. limit is 1–100 (default 24). Pass nextCursor as cursor for the next page; it is null on the last page. Every book in the response carries collection.id, so the same id works for links back to the collection. Sandbox keys list only the sample book in each collection.',
+      'collection is a collection id: upanishads, bhagavad-gita, advaita-vedanta-prakarana-granthas, vedanta or yoga. limit is 1–100 (default 24). Pass nextCursor as cursor for the next page; it is null on the last page. Every book in the response carries collection.id, so the same id works for links back to the collection. Sandbox keys return Isha Upanishad for this collection, with nextCursor set to null. Paid keys can page through the available collection. Collections without a designated sample return an empty sandbox page.',
     render:
       'List data[].title and description, then open a book with GET /v1/books/{id}. Its chapters[] gives the chapter numbers for GET /v1/books/{id}/chapters/{chapter}, whose verses[] carry each verse number.',
     usage:
@@ -194,17 +200,17 @@ const cursor = incoming.searchParams.get('cursor');
 if (cursor) params.set('cursor', cursor);
 return mantrilo('/v1/books?' + params);`,
     viewCode:
-      'const books = data.map(book => ({ id: book.id, title: book.title, next: nextCursor }));',
+      'const books = data.map(book => ({ id: book.id, title: book.title, description: book.description }));',
   },
   {
     id: 'book-reader',
-    name: 'Build a shastra or book reader',
+    name: 'Build a book reader',
     area: 'Books',
-    summary: 'Browse books, select a chapter, and load paginated verses.',
+    summary: 'Read Sanskrit verses or English retellings of the Ramayana and Mahabharata.',
     method: 'GET',
     path: '/v1/books',
-    sample: samples.chapter,
-    sampleLabel: 'Chapter response excerpt',
+    sample: samples.books,
+    sampleLabel: 'Book list excerpt',
     followupPaths: [
       ['Book and chapter index', '/v1/books/' + bookId],
       ['First chapter', chapterPath],
@@ -218,7 +224,7 @@ return mantrilo('/v1/books?' + params);`,
     inputs:
       'GET /v1/books returns up to 24 books. Follow nextCursor as cursor. Fetch /v1/books/{id} for the chapters index, then /v1/books/{id}/chapters/{chapter} using its numeric chapter number. Follow data.nextOffset as offset for more verses. Paid chapter pages contain up to 30 verses. Sandbox shows the opening chapter and first three verses of its sample books.',
     render:
-      'Use the book title, chapter titles and verse numbers for navigation. Render available Sanskrit, transliteration and translation per verse. The chapter is the public reading unit, with verses embedded in its pages.',
+      'Use the book title and chapter index for navigation. Scripture chapters return verses for available Sanskrit and transliteration. With a live key, open /v1/books/ramayana or /v1/books/mahabharata and append /chapters/1 for the first chapter. For format "prose", show the source citation and render each sections entry’s title and paragraphs. The chapter comes in one response.',
     usage:
       'A successful book list, book detail, or chapter page each uses one request. The complete example below makes three calls. Reuse cached indexes and pages when appropriate.',
     serverFlow: `const listing = await mantrilo('/v1/books');
@@ -232,7 +238,13 @@ const offset = incoming.searchParams.get('offset');
 const page = await mantrilo(path + '/chapters/' + chapter.number +
   (offset ? '?' + new URLSearchParams({ offset }) : ''));
 return { ...page, book: book.data };`,
-    viewCode: 'const verses = data?.verses ?? [];',
+    viewCode: `if (data?.format === 'prose') {
+  const { sections, source } = data;
+  // Display source, then each section’s title and paragraphs.
+} else {
+  const verses = data?.verses ?? [];
+  // Display the verse page and follow nextOffset when present.
+}`,
   },
 ];
 
@@ -496,23 +508,8 @@ const coreSamples: Record<string, unknown> = {
   positions: samples.positions,
   panchang: samples.panchang,
   'moon-timeline': samples['moon-timeline'],
-  chart: {
-    data: {
-      operation: 'chart',
-      charts: [{ division: 1, ascendant: { house: 1 }, planets: [], houses: [] }],
-    },
-    calculated: true,
-  },
-  'daily-panchang': {
-    data: {
-      operation: 'daily-panchang',
-      date: '2026-11-12',
-      timezone: 'Asia/Kolkata',
-      sunrise: '06:42',
-      sunset: '17:28',
-    },
-    calculated: true,
-  },
+  chart: samples.chart,
+  'daily-panchang': samples['daily-panchang'],
   match: { data: { operation: 'match', score: 25, maxScore: 36, factors: [] }, calculated: true },
   places: {
     data: {
@@ -574,11 +571,16 @@ export function astrologyGuides(configured: Operation[] = []): Guide[] {
           data: { operation: id, result: excerpt?.result ?? {} },
           calculated: true,
         });
-    const sampleLabel = verifiedSample
-      ? 'Verified sandbox response excerpt'
-      : image || id in coreSamples || excerpt
-        ? 'Illustrative response excerpt'
-        : 'Response envelope · operation payload omitted';
+    const sampleLabel =
+      id === 'daily-panchang'
+        ? 'Verified New Delhi response excerpt'
+        : id === 'chart'
+          ? 'Verified synthetic D1/D9 and Vimshottari Dasha response excerpt'
+          : verifiedSample
+            ? 'Verified sandbox response excerpt'
+            : image || id in coreSamples || excerpt
+              ? 'Illustrative response excerpt'
+              : 'Response envelope · operation payload omitted';
     return {
       id: 'astrology-' + id,
       name,

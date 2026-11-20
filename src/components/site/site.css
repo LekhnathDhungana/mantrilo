@@ -1,4 +1,19 @@
-/* Mantrilo public site. Every rule is scoped under .mh. */
+/* Mantrilo public site. */
+@font-face {
+  font-family: Inter;
+  src: url('/fonts/inter-v20-latin.woff2') format('woff2');
+  font-weight: 400 700;
+  font-display: optional;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Tiro Devanagari Sanskrit';
+  src: url('/fonts/tiro-devanagari-v7.woff2') format('woff2');
+  font-weight: 400;
+  font-display: optional;
+  unicode-range: U+0900-097F, U+1CD0-1CF4, U+1CF7-1CF9, U+200C-200D, U+20A8, U+20B9, U+20F0, U+25CC, U+A830-A839, U+A8E0-A8FF, U+11B00-11B0A;
+}
+
 
 .mh {
   --bg: #fffbf5;
@@ -31,7 +46,7 @@
     'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     sans-serif;
   --deva: 'Tiro Devanagari Sanskrit', 'Noto Serif Devanagari', 'Kohinoor Devanagari', serif;
-  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --radius: 14px;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   color-scheme: light;
@@ -101,6 +116,18 @@
   --brand-light-lettering: block;
   --brand-original-clip: inset(0 74% 0 0);
   color-scheme: dark;
+}
+
+/* Expo's web reset pins html, body and #root to the viewport and sets body { overflow: hidden }
+   for full-screen app layouts. The public site scrolls the document, so undo it on these pages. */
+html:has(.mh),
+html:has(.mh) body,
+html:has(.mh) #root {
+  height: auto;
+  min-height: 100%;
+}
+html:has(.mh) body {
+  overflow: visible;
 }
 
 /* Keep overscroll and the area behind the page in the same color as the page. */
@@ -368,14 +395,14 @@ body:has(.mh[data-theme='dark']) {
   aspect-ratio: 640 / 162;
 }
 .mh .brand-original,
-.mh-logo .brand-light-lettering {
+.mh .brand-light-lettering {
   position: absolute;
   inset: 0;
 }
-.mh-logo .brand-original {
+.mh .brand-original {
   clip-path: var(--brand-original-clip, none);
 }
-.mh-logo .brand-light-lettering {
+.mh .brand-light-lettering {
   display: var(--brand-light-lettering, none);
   /* The split falls in the gap between the Om and the lettering. */
   clip-path: inset(0 0 0 26%);
@@ -840,6 +867,167 @@ body:has(.mh[data-theme='dark']) {
 .mh-heading-left {
   margin: 0;
   text-align: left;
+}
+
+/* Customer story */
+.mh-story-section {
+  padding-bottom: 56px;
+}
+.mh .mh-story {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  gap: 56px;
+  align-items: center;
+  margin: 0;
+  padding: 64px;
+  border-radius: 24px;
+  border: 1px solid var(--line-2);
+  background:
+    radial-gradient(120% 90% at 0% 0%, var(--saffron-soft) 0%, transparent 60%),
+    linear-gradient(160deg, var(--surface) 0%, var(--surface-2) 100%);
+  box-shadow: var(--shadow-md);
+}
+.mh-story::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: linear-gradient(90deg, var(--marigold), var(--saffron), var(--vermilion), var(--rose));
+}
+.mh-story-ring {
+  position: absolute;
+  width: 460px;
+  height: 460px;
+  left: -170px;
+  bottom: -200px;
+  color: var(--saffron);
+  opacity: 0.12;
+  z-index: -1;
+}
+.mh-story-ring circle[fill] {
+  fill: transparent;
+}
+.mh-story-mark {
+  display: block;
+  width: 44px;
+  height: 33px;
+  margin: 6px 0 18px;
+  fill: var(--saffron);
+}
+.mh-story blockquote {
+  margin: 0;
+}
+.mh-story blockquote p {
+  font-size: clamp(20px, 2vw, 25px);
+  line-height: 1.5;
+  letter-spacing: -0.018em;
+  font-weight: 500;
+  color: var(--ink);
+}
+.mh-story blockquote em {
+  color: var(--accent-text);
+}
+.mh-story figcaption {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.mh-story figcaption img {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+}
+.mh-story-who b {
+  display: block;
+  font-weight: 600;
+  color: var(--ink);
+}
+.mh-story-who small {
+  display: block;
+  font-size: 14px;
+  color: var(--ink-3);
+}
+.mh-story-visit {
+  margin-left: auto;
+}
+.mh-story-side {
+  padding: 28px;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+}
+.mh-story-label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3) !important;
+  margin-bottom: 18px !important;
+}
+.mh-story-side ul {
+  list-style: none;
+  display: grid;
+  gap: 14px;
+}
+.mh-story-side li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.mh-story-side li + li {
+  padding-top: 14px;
+  border-top: 1px dashed var(--line);
+}
+.mh-story-glyph {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--saffron-soft);
+  color: var(--accent-text);
+  font-family: var(--deva);
+  font-size: 18px;
+  line-height: 1;
+}
+.mh-story-side b {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.mh-story-side code {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-3);
+}
+@media (max-width: 860px) {
+  .mh .mh-story {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 40px 24px 28px;
+  }
+  .mh-story-visit {
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+  .mh-story-side {
+    padding: 20px 18px;
+  }
+  .mh-story-side code {
+    font-size: 11px;
+    white-space: nowrap;
+  }
 }
 .mh-eyebrow {
   display: inline-flex;
@@ -1683,7 +1871,7 @@ body:has(.mh[data-theme='dark']) {
   align-content: start;
   gap: 10px;
 }
-.mh-footer h3 {
+.mh-footer .mh-footer-label {
   font-size: 13px;
   font-weight: 600;
   color: var(--ink);
@@ -2337,6 +2525,12 @@ a.mh-card {
     width: 95vw;
     height: 95vw;
   }
+  .mh .mh-blob,
+  .mh .mh-hero-ring,
+  .mh .mh-verse-float {
+    animation: none;
+    will-change: auto;
+  }
   .mh-features,
   .mh-uses,
   .mh-plans {
@@ -2542,11 +2736,13 @@ a.mh-card {
   border-bottom: 1px solid var(--line);
 }
 .mh-docs-section h2,
+.mh-endpoint h3,
 .mh-docs-section h3 {
   margin: 0 0 14px;
   letter-spacing: -0.02em;
 }
-.mh-docs-section h2 {
+.mh-docs-section h2,
+.mh-endpoint h3 {
   font-size: 26px;
 }
 .mh-docs-section h3 {
@@ -2554,6 +2750,7 @@ a.mh-card {
   line-height: 1.4;
 }
 .mh-docs-section h2 a,
+.mh-endpoint h3 a,
 .mh-docs-section h3 a {
   color: inherit;
   text-decoration: none;
@@ -2819,7 +3016,7 @@ a.mh-card {
   line-height: 1.15;
 }
 .mh-detail-copy h3,
-.mh-guide h3 {
+.mh-guide h2 {
   margin: 24px 0 6px;
   font-size: 16px;
   display: flex;
@@ -3124,4 +3321,75 @@ a.mh-card {
 .mh[data-theme='dark'] .mh-verb {
   background: #12301f;
   color: #86e0a8;
+}
+
+/* Guides by goal, inside /docs */
+.mh .mh-docs-goals {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 18px 0 14px;
+}
+.mh .mh-docs-goals h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+.mh .mh-docs-goals p {
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+.mh .mh-docs-head .mh-eyebrow a {
+  color: inherit;
+}
+
+.mh-preview-verse {
+  white-space: pre-line;
+}
+
+.mh-prose audio {
+  display: block;
+  max-width: 100%;
+}
+
+/* Book text: one block per verse, Devanagari first. */
+.mh-verses {
+  display: grid;
+  gap: 0;
+  margin-top: 8px;
+}
+.mh .mh-verse {
+  padding: 20px 0;
+  border-top: 1px solid var(--line);
+}
+.mh .mh-verse h3 {
+  margin: 0 0 6px;
+}
+.mh .mh-verse p {
+  margin: 0 0 8px;
+}
+.mh .mh-verse .mh-verse-key {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--ink-3);
+}
+.mh .mh-verse .mh-verse-deva {
+  font-family: var(--deva);
+  font-size: 1.15rem;
+  line-height: 1.7;
+  color: var(--ink);
+}
+.mh .mh-verse .mh-verse-roman {
+  font-style: italic;
+  color: var(--ink-2);
+}
+.mh .mh-verse .mh-verse-english {
+  color: var(--ink);
+}
+.mh .mh-pager {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
 }

@@ -1,6 +1,8 @@
 # Build with repository root as context:
 # docker build -f developer/deployment/Dockerfile -t mantrilo-developer .
 FROM node:22-alpine AS build
+ARG CONSOLE_BASE_PATH
+ENV EXPO_PUBLIC_CONSOLE_BASE_PATH=${CONSOLE_BASE_PATH}
 WORKDIR /app/developer
 COPY developer/package*.json ./
 RUN npm ci
@@ -16,6 +18,7 @@ RUN npm ci --omit=dev
 COPY --from=build /app/developer/dist ./dist
 COPY developer/server ./server
 COPY developer/api ./api
+COPY developer/assets/mantrilo-logo.png developer/assets/mantrilo-icon.png ./assets/
 COPY shared/ /app/shared/
 USER node
 EXPOSE 8080

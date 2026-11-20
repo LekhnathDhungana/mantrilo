@@ -45,6 +45,7 @@ export type Workspace = {
   logs: Activity[];
   preferences: { emailNotifications: boolean; usageAlertThreshold: number };
   billing?: {
+    currency?: string;
     customerId?: string;
     subscriptionId?: string;
     status?: string;
@@ -82,11 +83,13 @@ export type Session = {
   // Sandbox and live keys are metered separately; live appears once the plan is paid.
   usageByLane: { sandbox: Usage; live?: Usage };
   plan: Plan;
+  liveAccess: boolean;
   allowance: {
-    requests: number;
+    requests: number | null;
     audioBytes: number;
     products: number | null;
   };
+  promo: { canRedeem: boolean };
   // When the monthly allowance resets (the 1st of next month, UTC).
   resetsAt: string;
   accountingPolicy: string;

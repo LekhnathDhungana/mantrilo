@@ -1,9 +1,12 @@
+import { readFile } from 'node:fs/promises';
 import Stripe from 'stripe';
+import indiaAmounts from '../../shared/india-prices.json' with { type: 'json' };
 import {
   ApiError,
   FREE_PLAN,
   billingFor,
   getPlan,
+  insist,
   log,
   planFor,
   setEntitlement,
@@ -22,37 +25,146 @@ const isoDate = (seconds) => (seconds ? new Date(seconds * 1000).toISOString() :
 // sk_test_/rk_test_ keys belong to a sandbox or test mode; sk_live_/rk_live_ to live mode.
 export const stripeModeOf = (secretKey) => (/^[sr]k_live_/.test(secretKey) ? 'live' : 'test');
 
+// Checkout shows Mantrilo's name, logo and colours, not the Stripe account's own branding.
+// The icon is also the browser-tab icon on the checkout page.
+const BRAND_FILES = {
+  logo: { purpose: 'business_logo', name: 'mantrilo-logo.png' },
+  icon: { purpose: 'business_icon', name: 'mantrilo-icon.png' },
+};
+const BRANDING = {
+  display_name: 'Mantrilo',
+  background_color: '#ffffff',
+  button_color: '#f28c28',
+  border_style: 'rounded',
+  font_family: 'inter',
+};
+// A price that passed the check is trusted for this long, so checkout skips the Stripe lookup.
+// Failures are never cached: fixing the price in Stripe works on the next click.
+const PRICE_CHECK_TTL_MS = 10 * 60 * 1000;
+const OUTREACH_CODE = 'STARTER99';
+const FIRST_MONTH_CENTS = 99;
+const priceKey = (plan, market) => (market === 'IN' ? `IN:${plan}` : plan);
+
 export class StripeBilling {
-  constructor({ stripe, webhookSecret, prices, appOrigin, mode = 'live' }) {
-    Object.assign(this, { stripe, webhookSecret, prices, appOrigin, mode });
+  constructor({
+    stripe,
+    webhookSecret,
+    prices,
+    indiaPrices = {},
+    appOrigin,
+    mode = 'live',
+    portalConfiguration,
+    promotionIds = {},
+  }) {
+    Object.assign(this, {
+      stripe,
+      webhookSecret,
+      prices,
+      indiaPrices,
+      appOrigin,
+      mode,
+      portalConfiguration,
+      promotionIds,
+    });
+    this.verifiedAt = new Map();
+    this.brandFiles = {};
   }
-  // Checks each configured price against shared/content-plans.json: it must exist, be active,
-  // recur monthly in USD, and cost what the plan says. Returns a list of problems (empty if none).
-  async verifyPrices() {
-    const problems = [];
-    for (const [name, id] of Object.entries(this.prices)) {
-      const expected = Math.round(getPlan(name).price * 100);
+  // Checks every price and fetches the logo once at startup, so the first checkout is quick.
+  warm() {
+    Promise.all([this.verifyPrices(), this.verifyPrices(Object.keys(this.indiaPrices), 'IN')]).then(
+      (results) => {
+        const problems = results.flat();
+        if (problems.length) console.error(`Stripe price check: ${problems.join('; ')}`);
+      },
+    );
+    for (const kind of Object.keys(BRAND_FILES)) this.brandFile(kind);
+  }
+  // Reuses the image already uploaded to Stripe; uploads it the first time. Resolves to the
+  // file id, or null (checkout then goes without that image).
+  brandFile(kind) {
+    const { purpose, name } = BRAND_FILES[kind];
+    this.brandFiles[kind] ??= (async () => {
+      const { data } = await this.stripe.files.list({ purpose, limit: 100 });
+      const existing = data.find((file) => file.filename === name);
+      if (existing) return existing.id;
+      const path = new URL(`../assets/${name}`, import.meta.url);
+      const file = await this.stripe.files.create({
+        purpose,
+        file: { data: await readFile(path), name, type: 'image/png' },
+      });
+      return file.id;
+    })().catch((error) => {
+      console.error(`Stripe ${kind} upload failed: ${error.message}`);
+      delete this.brandFiles[kind];
+      return null;
+    });
+    return this.brandFiles[kind];
+  }
+  async brandingSettings() {
+    const [logo, icon] = await Promise.all([this.brandFile('logo'), this.brandFile('icon')]);
+    return {
+      ...BRANDING,
+      ...(logo ? { logo: { type: 'file', file: logo } } : {}),
+      ...(icon ? { icon: { type: 'file', file: icon } } : {}),
+    };
+  }
+  // Each configured price must match its advertised amount, currency and monthly interval.
+  async verifyPrices(names = Object.keys(this.prices), market) {
+    const regional = market === 'IN';
+    const currency = regional ? 'inr' : 'usd';
+    const symbol = regional ? '₹' : '$';
+    const checks = names.map(async (name) => {
+      const problems = [];
+      const id = (regional ? this.indiaPrices : this.prices)[name];
+      const expected = Math.round((regional ? indiaAmounts[name] : getPlan(name).price) * 100);
+      const cacheKey = priceKey(name, market);
       try {
         const price = await this.stripe.prices.retrieve(id);
         if (!price.active) problems.push(`${name}: price ${id} is archived`);
         if (price.livemode !== (this.mode === 'live'))
           problems.push(`${name}: price ${id} is not a ${this.mode}-mode price`);
-        if (price.currency !== 'usd')
-          problems.push(`${name}: billed in ${price.currency}, not usd`);
+        if (price.currency !== currency)
+          problems.push(`${name}: billed in ${price.currency}, not ${currency}`);
         if (price.recurring?.interval !== 'month' || price.recurring?.interval_count !== 1)
           problems.push(`${name}: not a monthly subscription price`);
         if (price.unit_amount !== expected)
           problems.push(
-            `${name}: Stripe charges $${(price.unit_amount / 100).toFixed(2)}, plans list $${(expected / 100).toFixed(2)}`,
+            `${name}: Stripe charges ${symbol}${(price.unit_amount / 100).toFixed(2)}, plans list ${symbol}${(expected / 100).toFixed(2)}`,
           );
       } catch (error) {
         problems.push(`${name}: price ${id} could not be read (${error.message})`);
       }
+      if (problems.length) this.verifiedAt.delete(cacheKey);
+      else this.verifiedAt.set(cacheKey, Date.now());
+      return problems;
+    });
+    return (await Promise.all(checks)).flat();
+  }
+  async availablePlans(market) {
+    const regional = market === 'IN';
+    const names = Object.keys(regional ? this.indiaPrices : this.prices);
+    const stale = names.filter(
+      (name) => Date.now() - (this.verifiedAt.get(priceKey(name, market)) ?? 0) >= PRICE_CHECK_TTL_MS,
+    );
+    if (stale.length) await this.verifyPrices(stale, market);
+    return names.filter((name) => this.verifiedAt.has(priceKey(name, market)));
+  }
+  async requirePlanPrice(plan, market) {
+    const checked = this.verifiedAt.get(priceKey(plan, market));
+    if (checked && Date.now() - checked < PRICE_CHECK_TTL_MS) return;
+    const problems = await this.verifyPrices([plan], market);
+    if (problems.length) {
+      console.error(`Stripe price check: ${problems.join('; ')}`);
+      throw new ApiError(
+        503,
+        'plan_unavailable',
+        'This plan is temporarily unavailable in Stripe.',
+      );
     }
-    return problems;
   }
   planFor(priceId) {
-    return Object.keys(this.prices).find((plan) => this.prices[plan] === priceId) || null;
+    if (!priceId) return null;
+    return PAID_PLANS.find((plan) => this.prices[plan] === priceId || this.indiaPrices[plan] === priceId) ?? null;
   }
   parseEvent(rawBody, signature) {
     try {
@@ -83,24 +195,195 @@ export class StripeBilling {
     const subscriptions = await this.listSubscriptions(customerId);
     return subscriptions.some((subscription) => ENTITLED_STATUSES.has(subscription.status));
   }
-  async checkoutUrl({ workspaceId, customerId, plan }) {
-    const session = await this.stripe.checkout.sessions.create({
+  get promotionPlans() {
+    return PAID_PLANS.filter((plan) => /^promo_[A-Za-z0-9]+$/.test(this.promotionIds[plan] ?? ''));
+  }
+  outreachPromotion(plan, code) {
+    if (code === undefined) return null;
+    insist(
+      this.promotionPlans.includes(plan) &&
+        typeof code === 'string' &&
+        code.trim().toUpperCase() === OUTREACH_CODE,
+      400,
+      'invalid_promotion_code',
+      'This promo code is unavailable for the selected plan.',
+    );
+    return this.promotionIds[plan];
+  }
+  async checkoutUrl({ workspaceId, customerId, plan, promotionCode, market }) {
+    const regional = market === 'IN';
+    const promotion = this.outreachPromotion(plan, promotionCode);
+    const renewalCents = Math.round((regional ? indiaAmounts[plan] : getPlan(plan).price) * 100);
+    const [, branding_settings] = await Promise.all([
+      this.requirePlanPrice(plan, market),
+      this.brandingSettings(),
+    ]);
+    const params = {
       mode: 'subscription',
       customer: customerId,
       client_reference_id: workspaceId,
-      line_items: [{ price: this.prices[plan], quantity: 1 }],
+      line_items: [{ price: (regional ? this.indiaPrices : this.prices)[plan], quantity: 1 }],
+      ...(regional ? {
+        billing_address_collection: 'required',
+        customer_update: { address: 'auto' },
+        adaptive_pricing: { enabled: false },
+      } : {}),
       subscription_data: { metadata: { workspaceId } },
-      success_url: `${this.appOrigin}/billing?checkout=success`,
-      cancel_url: `${this.appOrigin}/billing?checkout=cancelled`,
-    });
+      success_url: `${this.appOrigin}/billing?checkout=success#plans`,
+      cancel_url: `${this.appOrigin}/billing?checkout=cancelled${regional ? '&market=IN' : ''}#plans`,
+      ...(promotion ? { discounts: [{ promotion_code: promotion }] } : {}),
+    };
+    insist(
+      branding_settings.logo && branding_settings.icon,
+      503,
+      'checkout_branding_unavailable',
+      'Mantrilo checkout is temporarily unavailable. Contact hello@mantrilo.com for help.',
+    );
+    try {
+      const session = await this.stripe.checkout.sessions.create({ ...params, branding_settings });
+      if (regional && (session.currency !== 'inr' || session.amount_subtotal !== renewalCents)) {
+        await this.stripe.checkout.sessions.expire(session.id).catch(() => undefined);
+        throw new ApiError(503, 'regional_price_mismatch', 'The INR checkout price could not be verified.');
+      }
+      if (
+        promotion &&
+        (session.currency !== 'usd' ||
+          session.amount_total !== FIRST_MONTH_CENTS ||
+          session.amount_subtotal !== renewalCents ||
+          session.total_details?.amount_discount !== renewalCents - FIRST_MONTH_CENTS)
+      ) {
+        await this.stripe.checkout.sessions.expire(session.id).catch(() => undefined);
+        throw new ApiError(
+          503,
+          'promotion_price_mismatch',
+          'The offer could not be applied. No payment was taken.',
+        );
+      }
+      return session.url;
+    } catch (error) {
+      if (
+        promotion &&
+        error.type === 'StripeInvalidRequestError' &&
+        (String(error.param ?? '').startsWith('discounts') ||
+          String(error.code ?? '').includes('promotion_code'))
+      )
+        throw new ApiError(
+          400,
+          'promotion_not_eligible',
+          'This offer is only for eligible new customers.',
+        );
+      if (!String(error.param ?? '').startsWith('branding_settings')) throw error;
+      throw new ApiError(
+        503,
+        'checkout_branding_unavailable',
+        'Mantrilo checkout is temporarily unavailable. Contact hello@mantrilo.com for help.',
+      );
+    }
+  }
+  async portalAvailable() {
+    if (!/^bpc_[A-Za-z0-9]+$/.test(this.portalConfiguration ?? '')) return false;
+    try {
+      const [configuration, account] = await Promise.all([
+        this.stripe.billingPortal.configurations.retrieve(this.portalConfiguration),
+        this.stripe.accounts.retrieve(null),
+      ]);
+      const branding = account.settings?.branding;
+      const looksBranded =
+        configuration.active === true &&
+        configuration.is_default === false &&
+        configuration.livemode === (this.mode === 'live') &&
+        configuration.business_profile?.headline === 'Mantrilo Customer Portal' &&
+        account.business_profile?.name === BRANDING.display_name &&
+        Boolean(branding?.logo && branding?.icon) &&
+        branding.primary_color?.toLowerCase() === BRANDING.background_color &&
+        branding.secondary_color?.toLowerCase() === BRANDING.button_color;
+      if (!looksBranded) return false;
+      const [logo, icon] = await Promise.all([
+        this.stripe.files.retrieve(branding.logo),
+        this.stripe.files.retrieve(branding.icon),
+      ]);
+      return logo.filename === BRAND_FILES.logo.name && icon.filename === BRAND_FILES.icon.name;
+    } catch {
+      return false;
+    }
+  }
+  async portalUrl(customerId, flow) {
+    insist(
+      await this.portalAvailable(),
+      503,
+      'portal_branding_unavailable',
+      'Online billing management is temporarily unavailable. Contact hello@mantrilo.com for invoices or subscription changes.',
+    );
+    const returnUrl = `${this.appOrigin}/billing`;
+    const params = {
+      customer: customerId,
+      configuration: this.portalConfiguration,
+      return_url: flow ? `${returnUrl}#plans` : returnUrl,
+      ...(flow && {
+        flow_data: {
+          ...flow,
+          after_completion: {
+            type: 'redirect',
+            redirect: { return_url: `${returnUrl}?stripe=confirmed#plans` },
+          },
+        },
+      }),
+    };
+    let session;
+    try {
+      session = await this.stripe.billingPortal.sessions.create(params);
+    } catch (error) {
+      if (flow && error.type === 'StripeInvalidRequestError') {
+        console.error(`Stripe portal ${flow.type}: ${error.code ?? error.type}`);
+        throw new ApiError(
+          503,
+          'portal_flow_unavailable',
+          'Stripe could not open this plan change. Use Manage subscription or contact support.',
+        );
+      }
+      throw error;
+    }
     return session.url;
   }
-  async portalUrl(customerId) {
-    const session = await this.stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: `${this.appOrigin}/billing`,
+  async planPortalUrl({ workspaceId, customerId, plan }) {
+    const subscriptions = await this.listSubscriptions(customerId);
+    const subscription = subscriptions.find(
+      (record) =>
+        record.metadata?.workspaceId === workspaceId &&
+        ENTITLED_STATUSES.has(record.status) &&
+        this.planFor(record.items.data[0]?.price.id),
+    );
+    insist(
+      subscription,
+      409,
+      'no_subscription',
+      'This workspace has no active subscription in Stripe.',
+    );
+    if (plan === FREE_PLAN) {
+      return this.portalUrl(customerId, {
+        type: 'subscription_cancel',
+        subscription_cancel: { subscription: subscription.id },
+      });
+    }
+
+    const [item] = subscription.items.data;
+    insist(
+      item?.id && subscription.items.data.length === 1,
+      409,
+      'subscription_change_unavailable',
+      'This subscription needs to be changed through Manage subscription or support.',
+    );
+    insist(!Object.values(this.indiaPrices).includes(item.price.id), 400, 'contact_billing', 'Contact billing support to change an INR subscription.');
+    const price = this.prices[plan];
+    insist(item.price.id !== price, 409, 'already_on_plan', 'This is already your plan in Stripe.');
+    await this.requirePlanPrice(plan);
+    return this.portalUrl(customerId, {
+      type: 'subscription_update_confirm',
+      subscription_update_confirm: {
+        subscription: subscription.id,
+        items: [{ id: item.id, price, quantity: 1 }],
+      },
     });
-    return session.url;
   }
   retrieveSubscription(id) {
     return this.stripe.subscriptions.retrieve(id);
@@ -123,8 +406,18 @@ export function createBilling(env, appOrigin) {
     stripe: new Stripe(env.STRIPE_SECRET_KEY),
     webhookSecret: env.STRIPE_WEBHOOK_SECRET || null,
     prices: Object.fromEntries(PAID_PLANS.map((plan) => [plan, env[priceVariable(plan)]])),
+    indiaPrices: Object.fromEntries(
+      ['Starter', 'Growth'].flatMap((plan) => {
+        const id = env[`STRIPE_IN_PRICE_${plan.toUpperCase()}`]?.trim();
+        return id ? [[plan, id]] : [];
+      }),
+    ),
     appOrigin,
     mode: stripeModeOf(env.STRIPE_SECRET_KEY),
+    portalConfiguration: env.STRIPE_MANTRILO_PORTAL_CONFIGURATION?.trim(),
+    promotionIds: Object.fromEntries(
+      PAID_PLANS.map((plan) => [plan, env[`STRIPE_${plan.toUpperCase()}_PROMOTION_ID`]?.trim()]),
+    ),
   });
 }
 
@@ -154,6 +447,7 @@ export function applySubscription(workspace, subscription, priceToPlan, mode = '
       currentPeriodEnd: isoDate(item?.current_period_end),
       cancelsAt: isoDate(subscription.cancel_at),
       livemode: mode === 'live',
+      ...(item?.price.currency ? { currency: item.price.currency } : {}),
     },
   });
   if (previous !== plan)

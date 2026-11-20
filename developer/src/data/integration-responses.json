@@ -36,7 +36,7 @@
           "number": 1,
           "sanskrit": "अहं वैश्वानरो भूत्वा प्राणिनां देहमाश्रितः\nप्राणापान समायुक्तः पचाम्यन्नं चतुर्विधम्",
           "transliteration": "ahaṃ vaiśvānaro bhūtvā prāṇināṃ dehamāśritaḥ\nprāṇāpāna samāyuktaḥ pacāmyannaṃ caturvidham",
-          "translation": "I, having become the universal fire, residing in the bodies of living beings, and united with the inward and outward breaths, digest the four kinds of food (which is chewed, swallowed, licked and sucked)."
+          "translation": null
         }
       ]
     },
@@ -71,7 +71,7 @@
           "number": 1,
           "sanskrit": "धृतराष्ट्र उवाच\n\nधर्मक्षेत्रे कुरुक्षेत्रे समवेता युयुत्सवः।\n\nमामकाः पाण्डवाश्चैव किमकुर्वत सञ्जय।।1.1।।",
           "transliteration": "dhṛitarāśhtra uvācha\ndharma-kṣhetre kuru-kṣhetre samavetā yuyutsavaḥ\nmāmakāḥ pāṇḍavāśhchaiva kimakurvata sañjaya",
-          "translation": "Dhṛtarāṣṭra said: O Sanjaya, what did my sons and the sons of Pandu do when they assembled on the sacred field of Kurukshetra, eager for battle?"
+          "translation": null
         }
       ]
     }
@@ -86,7 +86,7 @@
           "body": "Sun",
           "tropicalLongitudeDegrees": 230.113778,
           "siderealLongitudeDegrees": 205.881416,
-          "latitudeDegrees": 0.000047,
+          "latitudeDegrees": 4.7e-5,
           "distanceAU": 0.989889235,
           "motion": {
             "degreesPerDay": 1.006151,
@@ -174,6 +174,204 @@
               "full_moon": "2026-11-24T14:54:04.191Z",
               "last_quarter": "2026-11-01T20:28:58.794Z"
             }
+          }
+        ]
+      }
+    },
+    "calculated": true
+  },
+  "daily-panchang": {
+    "data": {
+      "operation": "daily-panchang",
+      "engineVersion": "mantrilo-vedic-1",
+      "date": "2026-11-15",
+      "timezone": "Asia/Kolkata",
+      "basis": "local_sunrise",
+      "sunrise": "06:43:19",
+      "sunset": "17:27:50",
+      "tithi": {
+        "number": 6,
+        "name": "Shashti",
+        "paksha": "Shukla",
+        "endsAt": "2026-11-16T02:01:40.095280+05:30"
+      },
+      "nakshatra": {
+        "number": 21,
+        "name": "Uttara Ashadha",
+        "pada": 2,
+        "lord": "Sun",
+        "endsAt": "2026-11-15T23:29:06.472952+05:30"
+      },
+      "yoga": {
+        "number": 10,
+        "name": "Ganda",
+        "endsAt": "2026-11-16T07:16:28.084160+05:30"
+      },
+      "karanas": [
+        {
+          "number": 3,
+          "name": "Kolav",
+          "endsAt": "2026-11-15T12:44:29.104828+05:30"
+        },
+        {
+          "number": 4,
+          "name": "Tetil",
+          "endsAt": "2026-11-16T02:01:40.095280+05:30"
+        }
+      ],
+      "rahuKalam": {
+        "start": "16:07",
+        "end": "17:27"
+      }
+    },
+    "calculated": true
+  },
+  "chart": {
+    "data": {
+      "operation": "chart",
+      "engineVersion": "mantrilo-vedic-1",
+      "timezone": "Asia/Kolkata",
+      "ayanamsa": "lahiri",
+      "houseSystem": "whole_sign",
+      "nodeType": "mean",
+      "charts": [
+        {
+          "division": 1,
+          "ascendant": {
+            "rashi": {
+              "number": 6,
+              "name": "Virgo"
+            },
+            "house": 1,
+            "siderealLongitudeDegrees": 156.4105,
+            "degreesWithinRashi": null,
+            "retrograde": null,
+            "nakshatra": {
+              "number": 12,
+              "name": "Uttara Phalguni",
+              "pada": 3,
+              "lord": "Sun"
+            }
+          },
+          "planets": [
+            {
+              "body": "Sun",
+              "rashi": {
+                "number": 3,
+                "name": "Gemini"
+              },
+              "house": 10,
+              "siderealLongitudeDegrees": 64.7152,
+              "degreesWithinRashi": 4.7152,
+              "retrograde": false,
+              "nakshatra": {
+                "number": 5,
+                "name": "Mrigashira",
+                "pada": 4,
+                "lord": "Mars"
+              }
+            },
+            {
+              "body": "Moon",
+              "rashi": {
+                "number": 12,
+                "name": "Pisces"
+              },
+              "house": 7,
+              "siderealLongitudeDegrees": 339.132,
+              "degreesWithinRashi": 9.132,
+              "retrograde": false,
+              "nakshatra": {
+                "number": 26,
+                "name": "Uttara Bhadrapada",
+                "pada": 2,
+                "lord": "Saturn"
+              }
+            }
+          ],
+          "houses": [
+            {
+              "number": 1,
+              "rashi": {
+                "number": 6,
+                "name": "Virgo"
+              }
+            }
+          ]
+        },
+        {
+          "division": 9,
+          "ascendant": {
+            "rashi": {
+              "number": 11,
+              "name": "Aquarius"
+            },
+            "house": 1,
+            "siderealLongitudeDegrees": null,
+            "degreesWithinRashi": null,
+            "retrograde": null,
+            "nakshatra": null
+          },
+          "planets": [
+            {
+              "body": "Sun",
+              "rashi": {
+                "number": 8,
+                "name": "Scorpio"
+              },
+              "house": 10,
+              "siderealLongitudeDegrees": null,
+              "degreesWithinRashi": null,
+              "retrograde": null,
+              "nakshatra": null
+            },
+            {
+              "body": "Moon",
+              "rashi": {
+                "number": 6,
+                "name": "Virgo"
+              },
+              "house": 8,
+              "siderealLongitudeDegrees": null,
+              "degreesWithinRashi": null,
+              "retrograde": null,
+              "nakshatra": null
+            }
+          ],
+          "houses": [
+            {
+              "number": 1,
+              "rashi": {
+                "number": 11,
+                "name": "Aquarius"
+              }
+            }
+          ]
+        }
+      ],
+      "vimshottariDasha": {
+        "referenceDate": "2026-11-12",
+        "birthBalance": {
+          "lord": "Saturn",
+          "end": "2006-03-17",
+          "remainingYears": 10.7406
+        },
+        "activePeriods": [
+          {
+            "level": "Mahadasha",
+            "lord": "Ketu",
+            "start": "2023-03-17",
+            "end": "2030-03-17",
+            "durationYears": 7
+          }
+        ],
+        "timeline": [
+          {
+            "level": "Mahadasha",
+            "lord": "Saturn",
+            "start": "1995-06-20",
+            "end": "2006-03-17",
+            "durationYears": 10.74
           }
         ]
       }

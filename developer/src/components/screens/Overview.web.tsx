@@ -4,6 +4,7 @@ import { useConsole } from '../Session.web';
 import { mutate } from '../../lib/api';
 import { ApiKeyCard, primaryKey, UsageCard } from '../Account.web';
 import { CopyButton, ErrorNotice, formatResetDate, PageTitle } from '../ui.web';
+import { Plans, useBillingActions } from '../Plans.web';
 import { environmentLabel } from '../Shell.web';
 import type { Session } from '../../lib/types';
 
@@ -13,40 +14,48 @@ const FIRST_REQUEST = '/v1/mantras?limit=5';
 function StatusStrip({ s, worked }: { s: Session; worked: boolean }) {
   const used = s.usage.contentRequests,
     total = s.allowance.requests,
-    remaining = Math.max(0, total - used),
+    remaining = total === null ? null : Math.max(0, total - used),
     share = total ? Math.min(100, (used / total) * 100) : 0;
   const next = !worked
     ? { label: 'Run your first request', href: '#first-request' }
-    : !s.plan.price
-      ? { label: 'Upgrade for a live key', href: '/billing' }
-      : remaining < total * 0.1
-        ? { label: 'Raise your allowance', href: '/billing' }
-        : { label: 'Open the API Explorer', href: '/docs?tab=try' };
+    : total === null
+      ? { label: 'Browse the API docs', href: '/docs' }
+      : !s.liveAccess
+        ? { label: 'Upgrade for a live key', href: '#plans' }
+        : remaining !== null && total !== null && remaining < total * 0.1
+          ? { label: 'Raise your allowance', href: '#plans' }
+          : { label: 'Browse the guides', href: '/docs' };
   return (
     <section className="status-strip" aria-label="Workspace status">
       <div>
-        <span>Environment</span>
+        <span>API access</span>
         <strong>
           <i className={s.usageLane === 'sandbox' ? 'dot sandbox' : 'dot live'} />
-          {environmentLabel(s.usageLane)}
+          {s.usageLane === 'sandbox' ? 'Sandbox key' : environmentLabel(s.usageLane)}
         </strong>
-        <small>{s.plan.price ? 'Sandbox and live keys' : 'Sample content only'}</small>
+        <small>{s.liveAccess ? 'Sandbox and live keys' : 'Sample catalog for building and testing'}</small>
       </div>
       <div>
-        <span>Plan</span>
-        <strong>{s.plan.name}</strong>
-        <small>{s.plan.price ? `$${s.plan.price} a month` : 'Free'}</small>
+        <span>{total === null ? 'Request access' : 'Plan'}</span>
+        <strong>{total === null ? 'Unlimited' : s.plan.name}</strong>
+        <small>
+          {total === null ? 'Promo applied' : s.plan.price ? `$${s.plan.price} a month` : 'Free'}
+        </small>
       </div>
       <div>
         <span>Requests this month</span>
         <strong>
-          {used.toLocaleString()} <em>/ {total.toLocaleString()}</em>
+          {used.toLocaleString()} <em>/ {total?.toLocaleString() ?? 'Unlimited'}</em>
         </strong>
-        <span className="strip-meter" aria-hidden="true">
-          <i style={{ width: `${share}%` }} />
-        </span>
+        {total !== null && (
+          <span className="strip-meter" aria-hidden="true">
+            <i style={{ width: `${share}%` }} />
+          </span>
+        )}
         <small>
-          {remaining.toLocaleString()} left · resets {formatResetDate(s.resetsAt)}
+          {remaining === null
+            ? 'No monthly request limit'
+            : `${remaining.toLocaleString()} left · resets ${formatResetDate(s.resetsAt)}`}
         </small>
       </div>
       <div className="strip-next">
@@ -67,6 +76,7 @@ function StatusStrip({ s, worked }: { s: Session; worked: boolean }) {
 
 export default function Overview() {
   const { session, config, refresh } = useConsole();
+  const billing = useBillingActions();
   const [status, setStatus] = useState<number | null>(null),
     [pending, setPending] = useState(false),
     [error, setError] = useState('');
@@ -102,9 +112,13 @@ export default function Overview() {
         eyebrow={s.workspace.name.toUpperCase()}
         title={worked ? 'You’re connected.' : 'Your sandbox key is ready.'}
         copy={
-          s.plan.price
-            ? 'Build with your sandbox key and ship with your live key.'
-            : `Every account starts with a sandbox key and ${s.allowance.requests.toLocaleString()} free calls a month on sample content. Subscribe for a live key and the full catalog.`
+          s.liveAccess
+            ? s.allowance.requests === null
+              ? 'Your live key has unlimited requests on the full catalog.'
+              : 'Build with your sandbox key and ship with your live key.'
+            : s.allowance.requests === null
+              ? 'Your sandbox key has unlimited requests on the sample catalog.'
+              : `Every account starts with a sandbox key and ${s.allowance.requests.toLocaleString()} free calls a month on sample content. Subscribe for a live key and the full catalog.`
         }
       />
       <StatusStrip s={s} worked={worked} />
@@ -117,7 +131,7 @@ export default function Overview() {
         <div className="panel-heading">
           <h2>{worked ? 'Make another request' : 'Make your first request'}</h2>
           <Link href="/docs?tab=try" className="text-link">
-            API Explorer →
+            Try it in Docs →
           </Link>
         </div>
         <div className="account-card-body">
@@ -151,6 +165,13 @@ export default function Overview() {
               </p>
             ))}
         </div>
+      </section>
+      <section aria-labelledby="home-plans">
+        <div className="section-title" id="plans">
+          <h2 id="home-plans">Plans</h2>
+          <Link className="text-link" href="/billing">Usage & billing →</Link>
+        </div>
+        <Plans session={s} actions={billing} />
       </section>
     </>
   );

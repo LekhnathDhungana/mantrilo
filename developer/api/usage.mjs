@@ -6,8 +6,8 @@ export const SANDBOX_AUDIO_BYTES = 50 * 1024 * 1024;
 
 // Each usage lane gets the plan's monthly request allowance. Sandbox keys read only the sample, so
 // their audio stays testing-sized on every plan.
-export function limitsFor(plan, environment = 'production') {
-  const base = allowance(plan);
+export function limitsFor(plan, environment = 'production', unlimitedRequests = false) {
+  const base = allowance(plan, unlimitedRequests);
   return {
     requests: base.requests,
     audioBytes: plan.price && environment !== 'sandbox' ? base.audioBytes : SANDBOX_AUDIO_BYTES,
@@ -122,24 +122,30 @@ export class UsageMeter {
     const at = new Date(),
       period = currentPeriod(at),
       event = { workspaceId, keyId, lane, endpoint, requests, audioBytes: 0, period, at };
-    const totals = await this.totals(workspaceId, lane, period);
     let used;
-    if (totals.contentRequests + requests + margin <= limit) {
-      totals.contentRequests += requests;
-      used = totals.contentRequests;
-      // Not awaited: far from the limit, a lost write costs one uncounted request at most.
-      this.sink.add(event).catch(this.onError);
+    if (limit === null) {
+      // Unlimited workspaces still record usage and refunds without reading the monthly totals.
+      used = null;
+      this.record({ workspaceId, keyId, lane, endpoint, requests, at }).catch(this.onError);
     } else {
-      const result = await this.sink.reserve(event, limit);
-      const id = this.cacheId(workspaceId, lane, period);
-      this.cache.set(id, {
-        totals: { contentRequests: result.used, audioBytes: result.audioBytes },
-        expires: this.now() + this.ttlMs,
-      });
-      if (!result.ok) return { ok: false, used: result.used };
-      used = result.used;
+      const totals = await this.totals(workspaceId, lane, period);
+      if (totals.contentRequests + requests + margin <= limit) {
+        totals.contentRequests += requests;
+        used = totals.contentRequests;
+        // Not awaited: far from the limit, a lost write costs one uncounted request at most.
+        this.sink.add(event).catch(this.onError);
+      } else {
+        const result = await this.sink.reserve(event, limit);
+        const id = this.cacheId(workspaceId, lane, period);
+        this.cache.set(id, {
+          totals: { contentRequests: result.used, audioBytes: result.audioBytes },
+          expires: this.now() + this.ttlMs,
+        });
+        if (!result.ok) return { ok: false, used: result.used };
+        used = result.used;
+      }
+      this.touch(workspaceId, keyId, at).catch(() => {});
     }
-    this.touch(workspaceId, keyId, at).catch(() => {});
     let refunded = false;
     return {
       ok: true,

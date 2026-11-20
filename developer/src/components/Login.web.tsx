@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import Brand from './Brand.web';
 import { useConsole } from './Session.web';
 import { mutate } from '../lib/api';
+import { consoleReturn } from '../lib/console-return';
 import AuthFlow from './auth/AuthFlow.web';
 import Onboarding from './auth/Onboarding.web';
 export default function Login() {
   useEffect(() => {
     document.title = 'Sign in | Mantrilo Developer Console';
   }, []);
+  const { next } = useLocalSearchParams<{ next?: string }>();
+  const destination = consoleReturn(next);
   const { session, config, loading, error: serviceError, refresh } = useConsole();
   const [pending, setPending] = useState(false),
     [error, setError] = useState('');
@@ -18,14 +21,14 @@ export default function Login() {
         Connecting to your console…
       </div>
     );
-  if (session?.user.onboarded) return <Redirect href="/" />;
+  if (session?.user.onboarded) return <Redirect href={destination} />;
   async function demo(role: string) {
     setPending(true);
     setError('');
     try {
       await mutate('/api/auth/demo', 'POST', { role });
       await refresh();
-      router.replace('/');
+      router.replace(destination);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not open the demo.');
     } finally {
@@ -57,7 +60,7 @@ export default function Login() {
               ≋ <b>Sacred audio</b>
             </span>
             <span>
-              ▤ <b>Shastras & books</b>
+              ▤ <b>Books</b>
             </span>
             <span>
               ✧ <b>Astrology</b>
@@ -71,7 +74,7 @@ export default function Login() {
               {serviceError || error}
             </div>
           )}
-          {session ? <Onboarding /> : <AuthFlow />}
+          {session ? <Onboarding destination={destination} /> : <AuthFlow />}
           {config?.mode === 'demo' && (
             <div className="demo-login">
               <span className="badge">LOCAL DEMO · NO CREDENTIALS REQUIRED</span>

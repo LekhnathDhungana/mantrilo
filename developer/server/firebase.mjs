@@ -48,6 +48,7 @@ export class FirebaseSessions {
       return {
         uid: decoded.uid,
         email: user.email || user.phoneNumber || '',
+        emailVerified: user.emailVerified === true,
         admin: user.customClaims?.admin === true,
         // A confirmed phone number proves ownership as well as a confirmed email does.
         verified: user.emailVerified || Boolean(user.phoneNumber),

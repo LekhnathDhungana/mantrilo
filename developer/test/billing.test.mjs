@@ -16,16 +16,53 @@ const subscription = (overrides = {}) => ({
   customer: 'cus_1',
   cancel_at: null,
   metadata: { workspaceId },
-  items: { data: [{ price: { id: 'price_s' }, current_period_end: 1_800_000_000 }] },
+  items: { data: [{ id: 'si_1', price: { id: 'price_s' }, current_period_end: 1_800_000_000 }] },
   ...overrides,
 });
 
 class FakeStripe {
   webhooks = webhooks;
   subs = new Map();
-  calls = { customers: [], checkouts: [], cancelled: [] };
+  calls = { customers: [], checkouts: [], portal: [], cancelled: [] };
   live = [];
   failCancel = false;
+  priceOverrides = {};
+  merchantName = 'Mantrilo';
+  accounts = {
+    retrieve: async () => ({
+      business_profile: { name: this.merchantName },
+      settings: {
+        branding: {
+          logo: 'file_logo',
+          icon: 'file_icon',
+          primary_color: '#ffffff',
+          secondary_color: '#f28c28',
+        },
+      },
+    }),
+  };
+  prices = {
+    retrieve: async (id) => ({
+      active: true,
+      livemode: this.mode === 'live',
+      currency: 'usd',
+      unit_amount: { price_s: 4999, price_g: 14900, price_b: 39900 }[id],
+      recurring: { interval: 'month', interval_count: 1 },
+      ...this.priceOverrides[id],
+    }),
+  };
+  uploaded = [];
+  files = {
+    retrieve: async (id) => ({
+      filename: id === 'file_logo' ? 'mantrilo-logo.png' : 'mantrilo-icon.png',
+    }),
+    list: async ({ purpose }) => ({ data: this.uploaded.filter((f) => f.purpose === purpose) }),
+    create: async ({ purpose, file }) => {
+      const stored = { id: `file_${this.uploaded.length + 1}`, purpose, filename: file.name };
+      this.uploaded.push(stored);
+      return stored;
+    },
+  };
   customers = {
     create: async (params, options) => {
       this.calls.customers.push({ params, options });
@@ -44,12 +81,43 @@ class FakeStripe {
     sessions: {
       create: async (params) => {
         this.calls.checkouts.push(params);
-        return { url: 'https://checkout.stripe.test/s' };
+        const price = params.line_items[0].price;
+        if (price === 'price_in_s')
+          return { id: 'cs_1', url: 'https://checkout.stripe.test/s', currency: 'inr', amount_subtotal: 149900 };
+        const subtotal = { price_s: 4999, price_g: 14900, price_b: 39900 }[
+          price
+        ];
+        return {
+          id: 'cs_1',
+          url: 'https://checkout.stripe.test/s',
+          ...(params.discounts && {
+            currency: 'usd',
+            amount_total: this.discountedTotal ?? 99,
+            amount_subtotal: subtotal,
+            total_details: { amount_discount: subtotal - 99 },
+          }),
+        };
+      },
+      expire: async (id) => {
+        this.expiredCheckout = id;
       },
     },
   };
   billingPortal = {
-    sessions: { create: async () => ({ url: 'https://billing.stripe.test/p' }) },
+    configurations: {
+      retrieve: async () => ({
+        active: true,
+        is_default: false,
+        livemode: this.mode === 'live',
+        business_profile: { headline: 'Mantrilo Customer Portal' },
+      }),
+    },
+    sessions: {
+      create: async (params) => {
+        this.calls.portal.push(params);
+        return { url: 'https://billing.stripe.test/p' };
+      },
+    },
   };
 }
 
@@ -70,10 +138,21 @@ class FakeSessions {
   }
 }
 
-async function fixture(t, { configured = true, secret = webhookSecret, mode = 'live' } = {}) {
+async function fixture(
+  t,
+  {
+    configured = true,
+    secret = webhookSecret,
+    mode = 'live',
+    portalConfiguration = 'bpc_mantrilo',
+    promotionIds,
+    indiaPrices,
+  } = {},
+) {
   const store = new MemoryStore(),
     sessions = new FakeSessions(),
     stripe = new FakeStripe();
+  stripe.mode = mode;
   await store.ensureWorkspace(workspaceId, 'u1', 'Acme');
   await store.putUser('u1', { workspaceId, role: 'owner' });
   const billing = configured
@@ -83,6 +162,9 @@ async function fixture(t, { configured = true, secret = webhookSecret, mode = 'l
         prices,
         appOrigin: 'http://localhost:4190',
         mode,
+        portalConfiguration,
+        promotionIds,
+        indiaPrices,
       })
     : null;
   const server = createConsoleServer({
@@ -144,6 +226,26 @@ test('billing reports when it is off and refuses purchases', async (t) => {
   assert.equal(checkout.body.error.code, 'billing_unconfigured');
 });
 
+test('India checkout requires verified eligibility and the INR price grants the matching plan', async (t) => {
+  const f = await fixture(t, { indiaPrices: { Starter: 'price_in_s' } });
+  f.stripe.priceOverrides.price_in_s = { currency: 'inr', unit_amount: 149900 };
+  const route = '/api/billing/checkout';
+  const request = { market: 'IN', plan: 'Starter' };
+  assert.equal((await f.call(route, 'POST', request)).status, 403);
+  assert.equal(f.stripe.calls.checkouts.length, 0);
+  await f.store.transact(workspaceId, (workspace) => { workspace.indiaPricing = true; });
+  assert.deepEqual((await f.call('/api/billing')).body.indiaPurchasable, ['Starter']);
+  assert.equal((await f.call(route, 'POST', { ...request, plan: 'Business' })).status, 400);
+  assert.equal((await f.call(route, 'POST', { ...request, promotionCode: 'STARTER99' })).status, 400);
+  assert.equal((await f.call(route, 'POST', request)).status, 200);
+  assert.equal(f.stripe.calls.checkouts[0].line_items[0].price, 'price_in_s');
+  assert.equal(f.stripe.calls.checkouts[0].billing_address_collection, 'required');
+  await f.send(subscription({ items: { data: [{ id: 'si_1', price: { id: 'price_in_s', currency: 'inr' } }] } }));
+  const workspace = await f.workspace();
+  assert.equal(workspace.plan, 'Starter');
+  assert.equal(workspace.billing.currency, 'inr');
+});
+
 test('checkout uses the right price and tags the subscription with the workspace', async (t) => {
   const f = await fixture(t);
   const result = await f.call('/api/billing/checkout', 'POST', { plan: 'Growth' });
@@ -157,6 +259,36 @@ test('checkout uses the right price and tags the subscription with the workspace
   assert.equal((await f.workspace()).plan, 'Free');
   await f.call('/api/billing/checkout', 'POST', { plan: 'Starter' });
   assert.equal(f.stripe.calls.customers.length, 1);
+});
+
+test('STARTER99 applies a plan-specific discount and verifies the first-month amount', async (t) => {
+  const promotionIds = {
+    Starter: 'promo_starter99',
+    Growth: 'promo_growth99',
+    Business: 'promo_business99',
+  };
+  const f = await fixture(t, { promotionIds });
+  assert.deepEqual((await f.call('/api/billing')).body.promotionPlans, Object.keys(promotionIds));
+  const checkout = (plan, promotionCode) =>
+    f.call('/api/billing/checkout', 'POST', { plan, promotionCode });
+  assert.equal((await checkout('Starter', 'OTHER')).status, 400);
+  assert.equal(f.stripe.calls.customers.length, 0);
+  for (const plan of Object.keys(promotionIds)) {
+    assert.equal((await checkout(plan, 'starter99')).status, 200);
+    assert.deepEqual(f.stripe.calls.checkouts.at(-1).discounts, [
+      { promotion_code: promotionIds[plan] },
+    ]);
+    assert.deepEqual(f.stripe.calls.checkouts.at(-1).line_items, [
+      { price: prices[plan], quantity: 1 },
+    ]);
+  }
+  assert.equal((await f.workspace()).plan, 'Free');
+  f.stripe.discountedTotal = 39900;
+  const wrongAmount = await checkout('Business', 'STARTER99');
+  assert.equal(wrongAmount.status, 503);
+  assert.equal(wrongAmount.body.error.code, 'promotion_price_mismatch');
+  assert.equal(wrongAmount.body.url, undefined);
+  assert.equal(f.stripe.expiredCheckout, 'cs_1');
 });
 
 test('checkout rejects bad plans, unverified accounts and existing subscribers', async (t) => {
@@ -278,6 +410,70 @@ test('the portal needs a billing account', async (t) => {
     (await f.call('/api/billing/portal', 'POST')).body.url,
     'https://billing.stripe.test/p',
   );
+  assert.equal(f.stripe.calls.portal[0].configuration, 'bpc_mantrilo');
+});
+
+test('billing refuses portal sessions without a dedicated Mantrilo brand', async (t) => {
+  for (const setup of [{ portalConfiguration: null }, {}]) {
+    const f = await fixture(t, setup);
+    f.stripe.merchantName = 'Other business';
+    await f.send(subscription());
+    f.stripe.live = [subscription()];
+    assert.equal((await f.call('/api/billing')).body.portalAvailable, false);
+    assert.equal(
+      (await f.call('/api/billing/portal', 'POST')).body.error.code,
+      'portal_branding_unavailable',
+    );
+    assert.equal(
+      (await f.call('/api/billing/portal', 'POST', { plan: 'Free' })).body.error.code,
+      'portal_branding_unavailable',
+    );
+    assert.equal(f.stripe.calls.portal.length, 0);
+  }
+});
+
+test('plan buttons open Stripe for the chosen price or cancellation without changing entitlement', async (t) => {
+  const f = await fixture(t);
+  const current = subscription();
+  await f.send(current);
+  f.stripe.live = [subscription({ id: 'sub_other', metadata: {} }), current];
+  for (const [plan, price] of [
+    ['Growth', 'price_g'],
+    ['Business', 'price_b'],
+  ]) {
+    const result = await f.call('/api/billing/portal', 'POST', { plan });
+    assert.equal(result.body.url, 'https://billing.stripe.test/p');
+    const { customer, flow_data: flow } = f.stripe.calls.portal.at(-1);
+    assert.equal(customer, 'cus_1');
+    assert.equal(flow.type, 'subscription_update_confirm');
+    assert.deepEqual(flow.subscription_update_confirm, {
+      subscription: 'sub_1',
+      items: [{ id: 'si_1', price, quantity: 1 }],
+    });
+  }
+  assert.equal((await f.call('/api/billing/portal', 'POST', { plan: 'Free' })).status, 200);
+  const { flow_data: cancel } = f.stripe.calls.portal.at(-1);
+  assert.equal(cancel.type, 'subscription_cancel');
+  assert.equal(cancel.subscription_cancel.subscription, 'sub_1');
+  assert.equal((await f.workspace()).plan, 'Starter');
+  assert.equal(f.stripe.calls.checkouts.length, 0);
+  assert.equal(f.stripe.calls.cancelled.length, 0);
+});
+
+test('incorrect prices and subscriptions belonging to another workspace cannot open plan links', async (t) => {
+  const f = await fixture(t);
+  f.stripe.priceOverrides.price_g = { unit_amount: 100 };
+  const purchase = await f.call('/api/billing/checkout', 'POST', { plan: 'Growth' });
+  assert.equal(purchase.body.error.code, 'plan_unavailable');
+  assert.equal(f.stripe.calls.checkouts.length, 0);
+  await f.send(subscription());
+  f.stripe.live = [subscription({ metadata: { workspaceId: 'other' } })];
+  const unauthorized = await f.call('/api/billing/portal', 'POST', { plan: 'Growth' });
+  assert.equal(unauthorized.body.error.code, 'no_subscription');
+  f.stripe.live = [subscription()];
+  const switchPlan = await f.call('/api/billing/portal', 'POST', { plan: 'Growth' });
+  assert.equal(switchPlan.body.error.code, 'plan_unavailable');
+  assert.equal(f.stripe.calls.portal.length, 0);
 });
 
 test('deleting an account cancels its subscription first', async (t) => {
@@ -450,4 +646,52 @@ test('the Stripe key decides the mode, and prices are checked against the plans'
     'Starter: Stripe charges $49.00, plans list $49.99',
     'Business: not a monthly subscription price',
   ]);
+});
+
+test('checkout carries Mantrilo branding and reuses the uploaded logo', async () => {
+  const stripe = new FakeStripe();
+  const billing = new StripeBilling({ stripe, prices, appOrigin: 'http://x', mode: 'test' });
+  await billing.checkoutUrl({ workspaceId, customerId: 'cus_1', plan: 'Growth' });
+  const branding = stripe.calls.checkouts[0].branding_settings;
+  assert.equal(branding.display_name, 'Mantrilo');
+  assert.equal(branding.logo.file, stripe.uploaded.find((f) => f.purpose === 'business_logo').id);
+  assert.equal(branding.icon.file, stripe.uploaded.find((f) => f.purpose === 'business_icon').id);
+  // A restarted server finds the logo already in Stripe instead of uploading it again.
+  const restarted = new StripeBilling({ stripe, prices, appOrigin: 'http://x', mode: 'test' });
+  await restarted.checkoutUrl({ workspaceId, customerId: 'cus_1', plan: 'Growth' });
+  assert.equal(stripe.uploaded.length, 2);
+  assert.deepEqual(stripe.calls.checkouts[1].branding_settings, branding);
+});
+
+test('checkout refuses to fall back to account branding when Stripe rejects Mantrilo assets', async () => {
+  const stripe = new FakeStripe();
+  const create = stripe.checkout.sessions.create;
+  stripe.checkout.sessions.create = async (params) => {
+    if (params.branding_settings)
+      throw Object.assign(new Error('bad'), { param: 'branding_settings[logo]' });
+    return create(params);
+  };
+  const billing = new StripeBilling({ stripe, prices, appOrigin: 'http://x', mode: 'test' });
+  await assert.rejects(billing.checkoutUrl({ workspaceId, customerId: 'cus_1', plan: 'Growth' }), {
+    code: 'checkout_branding_unavailable',
+  });
+  assert.equal(stripe.calls.checkouts.length, 0);
+});
+
+test('a verified price is not fetched again; a failing one is', async () => {
+  const stripe = new FakeStripe();
+  let reads = 0;
+  const retrieve = stripe.prices.retrieve;
+  stripe.prices.retrieve = async (id) => (reads++, retrieve(id));
+  const billing = new StripeBilling({ stripe, prices, appOrigin: 'http://x', mode: 'test' });
+  await billing.requirePlanPrice('Growth');
+  await billing.requirePlanPrice('Growth');
+  assert.equal(reads, 1);
+  stripe.priceOverrides.price_s = { active: false };
+  await assert.rejects(billing.requirePlanPrice('Starter'), { code: 'plan_unavailable' });
+  assert.deepEqual(await billing.availablePlans(), ['Growth', 'Business']);
+  stripe.priceOverrides.price_s = {};
+  assert.deepEqual(await billing.availablePlans(), ['Starter', 'Growth', 'Business']);
+  await billing.requirePlanPrice('Starter');
+  assert.equal(reads, 5);
 });

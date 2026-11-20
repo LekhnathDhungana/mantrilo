@@ -17,23 +17,19 @@ export function Rosette({ className = '' }: { className?: string }) {
     </svg>
   );
 }
-export default function Brand({ adaptToTheme = false }: { adaptToTheme?: boolean }) {
-  const logo = require('../../developer/assets/mantrilo-logo.png');
+
+const logo = require('../../developer/assets/mantrilo-logo.png');
+const size = { width: '100%', height: '100%' } as const;
+
+export default function Brand() {
   return (
     <div className="brand">
       <div className="brand-original">
-        <Image
-          accessibilityLabel="Mantrilo"
-          source={logo}
-          style={{ width: '100%', height: '100%' }}
-          resizeMode="contain"
-        />
+        <Image accessibilityLabel="Mantrilo" source={logo} style={size} resizeMode="contain" />
       </div>
-      {adaptToTheme && (
-        <div className="brand-light-lettering" aria-hidden="true">
-          <Image source={logo} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
-        </div>
-      )}
+      <div className="brand-light-lettering" aria-hidden="true">
+        <Image source={logo} style={size} resizeMode="contain" />
+      </div>
     </div>
   );
 }

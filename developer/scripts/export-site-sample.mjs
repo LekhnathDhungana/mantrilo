@@ -1,6 +1,6 @@
-// Copies one real mantra and its recording into the marketing site.
+// Copies a public mantra snapshot and reads its recording size for the API example.
 // The site is static and has no API key, so it ships this snapshot. Reads the backend only.
-import { mkdir, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { applicationDefault, initializeApp } from 'firebase-admin/app';
@@ -26,21 +26,19 @@ if (!mantra.hasAudio || !mantra.audioPath) throw new Error(`${MANTRA_ID} has no 
 
 const file = bucket.file(mantra.audioPath);
 const [metadata] = await file.getMetadata();
-const audioDirectory = path.join(site, 'public/samples');
-await mkdir(audioDirectory, { recursive: true });
-const fileName = `${MANTRA_ID}.m4a`;
-await file.download({ destination: path.join(audioDirectory, fileName) });
-
 await writeFile(
-  path.join(site, 'src/data/catalog-samples.json'),
+  path.join(site, 'developer/src/data/catalog-samples.json'),
   `${JSON.stringify(
     {
       mantra: { data: RESOURCES.mantras.detail(mantra) },
-      recording: { src: `/samples/${fileName}`, bytes: Number(metadata.size) },
+      recording: {
+        src: `/samples/${MANTRA_ID}.m4a`,
+        bytes: Number(metadata.size),
+      },
     },
     null,
     2,
   )}\n`,
 );
-console.log(`Saved ${MANTRA_ID} (${metadata.size} bytes of audio).`);
+console.log(`Saved ${MANTRA_ID} (${metadata.size} audio bytes in metadata).`);
 process.exit(0);

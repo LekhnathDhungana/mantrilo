@@ -8,6 +8,8 @@ const PREVIEW_SIZE = 3;
 // These two titles are marked live in both of Mantrilo's catalog layouts.
 const SAMPLE_BOOKS = new Set(['bhagavadGita', 'ishaUpanishad', 'demo-pustak']);
 
+const COLLECTION_FALLBACKS = new Map([['ishaUpanishad', 'Upanishads']]);
+
 const COLLECTION_ID = /^[a-z0-9-]{1,80}$/;
 
 const text = (value) => (typeof value === 'string' && value.trim() ? value.trim() : null);
@@ -21,7 +23,7 @@ export const collectionId = (name) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '') || null;
 function collectionOf(book) {
-  const name = text(book.subcategory) ?? text(book.category);
+  const name = text(book.subcategory) ?? text(book.category) ?? COLLECTION_FALLBACKS.get(book.id);
   const id = collectionId(name);
   return id ? { id, name } : null;
 }
@@ -38,15 +40,23 @@ function bookSummary(book) {
     // The long description stays internal.
     description: text(book.seoDescription) ?? text(book.shortDescription),
     verseCount: number(book.totalVerses),
+    ...(book.format === 'prose' ? { format: 'prose', language: book.language } : {}),
   };
 }
 
 function chapterHeader(chapter) {
   return {
     number: number(chapter.chapter ?? chapter.chapter_number),
-    title: text(chapter.name_translation) ?? text(chapter.name),
+    title: text(chapter.name),
     description: text(chapter.description ?? chapter.chapter_summary),
     verseCount: number(chapter.verseCount ?? chapter.verses_count ?? chapter.verses?.length),
+    ...(chapter.format === 'prose'
+      ? {
+          format: 'prose',
+          source: text(chapter.source),
+          sectionCount: number(chapter.sectionCount),
+        }
+      : {}),
   };
 }
 
@@ -55,10 +65,10 @@ function passage(verse) {
     number: number(verse.verse ?? verse.verse_number),
     sanskrit: text(verse.sanskrit ?? verse.text),
     transliteration: text(verse.transliteration),
-    translation: text(verse.translation),
-    translator: text(verse.translator),
-    wordMeaning: text(verse.wordMeaning ?? verse.word_meanings),
-    commentary: text(verse.commentary),
+    translation: null,
+    translator: null,
+    wordMeaning: null,
+    commentary: null,
   };
 }
 
@@ -82,9 +92,21 @@ function chapterIndex(chapters) {
 export class FirestorePustak {
   constructor(db) {
     this.db = db;
+    this.catalogueCache = null;
   }
 
-  async catalogue() {
+  catalogue() {
+    if (!this.catalogueCache || this.catalogueCache.expires <= Date.now()) {
+      const record = { expires: Date.now() + 10_000, result: this.readCatalogue() };
+      this.catalogueCache = record;
+      record.result.catch(() => {
+        if (this.catalogueCache === record) this.catalogueCache = null;
+      });
+    }
+    return this.catalogueCache.result;
+  }
+
+  async readCatalogue() {
     // This is the reader catalog used by Satyam, copied into Mantrilo's project.
     const catalogue = await this.db.doc('pustak_metadata/catalogue').get();
     if (catalogue.exists) return catalogue.get('books') ?? [];
@@ -121,6 +143,15 @@ export class FirestorePustak {
   async chapter(bookId, chapter, page) {
     const ref = this.db.doc(`pustak/${bookId}/chapters/${chapter}`);
     const prepared = (await ref.get()).data();
+    if (prepared?.format === 'prose' && Array.isArray(prepared.sections)) {
+      if (page.offset !== 0) return null;
+      return {
+        ...chapterHeader(prepared),
+        sections: prepared.sections,
+        verses: [],
+        nextOffset: null,
+      };
+    }
     if (Array.isArray(prepared?.verses)) {
       let verses = prepared.verses;
       if (prepared.partCount > 1 && page.offset + page.limit > verses.length) {
@@ -149,33 +180,7 @@ export class FirestorePustak {
     const verses = rows.docs
       .map((doc) => doc.data())
       .sort((a, b) => (a.verse_order ?? a.verse_number) - (b.verse_order ?? b.verse_number));
-    const result = chapterPage(header.docs[0]?.data() ?? { chapter }, verses, page);
-    const ids = verses
-      .slice(page.offset, page.offset + page.limit)
-      .map((verse) => verse.externalId)
-      .filter((id) => id != null);
-    if (ids.length) {
-      // A verse page stays within Firestore's 30-value limit for an 'in' query.
-      const translations = await this.legacy(bookId, 'translation')
-        .where('verse_id', 'in', ids)
-        .where('lang', '==', 'english')
-        .select('verse_id', 'author_id', 'authorName', 'description')
-        .get();
-      const byVerse = new Map();
-      for (const doc of translations.docs) {
-        const translation = doc.data();
-        if (!byVerse.has(translation.verse_id) || translation.author_id === 19)
-          byVerse.set(translation.verse_id, translation);
-      }
-      for (const [index, verse] of result.verses.entries()) {
-        const translation = byVerse.get(verses[page.offset + index].externalId);
-        if (translation) {
-          verse.translation = text(translation.description);
-          verse.translator = text(translation.authorName);
-        }
-      }
-    }
-    return result;
+    return chapterPage(header.docs[0]?.data() ?? { chapter }, verses, page);
   }
 }
 

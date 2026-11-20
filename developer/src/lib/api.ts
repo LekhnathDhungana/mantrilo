@@ -1,4 +1,5 @@
 let csrfToken: string | null = null;
+const basePath = process.env.EXPO_PUBLIC_CONSOLE_BASE_PATH || '';
 export class ConsoleError extends Error {
   constructor(
     public status: number,
@@ -14,14 +15,14 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   if (options.body) headers.set('Content-Type', 'application/json');
   if (options.method && !['GET', 'HEAD'].includes(options.method)) {
     if (!csrfToken) {
-      const response = await fetch('/api/auth/csrf', { credentials: 'same-origin' });
+      const response = await fetch(`${basePath}/api/auth/csrf`, { credentials: 'same-origin' });
       const data = await response.json();
       if (!response.ok) throw new Error('Could not establish a secure request.');
       csrfToken = data.csrfToken;
     }
     headers.set('X-CSRF-Token', csrfToken!);
   }
-  const response = await fetch(path, {
+  const response = await fetch(basePath + path, {
     ...options,
     headers,
     credentials: 'same-origin',

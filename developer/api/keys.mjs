@@ -1,6 +1,8 @@
 import {
   ApiError,
   getPlan,
+  hasLiveAccess,
+  hasUnlimitedRequests,
   hasValidChecksum,
   hash,
   keyEnvironment,
@@ -53,11 +55,11 @@ export class KeyResolver {
     if (entry.status !== 'active')
       throw new ApiError(401, 'revoked_api_key', 'This API key has been revoked.');
     const plan = getPlan(entry.plan);
-    if (entry.environment === 'production' && !plan.price)
+    if (entry.environment === 'production' && !entry.liveAccess)
       throw new ApiError(
         403,
         'plan_inactive',
-        'Live keys need an active paid plan. Use your sandbox key, or subscribe in the console.',
+        'Live keys require active live access. Use your sandbox key, or check access in the console.',
       );
     return { ...entry, keyHash, plan };
   }
@@ -72,6 +74,8 @@ export class KeyResolver {
       environment: keyEnvironment(record),
       status: record.status,
       plan: planFor(workspace, this.billingMode).name,
+      unlimitedRequests: hasUnlimitedRequests(workspace),
+      liveAccess: hasLiveAccess(workspace, this.billingMode),
     };
   }
 }

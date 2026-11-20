@@ -1,4 +1,4 @@
-import catalog from './catalog-samples.json';
+import catalog from '../../developer/src/data/catalog-samples.json';
 
 // Shared request/response examples for the public pages. The mantra is a production snapshot
 // (developer/scripts/export-site-sample.mjs); book examples use the real collection ids.
@@ -35,7 +35,7 @@ export const audioResponse = {
     url: 'https://storage.googleapis.com/mantrilo-media/…?X-Goog-Signature=…',
     expiresAt: '2026-11-10T06:45:00.000Z',
     bytes: catalog.recording.bytes,
-    contentType: 'audio/mp4',
+    contentType: 'audio/x-m4a',
   },
   requestId: 'request-id',
 };
@@ -91,7 +91,7 @@ export const chapterResponse = {
         number: 1,
         sanskrit: '…',
         transliteration: '…',
-        translation: '…',
+        translation: null,
         translator: '…',
         wordMeaning: null,
         commentary: null,

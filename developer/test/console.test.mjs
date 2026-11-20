@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createServer } from 'node:http';
+import { createServer, get } from 'node:http';
 import { createConsoleServer, DemoSessions, seedDemo } from '../server/app.mjs';
 import { MemoryStore } from '../server/store.mjs';
 import { hash, currentPeriod, plans, secret } from '../server/domain.mjs';
+import { configurePromo } from '../server/promo.mjs';
 // The workspace's one key, which the console shows to its owner.
 async function workspaceKey(c) {
   const { keys } = (await c.call('/api/me')).body.workspace;
@@ -83,6 +84,49 @@ test('unauthenticated routes, CSRF, origin checking and logout invalidation', as
   c.jar.set('mantrilo_session', oldSession);
   assert.equal((await c.call('/api/me')).status, 401);
 });
+
+test('the console alias preserves sign-in links and leaves API requests on their original host', async (t) => {
+  const alias = 'console-alias.example';
+  const { base } = await fixture(t, 'demo', { redirectFromHost: alias });
+  const request = (path) => new Promise((resolve, reject) => {
+    get(base + path, { headers: { Host: alias } }, (response) => {
+      response.resume();
+      response.once('end', () => resolve(response));
+      response.once('error', reject);
+    }).once('error', reject);
+  });
+  const login = await request('/login?mode=signup');
+  assert.equal(login.statusCode, 307);
+  assert.equal(login.headers.location, 'http://localhost:4190/login?mode=signup');
+
+  const config = await request('/api/auth/config');
+  assert.equal(config.statusCode, 200);
+  assert.equal(config.headers.location, undefined);
+});
+
+test('the hosted console keeps session and CSRF protection in the single forwarded cookie', async (t) => {
+  const { base } = await fixture(t, 'demo', { basePath: '/console', hostingSession: true });
+  const origin = 'http://localhost:4190';
+  const csrf = await fetch(`${base}/console/api/auth/csrf`);
+  const { csrfToken } = await csrf.json();
+  const csrfCookie = csrf.headers.get('set-cookie');
+  assert.match(csrfCookie, /^__session=[^:]+:; HttpOnly; Path=\/console; SameSite=Strict/);
+  const cookie = csrfCookie.split(';')[0];
+  const post = (route, headers) => fetch(`${base}/console/api/auth/${route}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: origin, ...headers },
+    body: JSON.stringify({ role: 'customer' }),
+  });
+  assert.equal((await post('demo', { Cookie: cookie })).status, 403);
+  const login = await post('demo', { Cookie: cookie, 'X-CSRF-Token': csrfToken });
+  assert.equal(login.status, 200);
+  const sessionCookie = login.headers.get('set-cookie').split(';')[0];
+  assert.equal((await fetch(`${base}/console/api/me`, { headers: { Cookie: sessionCookie } })).status, 200);
+  const logout = await post('logout', { Cookie: sessionCookie, 'X-CSRF-Token': csrfToken });
+  assert.equal(logout.status, 200);
+  assert.equal((await fetch(`${base}/console/api/me`, { headers: { Cookie: sessionCookie } })).status, 401);
+});
+
 test('a new workspace starts on the Free plan with a working sandbox key and no setup', async (t) => {
   const f = await fixture(t),
     owner = f.client();
@@ -114,6 +158,111 @@ test('a new workspace starts on the Free plan with a working sandbox key and no 
     200,
   );
   assert.equal((await owner.call('/api/me')).body.usage.contentRequests, 1);
+});
+
+test('the personal promo applies to an exhausted workspace across console request paths', async (t) => {
+  const code = 'workspace-promo';
+  const workspaceId = 'workspace_demo_owner';
+  const promo = configurePromo(JSON.stringify({ workspaceId, code }));
+  const f = await fixture(t, 'demo', { promo });
+  const owner = f.client(),
+    other = f.client();
+  const redeem = (client, value = code) =>
+    client.call('/api/promo/redeem', 'POST', { code: value });
+  assert.equal((await redeem(owner)).status, 401);
+  await owner.login();
+  await other.login('admin');
+  assert.equal((await owner.call('/api/me')).body.promo.canRedeem, true);
+  assert.equal((await other.call('/api/me')).body.promo.canRedeem, false);
+  assert.equal((await redeem(other)).status, 403);
+  assert.equal((await redeem(owner, secret())).status, 400);
+
+  const key = await workspaceKey(owner);
+  await f.store.transact(workspaceId, (w) => {
+    w.usage[currentPeriod()] = { contentRequests: 500, audioBytes: 0, daily: {}, endpoints: {} };
+  });
+  await f.store.usageSink.add({
+    workspaceId,
+    keyId: key.id,
+    period: currentPeriod(),
+    lane: 'sandbox',
+    endpoint: 'astrology.positions',
+    requests: 500,
+    audioBytes: 0,
+    at: new Date(),
+  });
+  const calculate = () =>
+    owner.call('/api/astrology/calculate', 'POST', {
+      operation: 'positions',
+      datetime: '2026-03-20T12:00:00Z',
+    });
+  const demo = () =>
+    owner.call('/api/demo/catalog', 'GET', undefined, { Authorization: `Bearer ${key.secret}` });
+  assert.equal((await calculate()).status, 429);
+  assert.equal((await demo()).status, 429);
+
+  const redemption = await Promise.all([redeem(owner), redeem(owner)]);
+  assert.deepEqual(
+    redemption.map(({ status }) => status),
+    [200, 200],
+  );
+  const calculation = await calculate();
+  assert.equal(calculation.status, 200);
+  assert.equal(calculation.body.usage.remaining, null);
+  const catalog = await demo();
+  assert.equal(catalog.status, 200);
+  assert.equal(catalog.body.usage.remaining, null);
+  const { body: me } = await owner.call('/api/me');
+  assert.equal(me.plan.name, 'Free');
+  assert.equal(me.allowance.requests, null);
+  assert.equal(me.usage.contentRequests, 1002);
+  assert.equal(me.promo.canRedeem, false);
+  assert.equal(me.workspace.logs.filter(({ type }) => type === 'promo_redeemed').length, 1);
+  assert.ok(!JSON.stringify(me).includes(code));
+  const { body: astrology } = await owner.call('/api/astrology');
+  assert.equal(astrology.allowance, null);
+  assert.equal(astrology.balance, null);
+  assert.equal((await other.call('/api/me')).body.allowance.requests, 500);
+});
+
+test('a matching email must be verified to redeem a promo in Firebase mode', async (t) => {
+  const code = secret();
+  const promo = configurePromo(JSON.stringify({ email: 'DEVELOPER@demo.invalid', code }));
+  const f = await fixture(t, 'firebase', { promo });
+  const client = f.client();
+  const token = await f.sessions.createDemo();
+  client.jar.set('mantrilo_session', token);
+  const redeem = () => client.call('/api/promo/redeem', 'POST', { code });
+  assert.equal((await redeem()).status, 403);
+  f.sessions.sessions.get(hash(token)).verified = true;
+  assert.equal((await redeem()).status, 403);
+  f.sessions.sessions.get(hash(token)).emailVerified = true;
+  assert.equal((await redeem()).status, 200);
+  assert.equal((await client.call('/api/me')).body.allowance.requests, null);
+});
+
+test('a private live grant provisions a live key without subscribing or upgrading billing', async (t) => {
+  const f = await fixture(t);
+  const owner = f.client();
+  await owner.login();
+  const id = 'workspace_demo_owner';
+  await f.store.transact(id, (w) => {
+    w.unlimitedRequestsSince = new Date().toISOString();
+  });
+  assert.equal((await owner.call('/api/me')).body.liveAccess, false);
+  await f.store.transact(id, (w) => {
+    w.promoLiveAccess = true;
+  });
+  const me = (await owner.call('/api/me')).body;
+  assert.equal(me.plan.name, 'Free');
+  assert.equal(me.workspace.billing, undefined);
+  assert.equal(me.allowance.requests, null);
+  assert.equal(me.liveAccess, true);
+  assert.equal(me.usageLane, 'live');
+  const live = me.workspace.keys.find((key) => key.environment === 'production');
+  assert.match(live.secret, /^mtr_live_/);
+  assert.equal((await f.store.findKey(hash(live.secret))).workspaceId, id);
+  assert.equal((await owner.call('/api/keys/rotate', 'POST', { environment: 'production' })).status, 201);
 });
 test('keys are isolated per workspace, and workspace keys are regenerated, not revoked', async (t) => {
   const f = await fixture(t),

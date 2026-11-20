@@ -12,7 +12,7 @@ export default function Keys() {
     [revokeId, setRevokeId] = useState('');
   if (!session) return null;
   const current = [primaryKey(session, 'sandbox'), primaryKey(session, 'production')],
-    paid = session.plan.price > 0,
+    liveAccess = session.liveAccess,
     older = session.workspace.keys.filter(
       (key) => key.status === 'active' && !current.includes(key),
     );
@@ -37,7 +37,7 @@ export default function Keys() {
     );
   const revoke = (id: string) =>
     act(() => mutate(`/api/keys/${id}`, 'DELETE'), 'Could not revoke the key.');
-  const environments: [Environment, string][] = paid
+  const environments: [Environment, string][] = liveAccess
     ? [
         ['sandbox', 'sandbox key'],
         ['production', 'live key'],
@@ -48,7 +48,7 @@ export default function Keys() {
       <PageTitle
         eyebrow="CREDENTIALS"
         title="API keys"
-        copy="Your sandbox key reads sample content on every plan. Your live key reads the full catalog and comes with a paid plan."
+        copy="Sandbox keys read sample content. Live keys read the full catalog when your workspace has live access."
       />
       <ErrorNotice message={error} />
       <ApiKeyCard manage />

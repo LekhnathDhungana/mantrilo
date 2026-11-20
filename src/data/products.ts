@@ -1,19 +1,19 @@
 export const productPages = {
   'mantra-api': {
     label: 'MANTRA API',
-    title: 'Sanskrit verses, with their context.',
+    title: 'Sanskrit Mantra and Shloka API',
     intro:
-      'Add mantras to your app or website with one REST API. Records bring original Sanskrit together with transliteration, translation, word meanings, and source references where available.',
+      'Add mantras to your app or website with one REST API. Records bring original Sanskrit together with transliteration and source references where available.',
     status:
-      'Access is currently by request. Fields can be empty on individual records, so ask for the titles, languages, and source details your product needs.',
+      'Create a free sandbox key to try sample mantras. Fields can be empty on individual records, so check the titles, languages and source details your app needs.',
     sections: [
       {
         title: 'Build a reading experience around the verse',
-        copy: 'A developer can present original text first, offer transliteration alongside it, and show translation or meaning when those fields are available. Keep source context close to the text so readers can distinguish a verse from its explanation.',
+        copy: 'A developer can present original text first, offer transliteration alongside it, and add a translation they have permission to distribute. Keep source context close to the text so readers can distinguish a verse from its explanation.',
       },
       {
         title: 'Treat optional fields as optional',
-        copy: 'Mantra verses return sanskrit, transliteration, translation, and wordMeanings, and any of them can be null. Build your interface so a missing translation, source, or recording simply doesn’t appear.',
+        copy: 'Mantra verses return Sanskrit and transliteration where available. Translation is null and wordMeanings is empty. Hide missing fields in your app.',
       },
       {
         title: 'Keep text and recordings connected',
@@ -28,13 +28,13 @@ export const productPages = {
     exampleTitle: 'A mantra response',
     workflow: [
       'Receive a selected text record through your server.',
-      'Render original text and available transliteration or translation.',
+      'Render original text and available transliteration.',
       'Show a source reference and linked recording only when supplied.',
     ],
   },
   'sacred-audio-api': {
     label: 'SACRED AUDIO API',
-    title: 'Connect the words to the listening experience.',
+    title: 'Mantra Recording API',
     intro:
       'Add sacred audio to devotional apps, learning products, and websites. Mantrilo links recordings to their mantras, so listening stays connected to the words.',
     status:
@@ -50,7 +50,7 @@ export const productPages = {
       },
       {
         title: 'Plan for monthly data delivery',
-        copy: 'Audio allowances measure the data delivered, not file storage. The pricing page compares each plan’s monthly allowance. Recording length and how often people listen will affect delivery usage. Ask for recording coverage and formats when you request access.',
+        copy: 'Audio allowances measure the data delivered, not file storage. The pricing page compares each plan’s monthly allowance. Recording length and how often people listen will affect delivery usage. Ask us about recording coverage and formats.',
       },
       {
         title: 'Confirm recording-specific permissions',
@@ -65,21 +65,21 @@ export const productPages = {
       'Start playback after user input and monitor delivered data.',
     ],
   },
-  'shastra-books-api': {
-    label: 'HINDU SCRIPTURE & SHASTRA BOOKS API',
-    title: 'Build for the whole book. Or a single verse.',
+  'books-api': {
+    label: 'BOOKS API',
+    title: 'Books API',
     intro:
-      'Browse Hindu scriptures by book, chapter, and verse. Build a reading experience that keeps each passage connected to its source.',
+      'Add Hindu scriptures and English retellings of the Ramayana and Mahabharata to your app. Browse books by collection and read chapters with source references.',
     status:
-      'Book, chapter and verse endpoints are live. Filter the catalog by collection to call the Upanishads, the Bhagavad Gita and other sets directly.',
+      'Browse the catalog by collection. The sandbox shows sample titles and opening verses; a live key can access the full available catalog.',
     sections: [
       {
         title: 'Give readers a path through a text',
         copy: 'A scripture reader can start at a book overview, move into a chapter, and show individual verses within that chapter. Preserve the book and chapter relationship when linking to a selected passage.',
       },
       {
-        title: 'Respect the structure of the source',
-        copy: 'Texts are organized into books, chapters, and verses where applicable. Check how a source edition is numbered before building navigation or verse references.',
+        title: 'Ramayana and Mahabharata retellings',
+        copy: 'A live key can read all 22 Ramayana chapters and 62 Mahabharata chapters. Each chapter returns a source reference and ordered prose sections with paragraphs.',
       },
       {
         title: 'Handle missing translations and references',
@@ -87,7 +87,7 @@ export const productPages = {
       },
       {
         title: 'Review coverage and licensing by title',
-        copy: 'Ask for the available books, source editions, language coverage, and content license during onboarding. Paid plans cover the full available catalog, but that does not establish availability or rights for any specific scripture or edition.',
+        copy: 'Start with the Bhagavad Gita and Isha Upanishad in the sandbox. Browse the Library for previews and check the content license before publishing material in an app.',
       },
     ],
     sample: 'book' as const,
@@ -95,7 +95,7 @@ export const productPages = {
     workflow: [
       'List a collection with GET /v1/books?collection=upanishads.',
       'Open a book for its chapter index.',
-      'Read a chapter page by page, following nextOffset.',
+      'Render the sections of a prose chapter or follow nextOffset to page through verses.',
     ],
   },
 };

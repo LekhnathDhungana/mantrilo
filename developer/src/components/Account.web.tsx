@@ -48,13 +48,13 @@ function KeyRow({ label, note, keyRecord }: { label: string; note: string; keyRe
   );
 }
 
-// The workspace's two keys: sandbox for everyone, live once the workspace has a paid plan.
+// The workspace's keys: sandbox for everyone, live when entitled.
 export function ApiKeyCard({ manage = false }: { manage?: boolean }) {
   const { session } = useConsole();
   if (!session) return null;
   const sandbox = primaryKey(session, 'sandbox'),
     live = primaryKey(session, 'production'),
-    paid = session.plan.price > 0;
+    liveAccess = session.liveAccess;
   return (
     <article className="panel account-card">
       <div className="panel-heading">
@@ -75,21 +75,21 @@ export function ApiKeyCard({ manage = false }: { manage?: boolean }) {
         ) : (
           <p>Your sandbox key is being prepared. Refresh in a moment.</p>
         )}
-        {paid && live ? (
+        {liveAccess && live ? (
           <KeyRow label="Live key" note="Full catalog, for production" keyRecord={live} />
         ) : (
           <div className="key-row locked">
             <div className="key-row-heading">
               <EnvTag environment="live" />
               <strong>Live key</strong>
-              <Badge>{paid ? 'Being prepared' : 'Paid plans'}</Badge>
+              <Badge>{liveAccess ? 'Being prepared' : 'Paid plans'}</Badge>
             </div>
             <p className="small muted">
-              {paid
+              {liveAccess
                 ? 'Your live key is being prepared. Refresh in a moment.'
                 : 'Subscribe to get a live key for the full catalog. Your sandbox key keeps working.'}
             </p>
-            {!paid && (
+            {!liveAccess && (
               <Link href="/billing" className="button small-button">
                 See plans
               </Link>
@@ -109,34 +109,39 @@ export function UsageCard() {
   const used = session.usage.contentRequests,
     quota = session.allowance.requests,
     percent = quota ? Math.min(100, (used / quota) * 100) : 0,
-    paid = session.plan.price > 0;
+    liveAccess = session.liveAccess;
   return (
     <article className="panel account-card">
       <div className="panel-heading">
         <h2>Usage this month</h2>
-        <Badge tone={paid ? 'green' : 'neutral'}>{session.plan.name} plan</Badge>
+        <Badge tone={liveAccess || quota === null ? 'green' : 'neutral'}>
+          {quota === null ? 'Unlimited requests' : `${session.plan.name} plan`}
+        </Badge>
       </div>
       <div className="account-card-body">
         <div className="metric-value">
           {used.toLocaleString()}
-          <span> / {quota.toLocaleString()} calls</span>
+          <span> / {quota?.toLocaleString() ?? 'Unlimited'} calls</span>
         </div>
-        <div
-          className={`meter-track ${percent >= 90 ? 'high' : ''}`}
-          role="progressbar"
-          aria-label="API calls used this month"
-          aria-valuenow={used}
-          aria-valuemin={0}
-          aria-valuemax={Math.max(1, quota, used)}
-        >
-          <i style={{ width: `${percent}%` }} />
-        </div>
+        {quota !== null && (
+          <div
+            className={`meter-track ${percent >= 90 ? 'high' : ''}`}
+            role="progressbar"
+            aria-label="API calls used this month"
+            aria-valuenow={used}
+            aria-valuemin={0}
+            aria-valuemax={Math.max(1, quota, used)}
+          >
+            <i style={{ width: `${percent}%` }} />
+          </div>
+        )}
         <p className="small muted">
-          {paid ? 'Live · ' : 'Sandbox · '}
-          {Math.max(0, quota - used).toLocaleString()} left · Resets{' '}
-          {formatResetDate(session.resetsAt)}
+          {liveAccess ? 'Live · ' : 'Sandbox · '}
+          {quota === null
+            ? 'No monthly request limit'
+            : `${Math.max(0, quota - used).toLocaleString()} left · Resets ${formatResetDate(session.resetsAt)}`}
         </p>
-        {paid && (
+        {liveAccess && (
           <p className="small muted">
             Sandbox: {(session.usageByLane?.sandbox.contentRequests ?? 0).toLocaleString()} used,
             counted separately
@@ -145,9 +150,11 @@ export function UsageCard() {
         <div className="action-row">
           <Link
             href="/billing"
-            className={paid ? 'button subtle small-button' : 'button small-button'}
+            className={liveAccess ? 'button subtle small-button' : 'button small-button'}
           >
-            {paid ? 'View usage' : 'Upgrade'}
+            {liveAccess || quota === null || session.promo?.canRedeem
+              ? 'View usage & billing'
+              : 'Upgrade'}
           </Link>
         </div>
       </div>

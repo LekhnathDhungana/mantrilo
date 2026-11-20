@@ -9,10 +9,13 @@ export default function LibraryPage() {
       </Link>
       <Text style={styles.title}>Content library</Text>
       <Text style={styles.body}>
-        The API serves mantras, recordings linked to mantras, scripture books by collection, and
-        astrology calculations. Open the website in a browser for full coverage details.
+        Explore mantras, recordings, Sanskrit scriptures, English retellings of the Ramayana and
+        Mahabharata, and astrology calculations.
       </Text>
-      <Link href="/access" style={styles.link}>
+      <Link href="/books-api" style={styles.link}>
+        Explore the Books API →
+      </Link>
+      <Link href="/contact" style={styles.link}>
         Request API access →
       </Link>
     </ScrollView>

@@ -22,12 +22,12 @@ Keep private API keys server-side, preferably in GCP Secret Manager. No secret i
 
 - Pricing: `shared/content-plans.json` is the single source of truth; `src/data/plans.ts` re-exports it for marketing cards and the comparison table.
 - Samples: `src/data/samples.ts` contains illustrative schema fixtures only. No catalog title, translation, audio, or content license has been supplied.
-- Pages: `/mantra-api` (the old `/mantra-shloka-api` redirects there), `/sacred-audio-api`, `/shastra-books-api`, `/astrology-api`, `/pricing`, `/docs`, `/access`, `/privacy`, `/terms`, `/license` are working routes; legal pages disclose missing final documents and grant no rights.
+- Pages: `/mantra-api` (the old `/mantra-shloka-api` redirects there), `/sacred-audio-api`, `/books-api` (the old `/shastra-books-api` redirects there), `/astrology-api`, `/pricing`, `/docs` (guides by goal at `/docs?guide=…`; the old `/implementation` redirects there), `/contact` (the old `/access` redirects there), `/privacy`, `/terms`, `/license` are working routes; legal pages disclose missing final documents and grant no rights.
 - The ornamental rosette is a local SVG, not a product or authenticity claim. Devanagari uses system fonts with no third-party font request.
 
 ## GCP preparation (not deployed)
 
-The website isn't deployed yet; the GCP project is `mantrilo`. `deployment/Dockerfile` builds the static export and serves it on port 8080 using unprivileged Nginx for Cloud Run. `deployment/nginx.conf` resolves clean URLs. Build with the repository as context:
+The public website is deployed at [www.mantrilo.com](https://www.mantrilo.com/) with Firebase Hosting in the `mantrilo` project. `deployment/Dockerfile` builds the static export and serves it on port 8080 using unprivileged Nginx for Cloud Run. `deployment/nginx.conf` resolves clean URLs. Build with the repository as context:
 
 ```sh
 docker build -f deployment/Dockerfile -t mantrilo-web .
@@ -52,12 +52,16 @@ After building, `npm run preview` serves the export on `http://localhost:4187`, 
 
 ## SEO and astrology
 
-See [the implementation audit, search-theme map, verification, decisions, and launch checklist](docs/SEO-IMPLEMENTATION.md). Search metadata lives in `src/data/seo-pages.json`; Expo 58 route `generateMetadata` exports render it into initial HTML. `src/components/Seo.web.tsx` keeps it synchronized on client navigation and renders truthful JSON-LD when a confirmed origin is configured.
+See the [technical SEO audit](docs/SEO-TECHNICAL-AUDIT.md) and [production release follow-up](docs/SEO-RELEASE-FOLLOWUP.md). Search metadata lives in `src/data/seo-pages.json`; Expo 58 route `generateMetadata` exports render it into initial HTML. `src/components/Seo.web.tsx` keeps it synchronized on client navigation and renders truthful JSON-LD when a confirmed origin is configured.
 
 Private/local builds default to noindex. Set `EXPO_PUBLIC_SITE_URL` to the verified HTTPS production origin and explicitly set `EXPO_PUBLIC_INDEXING_ENABLED=true` only for an authorized production build. Without a configured origin, canonical/structured-data URLs are omitted and the preview sitemap is empty. `npm run check:seo` verifies the default preview export. Keep Cloud Run previews authenticated; robots directives do not control access.
+
+The public guide titles, descriptions and slugs live in `src/data/public-guides.json`. Each guide has an Expo route under `src/app/docs/guides`; the build validates its canonical URL and includes it in the production sitemap. For a public Firebase release, set the HTTPS console origin in `EXPO_PUBLIC_CONSOLE_URL`, run `npm run build`, then run `python3 scripts/check-seo.py dist "$EXPO_PUBLIC_SITE_URL"` before deploying. Firebase repeats this check before publishing. Use the console URL configured as `MANTRILO_APP_ORIGIN` in the deployed console service; another Cloud Run alias can load the form but fail session creation. After deploying, run `python3 scripts/check-live-seo.py "$EXPO_PUBLIC_SITE_URL"` to check the sitemap, index directives, legacy redirects, a true 404 and the signup link.
 
 Astrology is linked from the homepage and navigation without a planned badge. The Developer Console provides real planetary positions and instant Panchang calculations with explicit methods, included in every plan at one content request per calculation. The marketing inquiry path only prepares a local draft. Existing content plans are unchanged.
 
 ## Separate Developer Console
 
 The customer console lives in [`developer/`](developer/README.md), with its own package, Expo routes, Node backend, environment template, GCP preparation, bootstrap command, and security tests. Its loopback preview uses port 4190. Content pricing is shared through `shared/content-plans.json` without changing the existing plan values.
+
+Use `node developer/scripts/seo-signup-starts.mjs 30` to count tagged Try API visits and signup starts separately by public CTA page and broad referrer category in Cloud Run logs. These are requests, and search referrals can include paid traffic. Use `node developer/scripts/seo-activation-report.mjs YYYY-MM` for the all-source workspace, sandbox-key, and successful-usage cohort. Search Console provides organic results separately.

@@ -1,0 +1,44 @@
+{
+  "upanishads": {
+    "id": "upanishads",
+    "label": "Load the Upanishads",
+    "title": "Upanishads API: Load Books and Verses",
+    "description": "Filter the Mantrilo books API for the Upanishads, follow pagination, and load chapters and verses from your server."
+  },
+  "search-mantras": {
+    "id": "search-mantras",
+    "label": "Build a searchable shloka library",
+    "title": "Build a Searchable Mantra & Shloka Library",
+    "description": "Use the Mantrilo API to list mantras and shlokas, filter by deity, paginate results, and search your loaded catalog."
+  },
+  "sacred-audio": {
+    "id": "sacred-audio",
+    "label": "Play sacred audio",
+    "title": "Mantra Audio Playback Integration Guide",
+    "description": "Request signed mantra recording URLs from your server and pass them to your app’s player. See expiration, usage, and availability."
+  },
+  "book-reader": {
+    "id": "book-reader",
+    "label": "Build a book reader",
+    "title": "Build a Book Reader with Mantrilo",
+    "description": "Build a reader for Sanskrit verse pages and English retellings of the Ramayana and Mahabharata with the Mantrilo Books API."
+  },
+  "vedic-birth-chart": {
+    "id": "astrology-chart",
+    "label": "Add birth charts",
+    "title": "Vedic Birth Chart & Kundli API Integration Guide",
+    "description": "Build a Kundli with Mantrilo. See a verified synthetic D1 and D9 response, optional Vimshottari Dasha, and birth time and timezone requirements."
+  },
+  "daily-panchang": {
+    "id": "astrology-daily-panchang",
+    "label": "Add a daily Panchang",
+    "title": "Daily Panchang API Integration Guide",
+    "description": "Build a Hindu calendar using the Mantrilo Daily Panchang API. See local date and location inputs, sunrise-based values, and server code."
+  },
+  "featured-mantra": {
+    "id": "featured-mantra",
+    "label": "Feature a daily mantra",
+    "title": "Add a Daily Sanskrit Mantra to Your App",
+    "description": "Fetch one mantra from the Mantrilo API and display its Sanskrit and transliteration in your app."
+  }
+}
