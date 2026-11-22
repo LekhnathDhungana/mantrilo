@@ -1,18 +1,25 @@
-"""Check the actual public release after publishing, including canonical host and CTA."""
+"""Check the actual public release after publishing, including canonical host and CTA.
+
+    python3 scripts/check-live-seo.py https://www.mantrilo.com [dist]
+
+The live sitemap must list exactly the URLs of the production build in `dist` (the build that was
+deployed), and every one of them must serve an indexable page with its own canonical.
+"""
+from concurrent.futures import ThreadPoolExecutor
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.error import HTTPError
 from urllib.parse import parse_qs, urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
-import json
 import sys
 import xml.etree.ElementTree as ET
 
 origin = (sys.argv[1] if len(sys.argv) > 1 else 'https://www.mantrilo.com').rstrip('/')
-site = json.loads(Path('src/data/seo-pages.json').read_text())
-guides = json.loads(Path('src/data/public-guides.json').read_text())
-expected = {origin + path for path, page in site.items() if page['indexable']}
-expected.update(f'{origin}/docs/guides/{slug}' for slug in guides)
+built = Path(sys.argv[2] if len(sys.argv) > 2 else 'dist') / 'sitemap.xml'
+SITEMAP = '{http://www.sitemaps.org/schemas/sitemap/0.9}loc'
+expected = {n.text for n in ET.parse(built).getroot().iter(SITEMAP)}
+assert expected, f'{built} lists no URLs: build with EXPO_PUBLIC_INDEXING_ENABLED=true first'
+assert all(url.startswith(origin + '/') for url in expected), f'{built} was built for another origin'
 
 class NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, *args, **kwargs):
@@ -59,8 +66,13 @@ status, _, _, robots = get(origin + '/robots.txt')
 assert status == 200 and 'Disallow: /' not in robots and f'Sitemap: {origin}/sitemap.xml' in robots
 status, _, _, sitemap = get(origin + '/sitemap.xml')
 assert status == 200
-locations = [n.text for n in ET.fromstring(sitemap).iter('{http://www.sitemaps.org/schemas/sitemap/0.9}loc')]
-assert len(locations) == len(expected) and set(locations) == expected, locations
+locations = [n.text for n in ET.fromstring(sitemap).iter(SITEMAP)]
+assert len(locations) == len(set(locations)), 'duplicate sitemap URLs'
+missing, extra = expected - set(locations), set(locations) - expected
+assert not missing and not extra, (
+    f'live sitemap differs from {built} (deployed an older build?): '
+    f'{len(missing)} missing, e.g. {sorted(missing)[:3]}; {len(extra)} extra, e.g. {sorted(extra)[:3]}'
+)
 required_requests = {
     '/': ('preset', 'quickstart'),
     '/docs': ('preset', 'quickstart'),
@@ -79,7 +91,7 @@ required_requests = {
     '/library/books/upanishads': ('preset', 'upanishads'),
     '/library/books/mundaka-upanishad': ('preset', 'upanishads'),
     '/library/books/yoga-sutras': ('preset', 'book-reader'),
-    '/library/mantras/aham-vaishvanaro-bhutva': ('preset', 'featured-mantra'),
+    '/library/mantras/aham-vaishvanaro-bhuthva': ('preset', 'featured-mantra'),
     '/docs/guides/upanishads': ('preset', 'upanishads'),
     '/docs/guides/search-mantras': ('preset', 'search-mantras'),
     '/docs/guides/sacred-audio': ('preset', 'sacred-audio'),
@@ -88,9 +100,10 @@ required_requests = {
     '/docs/guides/daily-panchang': ('operation', 'daily-panchang'),
     '/docs/guides/vedic-birth-chart': ('operation', 'chart'),
 }
-signups = set()
-console_requests = set()
-for url in sorted(expected):
+assert {origin + path for path in required_requests} <= expected, (
+    'a page with a required console request is not in the sitemap'
+)
+def check(url):
     status, headers, final, html = get(url)
     assert status == 200 and final == url, (url, status, final)
     head = Head()
@@ -106,13 +119,20 @@ for url in sorted(expected):
             parse_qs(urlsplit(link).query).get(key) == [value]
             for link in head.console_requests
         ), (url, 'missing direct console request', key, value)
-    signups.update(head.signup)
-    console_requests.update(head.console_requests)
+    return head
+
+signups = set()
+console_requests = set()
+with ThreadPoolExecutor(8) as pool:
+    for head in pool.map(check, sorted(expected)):
+        signups.update(head.signup)
+        console_requests.update(head.console_requests)
 for old, new in {
     '/mantra-shloka-api': '/mantra-api',
     '/shastra-books-api': '/books-api',
     '/implementation': '/docs',
     '/access': '/contact',
+    '/library/mantras/aham-vaishvanaro-bhutva': '/library/mantras/aham-vaishvanaro-bhuthva',
 }.items():
     redirect, headers, _, _ = get(origin + old, follow=False)
     assert redirect in (301, 308) and headers.get('Location') in (new, origin + new), (old, redirect)

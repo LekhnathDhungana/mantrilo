@@ -1,5 +1,8 @@
 {
-  "firestore": { "rules": "deployment/firestore.rules" },
+  "firestore": {
+    "rules": "deployment/firestore.rules",
+    "indexes": "deployment/firestore.indexes.json"
+  },
   "storage": { "rules": "deployment/storage.rules" },
   "emulators": {
     "auth": { "port": 9099 },

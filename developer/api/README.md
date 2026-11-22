@@ -32,14 +32,19 @@ response, with an empty `verses` array and `nextOffset: null`.
 
 Send a JSON body with an `operation`. Each successful request uses one content request.
 
-| Operation               | Inputs                                                                                                                           |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `chart`                 | `birth`, optional `divisions` (default `[1,9]`), `dashaLevels` (0–3), and `referenceDate` (required when Dasha depth is nonzero) |
-| `daily-panchang`        | `date`, `latitude`, `longitude`, `timezone`                                                                                      |
-| `match`                 | `person1` and `person2`, each a birth object                                                                                     |
-| `chart-image`           | `birth`, optional `divisions` and `layout` (`north`, `south` or `east`). Returns a PNG as `data.imageBase64`.                    |
-| `places`                | `query`, optional `country` (uppercase two-letter code) and `limit` (1–10)                                                       |
-| `positions`, `panchang` | `datetime` and optional `ayanamsaDegrees`                                                                                        |
+| Operation               | Inputs                                                                                                                                                                                                                                                   |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `chart`                 | `birth`, optional `divisions` (default `[1,9]`), `dashaLevels` (0–3), and `referenceDate` (required when Dasha depth is nonzero)                                                                                                                         |
+| `daily-panchang`        | `date`, `latitude`, `longitude`, `timezone`                                                                                                                                                                                                              |
+| `match`                 | `person1` and `person2`, each a birth object                                                                                                                                                                                                             |
+| `chart-image`           | `birth`, optional `divisions` and `layout` (`north`, `south` or `east`). Returns a PNG as `data.imageBase64`.                                                                                                                                            |
+| `places`                | `query`, optional `country` (uppercase two-letter code) and `limit` (1–10)                                                                                                                                                                               |
+| `signs`                 | `birth`, optional `timeKnown` (default `true`). Western Sun, Moon and Rising signs plus Vedic Rashi, Lagna, Sun sign and Nakshatra. With `timeKnown: false`, Rising and Lagna are `null` and a Moon that changed sign that day lists both as `possible`. |
+| `positions`, `panchang` | `datetime` and optional `ayanamsaDegrees`                                                                                                                                                                                                                |
+
+The free calculators on mantrilo.com call `signs` and `places` through keyless endpoints,
+`GET /v1/public/signs` and `GET /v1/public/places`, which are limited per IP and capped per
+day. Apps should use `POST /v1/astrology/calculate` with a key.
 
 For Western, numerology, and additional Vedic operations, use the operation ID from
 `GET /v1/astrology` and send its input under `parameters`:

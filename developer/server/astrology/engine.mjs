@@ -194,6 +194,40 @@ function planet(body, date, ayanamsa) {
     ...classify(sidereal),
   };
 }
+// Tropical zodiac signs, in order from 0° of the ecliptic.
+export const ZODIAC_SIGNS = [
+  'Aries',
+  'Taurus',
+  'Gemini',
+  'Cancer',
+  'Leo',
+  'Virgo',
+  'Libra',
+  'Scorpio',
+  'Sagittarius',
+  'Capricorn',
+  'Aquarius',
+  'Pisces',
+];
+/** The geocentric tropical ecliptic longitude of a body, in degrees, at an instant. */
+export const tropicalLongitude = (body, date) => normalize(coordinates(body, date).longitude);
+/**
+ * The tropical ecliptic longitude rising on the eastern horizon (the ascendant) for an instant
+ * and place, from local apparent sidereal time and the true obliquity of the ecliptic.
+ */
+export function ascendantLongitude(date, latitude, longitude) {
+  const time = Astronomy.MakeTime(date),
+    radians = Math.PI / 180,
+    ramc = normalize(Astronomy.SiderealTime(time) * 15 + longitude) * radians,
+    obliquity = Astronomy.e_tilt(time).tobl * radians,
+    phi = latitude * radians;
+  return normalize(
+    Math.atan2(
+      Math.cos(ramc),
+      -(Math.sin(ramc) * Math.cos(obliquity) + Math.tan(phi) * Math.sin(obliquity)),
+    ) / radians,
+  );
+}
 export function panchangFromLongitudes(sunTropical, moonTropical, ayanamsa) {
   const elongation = normalize(moonTropical - sunTropical),
     tithiIndex = Math.floor(elongation / 12),

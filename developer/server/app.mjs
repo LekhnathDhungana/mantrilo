@@ -42,6 +42,7 @@ import { readEmail, Throttle } from './email-codes.mjs';
 import { libraryItem, libraryPage, streamLibraryAudio } from './library.mjs';
 import { readBookListQuery, readPustakLibrary } from './pustak.mjs';
 import { createAstrologyService } from './astrology/service.mjs';
+import { handleArticleAdmin } from './blog.mjs';
 import { RATE_LIMITS, RateLimiter, UsageMeter, limitsFor } from '../api/usage.mjs';
 import { ENTITLED_STATUSES, PAID_PLANS, syncFromEvent, syncWorkspace } from './billing.mjs';
 
@@ -136,12 +137,20 @@ export function createConsoleServer({
   books = null,
   astrologyService = createAstrologyService(),
   phoneCodes = false,
+  // Google and Apple sign-in run entirely in Firebase; these only decide whether the buttons show.
+  googleSignIn = false,
+  appleSignIn = false,
   trustProxy = false,
   redirectFromHost = null,
   basePath = '',
   hostingSession = false,
   codeThrottle = new Throttle({ limit: 20, windowMs: 60 * 60 * 1000 }),
   staticRoot = path.resolve('dist'),
+  // Blog articles (FirestoreArticles / MemoryArticles) for the admin screen.
+  articles = null,
+  // The public blog (createBlog). Served for /blog URLs outside basePath, which reach this
+  // service through the Firebase Hosting rewrite.
+  blog = null,
 }) {
   const compressedAssets = new Map();
   const astrologyMeter = new UsageMeter(store.usageSink, { ttlMs: 0 });
@@ -180,6 +189,13 @@ export function createConsoleServer({
       const url = new URL(request.url, 'http://localhost');
       const method = request.method;
       if (url.pathname === '/healthz') return send(200, { ok: true });
+      if (
+        blog &&
+        basePath &&
+        blog.matches(url.pathname) &&
+        !url.pathname.startsWith(`${basePath}/`)
+      )
+        return await blog.serve(request, response, url);
       if (basePath && url.pathname !== basePath && !url.pathname.startsWith(`${basePath}/`)) {
         return send(404, { error: { code: 'not_found', message: 'Not found.' } });
       }
@@ -241,6 +257,8 @@ export function createConsoleServer({
             registration: mode === 'firebase',
             emailCodes: mode === 'firebase' && Boolean(emailCodes),
             phoneCodes: mode === 'firebase' && phoneCodes,
+            googleSignIn: mode === 'firebase' && googleSignIn,
+            appleSignIn: mode === 'firebase' && appleSignIn,
           });
         if (route === '/api/auth/csrf' && method === 'GET') {
           if (hostingSession && csrf) return send(200, { csrfToken: csrf });
@@ -887,7 +905,10 @@ export function createConsoleServer({
         if (route === '/api/billing' && method === 'GET')
           return send(200, {
             plan,
-            monthlyTotal: billingFor(workspace, billingMode)?.currency === 'inr' ? indiaPrices[plan.name] : plan.price,
+            monthlyTotal:
+              billingFor(workspace, billingMode)?.currency === 'inr'
+                ? indiaPrices[plan.name]
+                : plan.price,
             currency: billingFor(workspace, billingMode)?.currency ?? 'usd',
             period: null,
             invoices: [],
@@ -909,11 +930,31 @@ export function createConsoleServer({
           insist(verified, 403, 'email_unverified', 'Verify your email before subscribing.');
           const { plan, promotionCode, market } = (await body(request)) ?? {};
           insist(PAID_PLANS.includes(plan), 400, 'invalid_plan', 'Choose a paid plan.');
-          insist(market === undefined || market === 'IN', 400, 'invalid_market', 'Unknown billing market.');
+          insist(
+            market === undefined || market === 'IN',
+            400,
+            'invalid_market',
+            'Unknown billing market.',
+          );
           if (market === 'IN') {
-            insist(workspace.indiaPricing === true, 403, 'regional_pricing_unavailable', 'Contact billing to verify your India billing address.');
-            insist(plan !== 'Business', 400, 'contact_billing', 'Contact billing for an India Business quote.');
-            insist(promotionCode === undefined, 400, 'invalid_promotion_code', 'Promo codes are unavailable on India pricing.');
+            insist(
+              workspace.indiaPricing === true,
+              403,
+              'regional_pricing_unavailable',
+              'Contact billing to verify your India billing address.',
+            );
+            insist(
+              plan !== 'Business',
+              400,
+              'contact_billing',
+              'Contact billing for an India Business quote.',
+            );
+            insist(
+              promotionCode === undefined,
+              400,
+              'invalid_promotion_code',
+              'Promo codes are unavailable on India pricing.',
+            );
           }
           billing.outreachPromotion(plan, promotionCode);
           // Checked alongside the subscription lookup below; usually answered from cache.
@@ -941,7 +982,13 @@ export function createConsoleServer({
           }
           await priceReady;
           return send(200, {
-            url: await billing.checkoutUrl({ workspaceId, customerId, plan, promotionCode, market }),
+            url: await billing.checkoutUrl({
+              workspaceId,
+              customerId,
+              plan,
+              promotionCode,
+              market,
+            }),
           });
         }
         if (route === '/api/billing/sync' && method === 'POST') {
@@ -976,6 +1023,16 @@ export function createConsoleServer({
             'admin_required',
             'Administrator permission is required.',
           );
+          if (route === '/api/admin/articles' || route.startsWith('/api/admin/articles/')) {
+            insist(articles, 503, 'blog_unavailable', 'The blog store is not configured.');
+            const [status, data] = await handleArticleAdmin({
+              route,
+              method,
+              readBody: () => body(request, 600_000),
+              articles,
+            });
+            return send(status, data);
+          }
           if (route === '/api/admin/workspaces' && method === 'GET')
             return send(200, {
               workspaces: await Promise.all(

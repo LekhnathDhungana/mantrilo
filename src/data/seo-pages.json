@@ -95,12 +95,6 @@
     "label": "Daily Panchang API",
     "indexable": true
   },
-  "/library/mantras/aham-vaishvanaro-bhutva": {
-    "title": "Aham Vaishvanaro Bhutva · Bhagavad Gita 15.14 | Mantrilo",
-    "description": "Read Bhagavad Gita 15.14 in Sanskrit with transliteration, listen to the featured recording, and try the mantra in the Mantrilo sandbox.",
-    "label": "Aham Vaishvanaro Bhutva",
-    "indexable": true
-  },
   "/library/books/upanishads": {
     "title": "Upanishads Library and Books API | Mantrilo",
     "description": "Browse Sanskrit Upanishad previews by title, compare chapter coverage, and try the Isha Upanishad example with the Mantrilo Books API.",

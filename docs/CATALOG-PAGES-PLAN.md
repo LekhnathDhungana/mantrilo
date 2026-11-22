@@ -51,7 +51,7 @@ Description: built from `seoDescription`, ending with what the API returns.
    sacred-audio guide.
 7. Availability: which plans include it, sandbox button (the first 5 ids are sandbox-visible).
 8. Related: other mantras for the same deity, the deity hub, the search-mantras guide.
-9. Footer link: "Read the meaning on Satyam" to the matching `satyam.app/shlokam/{slug}` page.
+9. No links to Satyam: it is a customer, not part of the API docs.
 
 The documentation framing is deliberate: Satyam already has a reader page for each of these hymns
 with full English meanings. Mantrilo pages target developers ("{title} API", "{title} JSON",

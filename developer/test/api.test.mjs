@@ -139,9 +139,7 @@ test('prose books return chapter sections with source references', async (t) => 
   const sections = [{ sectionNumber: 1, title: 'Ayodhya', paragraphs: ['The story begins.'] }];
   const docs = {
     'pustak_metadata/catalogue': {
-      books: [
-        { id: 'ramayana', isLive: true, format: 'prose', language: 'en', totalVerses: 0 },
-      ],
+      books: [{ id: 'ramayana', isLive: true, format: 'prose', language: 'en', totalVerses: 0 }],
     },
     'pustak/ramayana': { isLive: true, chapterIndex: [header] },
     'pustak/ramayana/chapters/1': { ...header, sections },
@@ -337,6 +335,25 @@ test('audio redirects to a short-lived link and is charged by size', async (t) =
   assert.equal(requests, 2);
 });
 
+test('public recording previews need no key, are limited per IP and are not metered', async (t) => {
+  const f = await fixture(t);
+  const ok = await f.call('/v1/public/mantras/mantra-02/preview');
+  assert.equal(ok.status, 200);
+  assert.equal(ok.headers.get('access-control-allow-origin'), '*');
+  assert.match(ok.body.data.url, /^https:\/\/media\.test\//);
+  assert.ok(Date.parse(ok.body.data.expiresAt) > Date.now());
+  assert.equal(
+    (await f.call('/v1/public/mantras/mantra-13/preview')).body.error.code,
+    'audio_unavailable',
+  );
+  assert.equal((await f.call('/v1/public/mantras/missing/preview')).status, 404);
+  for (let i = 0; i < 7; i++) await f.call('/v1/public/mantras/mantra-02/preview');
+  const limited = await f.call('/v1/public/mantras/mantra-02/preview');
+  assert.equal(limited.status, 429);
+  assert.equal(limited.body.error.code, 'preview_limited');
+  assert.equal(f.sink.events.length, 0);
+});
+
 test('Free plan audio stops at its allowance', async (t) => {
   const f = await fixture(t, { plan: 'Free', rate: { rate: 1000, burst: 1000 } });
   const perFile = 4 * 1024 * 1024,
@@ -406,14 +423,20 @@ test('an unlimited workspace can exceed both request quotas and still records su
 test('only an explicit live promo grants a free workspace production catalog access', async (t) => {
   const f = await fixture(t, { plan: 'Free' });
   const get = () => f.call('/v1/mantras/mantra-12', f.keys.live);
-  await f.store.transact('w1', (w) => { w.unlimitedRequestsSince = new Date().toISOString(); });
+  await f.store.transact('w1', (w) => {
+    w.unlimitedRequestsSince = new Date().toISOString();
+  });
   assert.equal((await get()).body.error.code, 'plan_inactive');
-  await f.store.transact('w1', (w) => { w.promoLiveAccess = true; });
+  await f.store.transact('w1', (w) => {
+    w.promoLiveAccess = true;
+  });
   const result = await get();
   assert.equal(result.status, 200);
   assert.equal(result.headers.get('x-quota-requests-remaining'), 'unlimited');
   assert.equal(result.headers.get('x-ratelimit-limit'), '2');
-  await f.store.transact('w1', (w) => { delete w.unlimitedRequestsSince; });
+  await f.store.transact('w1', (w) => {
+    delete w.unlimitedRequestsSince;
+  });
   assert.equal((await get()).body.error.code, 'plan_inactive');
 });
 
@@ -996,4 +1019,92 @@ test('book collections are callable directly and paginate with limit and cursor'
   assert.equal(bad.status, 400);
   assert.equal(bad.body.error.code, 'invalid_collection');
   assert.equal((await f.call('/v1/books?limit=0', f.keys.live)).body.error.code, 'invalid_limit');
+});
+
+test('the public sign calculator needs no key, converts local time and is limited per IP', async (t) => {
+  const row = (name, signId, nakshatra) => ({
+    ...(name ? { name } : {}),
+    sign_id: signId,
+    sign: 'Example',
+    degree_in_sign: 10.5,
+    nakshatra,
+    nakshatra_id: 13,
+    pada: 3,
+    nakshatra_lord: 'Moon',
+  });
+  const outbound = [];
+  const astrologyService = createAstrologyService({
+    key: 'server-only-fixture',
+    fetcher: async (url, init) => {
+      const path = new URL(url).pathname.replace('/api/v2', '');
+      outbound.push({ path, payload: init.body ? JSON.parse(init.body) : null });
+      if (path === '/geo/search')
+        return Response.json({
+          results: [
+            { name: 'Kathmandu', country: 'NP', lat: 27.7, lng: 85.3, timezone: 'Asia/Kathmandu' },
+          ],
+        });
+      return Response.json({
+        chart: {
+          ascendant: row(null, 6, 'Hasta'),
+          planets: [row('Sun', 2, 'Rohini'), row('Moon', 12, 'Revati')],
+          houses: Array.from({ length: 12 }, (_, i) => ({ house: i + 1, sign: 'Example' })),
+        },
+      });
+    },
+  });
+  const f = await fixture(t, { astrologyService, publicDailyCap: 20 });
+  const place = 'latitude=28.6&longitude=77.2&timezone=Asia/Kolkata';
+  const ok = await f.call(`/v1/public/signs?date=1995-06-20&time=12:30&${place}`);
+  assert.equal(ok.status, 200);
+  assert.equal(ok.headers.get('access-control-allow-origin'), '*');
+  const { western, vedic, timeKnown } = ok.body.data;
+  assert.equal(timeKnown, true);
+  assert.equal(western.sun.name, 'Gemini');
+  assert.equal(western.rising.name, 'Libra');
+  assert.deepEqual(vedic.moon.rashi, { number: 12, name: 'Meena', english: 'Pisces' });
+  assert.equal(vedic.lagna.rashi.name, 'Kanya');
+  assert.equal(vedic.moon.nakshatra.name, 'Revati');
+  assert.equal(outbound[0].payload.hour, 12);
+  assert.equal(outbound[0].payload.tz_str, 'Asia/Kolkata');
+
+  const noTime = await f.call(`/v1/public/signs?date=1995-06-20&${place}`);
+  assert.equal(noTime.body.data.timeKnown, false);
+  assert.equal(noTime.body.data.western.rising, null);
+  assert.equal(noTime.body.data.vedic.lagna, null);
+
+  const skipped = await f.call(
+    '/v1/public/signs?date=2026-03-08&time=02:30&latitude=40.7&longitude=-74&timezone=America/New_York',
+  );
+  assert.equal(skipped.body.error.code, 'invalid_local_time');
+  assert.equal(
+    (await f.call(`/v1/public/signs?date=1995-02-30&${place}`)).body.error.code,
+    'invalid_date',
+  );
+  assert.equal(
+    (await f.call('/v1/public/signs?date=1995-06-20&timezone=Asia/Kolkata')).body.error.code,
+    'invalid_coordinates',
+  );
+
+  const places = await f.call('/v1/public/places?query=Kathmandu');
+  assert.equal(places.body.data.places[0].timezone, 'Asia/Kathmandu');
+  assert.equal(f.sink.events.length, 0);
+
+  for (let i = 0; i < 12; i++) await f.call(`/v1/public/signs?date=1995-06-20&${place}`);
+  const limited = await f.call(`/v1/public/signs?date=1995-06-20&${place}`);
+  assert.equal(limited.status, 429);
+  assert.equal(limited.body.error.code, 'calculator_limited');
+  // Place search has its own allowance.
+  assert.equal((await f.call('/v1/public/places?query=Kathmandu')).status, 200);
+});
+
+test('the public calculator stops at its daily cap', async (t) => {
+  const astrologyService = createAstrologyService({
+    key: 'k',
+    fetcher: async () => Response.json({ results: [] }),
+  });
+  const f = await fixture(t, { astrologyService, publicDailyCap: 2 });
+  assert.equal((await f.call('/v1/public/places?query=Pune')).status, 200);
+  assert.equal((await f.call('/v1/public/places?query=Pune')).status, 200);
+  assert.equal((await f.call('/v1/public/places?query=Pune')).body.error.code, 'calculator_busy');
 });

@@ -11,6 +11,7 @@ import { billingModeFrom } from './domain.mjs';
 import { demoPustak, FirestorePustak } from './pustak.mjs';
 import { createAstrologyService } from './astrology/service.mjs';
 import { configurePromo } from './promo.mjs';
+import { createBlog, FirestoreArticles, MemoryArticles } from './blog.mjs';
 const mode =
   process.env.MANTRILO_MODE || (process.env.NODE_ENV === 'production' ? 'firebase' : 'demo');
 const port = Number(process.env.PORT || 4190);
@@ -43,6 +44,7 @@ try {
     content,
     media,
     books,
+    articles,
     apiUrl = process.env.MANTRILO_API_URL?.replace(/\/+$/, '') || null;
   // Running locally against Firebase, the API usually runs beside the console (`npm run api`,
   // port 4191). Default to it so Docs can run requests without extra setup.
@@ -64,6 +66,7 @@ try {
     content = demoContent();
     books = demoPustak;
     apiUrl = await startDemoApi(store, port + 100, astrologyService);
+    articles = new MemoryArticles();
   } else {
     const { auth, db } = firebaseServices();
     store = new FirestoreStore(db);
@@ -75,6 +78,7 @@ try {
     );
     books = new FirestorePustak(db);
     sessions = new FirebaseSessions(auth, db);
+    articles = new FirestoreArticles(db);
   }
   const firebaseConfig =
     mode === 'firebase' && process.env.FIREBASE_WEB_API_KEY
@@ -115,10 +119,20 @@ try {
     promo,
     billingMode,
     phoneCodes: process.env.MANTRILO_PHONE_AUTH === 'true',
+    googleSignIn: process.env.MANTRILO_GOOGLE_AUTH === 'true',
+    appleSignIn: process.env.MANTRILO_APPLE_AUTH === 'true',
     trustProxy: Boolean(process.env.K_SERVICE),
     redirectFromHost: process.env.MANTRILO_CONSOLE_ALIAS_HOST,
     basePath,
     hostingSession: process.env.MANTRILO_HOSTING_SESSION === 'true',
+    articles,
+    // The service behind Firebase Hosting (basePath /console) also renders www.mantrilo.com/blog.
+    blog: basePath
+      ? createBlog({
+          articles,
+          siteOrigin: process.env.MANTRILO_SITE_ORIGIN || 'https://www.mantrilo.com',
+        })
+      : null,
   });
   server.requestTimeout = 15000;
   server.headersTimeout = 10000;

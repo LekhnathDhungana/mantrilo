@@ -1607,6 +1607,62 @@ td code {
 .auth-options .button {
   width: 100%;
 }
+.button.social {
+  box-shadow: var(--shadow-sm);
+}
+.button.social.google {
+  background: #fff;
+  color: #1f1f1f;
+  border-color: #dadce0;
+}
+.button.social.google:hover:not(:disabled) {
+  background: #f8f9fa;
+}
+/* Apple's guidelines ask for a black button on light pages and a white one on dark pages. */
+.button.social.apple {
+  background: #000;
+  color: #fff;
+  border-color: #000;
+}
+.button.social.apple:hover:not(:disabled) {
+  background: #1f1f1f;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .button.social.apple {
+    background: #fff;
+    color: #000;
+    border-color: #fff;
+  }
+  :root:not([data-theme='light']) .button.social.apple:hover:not(:disabled) {
+    background: #e8e8e8;
+  }
+}
+:root[data-theme='dark'] .button.social.apple {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+}
+:root[data-theme='dark'] .button.social.apple:hover:not(:disabled) {
+  background: #e8e8e8;
+}
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--ink-4);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--line);
+}
+.field-error {
+  color: var(--danger);
+}
 .auth-links {
   display: flex;
   justify-content: space-between;
@@ -3198,4 +3254,84 @@ button.library-row:hover {
 :root[data-theme='dark'] .brand {
   --brand-light-lettering: block;
   --brand-original-clip: inset(0 74% 0 0);
+}
+
+/* Blog admin (screens/Blog.web.tsx) */
+.blog-editor > label {
+  margin-bottom: 20px;
+}
+.blog-paste {
+  min-height: 320px;
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 13px;
+  line-height: 1.55;
+  resize: vertical;
+}
+.blog-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.blog-fields .blog-wide {
+  grid-column: 1 / -1;
+}
+.blog-label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.blog-inline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.blog-schedule {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  max-width: 560px;
+}
+.blog-slot {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.blog-actions {
+  display: inline-flex;
+  gap: 12px;
+}
+.blog-preview {
+  max-width: 760px;
+  line-height: 1.7;
+}
+.blog-preview h1 {
+  margin: 10px 0 6px;
+  font-size: 30px;
+  letter-spacing: -0.02em;
+}
+.blog-preview h2 {
+  margin-top: 28px;
+}
+.blog-preview pre {
+  overflow-x: auto;
+  padding: 16px;
+  border-radius: 12px;
+  background: #16122a;
+  color: #ebe5f3;
+  font-size: 13px;
+}
+.blog-preview .mh-copy-code,
+.blog-preview .mh-code-lang {
+  display: none;
+}
+.blog-preview img {
+  max-width: 100%;
+}
+@media (max-width: 720px) {
+  .blog-fields {
+    grid-template-columns: 1fr;
+  }
 }

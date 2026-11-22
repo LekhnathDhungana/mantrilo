@@ -1,5 +1,3 @@
-import { Image } from 'react-native';
-
 export function Rosette({ className = '' }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 240 240" fill="none" aria-hidden="true">
@@ -18,17 +16,18 @@ export function Rosette({ className = '' }: { className?: string }) {
   );
 }
 
-const logo = require('../../developer/assets/mantrilo-logo.png');
-const size = { width: '100%', height: '100%' } as const;
+// A plain <img> from public/, so the logo is in the static HTML. Server-rendered pages
+// without the app's JavaScript (the blog) show it too.
+const LOGO = '/brand/mantrilo-logo.png';
 
 export default function Brand() {
   return (
     <div className="brand">
       <div className="brand-original">
-        <Image accessibilityLabel="Mantrilo" source={logo} style={size} resizeMode="contain" />
+        <img className="brand-image" src={LOGO} alt="Mantrilo" width={640} height={162} />
       </div>
       <div className="brand-light-lettering" aria-hidden="true">
-        <Image source={logo} style={size} resizeMode="contain" />
+        <img className="brand-image" src={LOGO} alt="" width={640} height={162} />
       </div>
     </div>
   );

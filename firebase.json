@@ -8,6 +8,20 @@
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**", "nginx-seo.conf"],
     "rewrites": [
       {
+        "source": "/blog",
+        "run": {
+          "serviceId": "mantrilo-console-hosting",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/blog/**",
+        "run": {
+          "serviceId": "mantrilo-console-hosting",
+          "region": "us-central1"
+        }
+      },
+      {
         "regex": "^/console(/.*)?$",
         "run": {
           "serviceId": "mantrilo-console-hosting",
@@ -74,6 +88,16 @@
       {
         "source": "/ne/astrology-api/daily-panchang",
         "destination": "/astrology-api/daily-panchang",
+        "type": 302
+      },
+      {
+        "source": "/library/mantras/aham-vaishvanaro-bhutva",
+        "destination": "/library/mantras/aham-vaishvanaro-bhuthva",
+        "type": 301
+      },
+      {
+        "source": "/admin/blog",
+        "destination": "https://mantrilo.com/console/blog",
         "type": 302
       }
     ]

@@ -22,6 +22,10 @@ const MESSAGES: Record<string, string> = {
   'auth/user-disabled': 'This account is disabled.',
   'auth/invalid-custom-token': 'Sign-in is misconfigured. Contact support.',
   'auth/custom-token-mismatch': 'Sign-in is misconfigured. Contact support.',
+  'auth/popup-blocked': 'Your browser blocked the sign-in window. Allow pop-ups and try again.',
+  'auth/account-exists-with-different-credential':
+    'That email already has an account. Sign in the way you did before.',
+  'auth/unauthorized-domain': 'Sign-in is misconfigured. Contact support.',
   'auth/network-request-failed': 'Could not connect. Check your internet connection and try again.',
 };
 
@@ -31,4 +35,10 @@ export function authErrorMessage(error: unknown) {
     MESSAGES[(error as { code?: string } | null)?.code ?? ''] ||
     'Something went wrong. Please try again.'
   );
+}
+
+// Closing the Google or Apple window is a choice, not an error worth showing.
+export function authCancelled(error: unknown) {
+  const code = (error as { code?: string } | null)?.code;
+  return code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request';
 }

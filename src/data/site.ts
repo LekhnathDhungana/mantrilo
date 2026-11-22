@@ -1,5 +1,6 @@
 import pages from './seo-pages.json';
 import { astrologySeoPages } from './astrology-pages';
+import { calculatorSeoPages } from './calculator-pages';
 import { publicGuides } from './public-guides';
 export const seoPages: Record<
   string,
@@ -12,6 +13,7 @@ export const seoPages: Record<
 > = {
   // Generated capability pages first, so a hand-written entry in seo-pages.json wins.
   ...astrologySeoPages,
+  ...calculatorSeoPages,
   ...pages,
   ...Object.fromEntries(
     Object.entries(publicGuides).map(([slug, guide]) => [

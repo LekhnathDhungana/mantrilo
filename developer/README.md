@@ -48,7 +48,7 @@ Firestore and Storage rules deny all browser access. The backend uses IAM throug
 
 ## Initial administrator bootstrap
 
-The fixed initial administrator is **bebaslekhnath@gmail.com**. Supply `MANTRILO_INITIAL_ADMIN_PASSWORD` securely in `.env.local` or the process environment/Secret Manager. Do not put its value in a command argument or share it in chat.
+The fixed initial administrator is **sri@mantrilo.com**. Supply `MANTRILO_INITIAL_ADMIN_PASSWORD` securely in `.env.local` or the process environment/Secret Manager. Do not put its value in a command argument or share it in chat.
 
 ```sh
 npm run bootstrap:admin
@@ -192,3 +192,49 @@ When a customer requests India pricing, verify the billing address and run
 `node scripts/india-pricing.mjs <workspace-id> enable` from the developer directory.
 The workspace can then select India and subscribe in INR. Use `disable` to remove eligibility
 for future checkouts. Handle INR plan changes and Business quotes through billing support.
+
+## Blog
+
+Articles live in the Firestore `articles` collection (document id = slug). Administrators write
+them in the console under **Administration → Blog** (`/console/blog`; `www.mantrilo.com/admin/blog`
+redirects there): paste Markdown with YAML frontmatter, check the parsed fields, then **Schedule**,
+**Publish now** or **Save draft**. The next open Monday, Wednesday or Friday at 9:00 AM Eastern is
+suggested; any day and time can be chosen.
+
+- Access: the console's existing administrator flag (`npm run bootstrap:admin`), checked on the
+  server for every `/api/admin/articles` call. No `ADMIN_EMAIL` variable is needed.
+- Firestore rules stay deny-all. Only the console service reads and writes articles, with IAM.
+- Public pages: `mantrilo-console-hosting` renders `/blog`, `/blog/category/{slug}`,
+  `/blog/{slug}`, `/blog/sitemap.xml` and `/blog/feed.xml` (Firebase Hosting rewrites `/blog` and
+  `/blog/**` to it). It fills the static site's `/blog-shell` page, so blog pages share the site's
+  header, footer and styles. Pages are cached at the CDN for 2 minutes and the shell for 1, so a
+  site deploy's new stylesheet reaches the blog within about 3 minutes.
+- Scheduling needs no cron: every public page and the sitemap read only articles whose
+  `publishAt` has passed, so a scheduled post appears within about 5 minutes of its time.
+- `robots.txt` lists `/blog/sitemap.xml` beside the static sitemap.
+
+One-time: create the index the public query uses (also in `deployment/firestore.indexes.json`):
+
+```bash
+gcloud firestore indexes composite create --project mantrilo --collection-group articles --query-scope COLLECTION --field-config field-path=status,order=ascending --field-config field-path=publishAt,order=descending
+```
+
+Release the hosting console (from the repository root). Its traffic is pinned to tagged
+revisions, so deploy a tagged revision, check it, then move traffic:
+
+```bash
+IMAGE=us-central1-docker.pkg.dev/mantrilo/mantrilo/console:blog-$(date +%Y%m%d%H%M)
+gcloud builds submit . --project mantrilo --region us-central1 --config developer/deployment/cloudbuild.yaml \
+  --service-account projects/mantrilo/serviceAccounts/mantrilo-builder@mantrilo.iam.gserviceaccount.com \
+  --substitutions _DOCKERFILE=developer/deployment/Dockerfile,_IMAGE=$IMAGE,_CONSOLE_BASE_PATH=/console
+gcloud run deploy mantrilo-console-hosting --image $IMAGE --tag blog --no-traffic --project mantrilo --region us-central1
+curl -s https://blog---mantrilo-console-hosting-bxjxj2ifdq-uc.a.run.app/blog | grep -o '<title>[^<]*'
+gcloud run services update-traffic mantrilo-console-hosting --to-tags blog=100 --project mantrilo --region us-central1
+```
+
+Then deploy the site (`npm run build` with the production variables, `firebase deploy --only
+hosting`) so `/blog-shell`, the rewrites and the robots.txt sitemap line go live.
+
+Test locally: `npm test` covers parsing, the slot rule, admin access, scheduled publishing and the
+rendered pages (`test/blog.test.mjs`). The public blog is only served when
+`MANTRILO_CONSOLE_BASE_PATH` is set; in plain local demo mode use the console's Blog screen.

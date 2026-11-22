@@ -188,3 +188,19 @@ test('calculations stop when the plan allowance is used up', async (t) => {
   assert.equal((await f.call('/api/astrology')).body.balance, 0);
   assert.equal((await f.call('/api/me')).body.usage.contentRequests, 500);
 });
+
+test('the ascendant follows sidereal time and latitude', async () => {
+  const { ascendantLongitude } = await import('../server/astrology/engine.mjs');
+  const Astronomy = await import('astronomy-engine');
+  // Find an instant when 0° Aries culminates at Greenwich (local sidereal time 0h).
+  let date = new Date('2026-09-21T00:00:00Z');
+  const hours = Astronomy.SiderealTime(Astronomy.MakeTime(date));
+  date = new Date(+date - (hours / 24) * 86_164_090.5);
+  // On the equator the rising point is then 0° Cancer. At London's latitude tables of houses
+  // give about 26° Cancer for the same Midheaven.
+  assert.ok(Math.abs(ascendantLongitude(date, 0, 0) - 90) < 0.05);
+  assert.ok(Math.abs(ascendantLongitude(date, 51.5, 0) - 116) < 1);
+  // Six sidereal hours later 0° Cancer culminates and 0° Libra rises on the equator.
+  const later = new Date(+date + 86_164_090.5 / 4);
+  assert.ok(Math.abs(ascendantLongitude(later, 0, 0) - 180) < 0.1);
+});

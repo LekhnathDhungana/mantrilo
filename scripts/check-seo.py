@@ -94,7 +94,11 @@ for route in exported:
     assert page.language == 'en', (route, 'language', page.language)
     assert not page.alternates, (route, page.alternates)
     assert page.title == expected['title'], (route, 'title', page.title)
-    assert page.h1_count == 1, (route, 'primary heading', page.h1_count)
+    # /blog-shell is the empty layout the blog server fills in; each blog page brings its own h1.
+    if route == '/blog-shell':
+        assert page.h1_count == 0 and not expected['indexable'], (route, 'blog shell')
+    else:
+        assert page.h1_count == 1, (route, 'primary heading', page.h1_count)
     assert page.meta['description'] == expected['description'], (route, 'description')
     for key in ['og:title', 'twitter:title']:
         assert page.meta[key] == expected['title'], (route, key)
@@ -119,6 +123,12 @@ for route, page in pages.items():
         url = urlsplit(href)
         if url.scheme or url.netloc: continue
         target = url.path or route
+        # /blog is rendered live by the blog server (developer/server/blog.mjs), not exported.
+        if target == '/blog' or target.startswith('/blog/'):
+            assert not (root / 'blog.html').exists() and not (root / 'blog').exists(), (
+                'a static /blog export would hide the live blog behind Firebase Hosting'
+            )
+            continue
         assert target in pages, (route, href, 'broken internal link')
         if url.fragment: assert url.fragment in pages[target].ids, (route, href, 'missing anchor')
         link_count += 1

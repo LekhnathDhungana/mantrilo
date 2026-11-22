@@ -109,4 +109,6 @@ export type AuthConfig = {
   registration: boolean;
   emailCodes: boolean;
   phoneCodes: boolean;
+  googleSignIn: boolean;
+  appleSignIn: boolean;
 };

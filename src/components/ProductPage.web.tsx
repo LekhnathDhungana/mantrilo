@@ -10,12 +10,12 @@ const ITEM: Record<ProductSlug, { item: string; guide: string; library: string }
   'mantra-api': {
     item: contentItems.find((i) => i.type === 'Mantra')!.id,
     guide: 'search-mantras',
-    library: '/library/mantras/aham-vaishvanaro-bhutva',
+    library: '/library/mantras/aham-vaishvanaro-bhuthva',
   },
   'sacred-audio-api': {
     item: 'recording',
     guide: 'sacred-audio',
-    library: '/library/mantras/aham-vaishvanaro-bhutva',
+    library: '/library/mantras/aham-vaishvanaro-bhuthva',
   },
   'books-api': {
     item: 'collection-upanishads',

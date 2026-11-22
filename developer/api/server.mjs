@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { ApiError, readJson, requestsRemaining, usageLane } from '../server/domain.mjs';
-import { createAstrologyService } from '../server/astrology/service.mjs';
+import { createAstrologyService, zonedDateTime } from '../server/astrology/service.mjs';
 import { readBookListQuery, readPustakLibrary } from '../server/pustak.mjs';
 import { readKey } from './keys.mjs';
 import { RESOURCES, encodeCursor, decodeCursor } from './content.mjs';
@@ -14,6 +14,14 @@ const ROUTE = /^\/v1\/(mantras|shlokas)(?:\/([^/]+)(?:\/(audio))?)?$/;
 const BOOK_ROUTE = /^\/v1\/books(?:\/([\w-]{1,200})(?:\/chapters\/([1-9]\d{0,8}))?)?$/;
 const ID = /^[\w-]{1,200}$/;
 const FAILED_AUTH_LIMIT = { rate: 0.2, burst: 10 }; // per client IP: 10 bad keys, then 1 per 5 s
+// Keyless recording previews for the public mantra pages on mantrilo.com.
+const PREVIEW_ROUTE = /^\/v1\/public\/mantras\/([\w-]{1,200})\/preview$/;
+const PREVIEW_LIMIT = { rate: 1 / 60, burst: 10 }; // per client IP: 10 previews, then 1 a minute
+// Keyless sign calculator and place search for the calculator pages on mantrilo.com. Each call
+// reaches the paid astrology provider, so both are limited per IP and capped per instance a day.
+const PUBLIC_SIGNS_LIMIT = { rate: 1 / 20, burst: 12 }; // 12 calculations, then 3 a minute
+const PUBLIC_PLACES_LIMIT = { rate: 1 / 2, burst: 30 }; // typing-speed searches
+const PUBLIC_DAILY_CAP = 3000;
 
 function readListQuery(url) {
   const limit = url.searchParams.has('limit') ? Number(url.searchParams.get('limit')) : 20;
@@ -40,6 +48,9 @@ export function createApiServer({
   meter,
   limiter = new RateLimiter(),
   authLimiter = new RateLimiter(),
+  previewLimiter = new RateLimiter(),
+  publicLimiter = new RateLimiter(),
+  publicDailyCap = PUBLIC_DAILY_CAP,
   trustProxy = false,
   logger = console,
   // Which Stripe mode's entitlements and usage lane apply (see planFor in server/domain.mjs).
@@ -47,6 +58,7 @@ export function createApiServer({
   // Cloud Run's max instances: how many caches may lag behind near the allowance.
   instances = 10,
 }) {
+  const publicUse = { day: '', count: 0 };
   return createServer(async (request, response) => {
     const requestId = randomUUID();
     const durations = {};
@@ -109,6 +121,77 @@ export function createApiServer({
           ],
         });
       if (route === '/v1/astrology') return send(200, { data: astrologyService.operations });
+
+      // A recording preview for the public mantra pages: no key, a short-lived link, and a
+      // per-IP limit. It reads one record and signs one link; nothing is metered to a workspace.
+      const preview = route.match(PREVIEW_ROUTE);
+      if (preview) {
+        response.setHeader('Access-Control-Allow-Origin', '*');
+        const taken = previewLimiter.take(clientIp(), PREVIEW_LIMIT);
+        if (!taken.ok) {
+          response.setHeader('Retry-After', String(taken.retryAfter));
+          throw new ApiError(429, 'preview_limited', 'Too many previews. Try again later.');
+        }
+        const doc = await timed('content', () => content.get('mantras', preview[1]));
+        if (!doc?.hasAudio || !doc.audioPath)
+          throw new ApiError(404, 'audio_unavailable', 'This mantra has no recording.');
+        const signed = await timed('sign', () => media.sign(doc.audioPath));
+        logger.info?.(`preview ${preview[1]} ${requestId}`);
+        return send(200, { data: { url: signed.url, expiresAt: signed.expiresAt } });
+      }
+      // The sign calculator: no key, limited per IP, never metered to a workspace, never logged
+      // with birth details.
+      if (route === '/v1/public/signs' || route === '/v1/public/places') {
+        response.setHeader('Access-Control-Allow-Origin', '*');
+        const signs = route === '/v1/public/signs';
+        const taken = publicLimiter.take(
+          `${signs ? 'signs' : 'places'}:${clientIp()}`,
+          signs ? PUBLIC_SIGNS_LIMIT : PUBLIC_PLACES_LIMIT,
+        );
+        if (!taken.ok) {
+          response.setHeader('Retry-After', String(taken.retryAfter));
+          throw new ApiError(
+            429,
+            'calculator_limited',
+            'Too many requests. Try again in a minute.',
+          );
+        }
+        const query = url.searchParams;
+        let calculation;
+        if (signs) {
+          const timezone = query.get('timezone') || '',
+            time = query.get('time') || '',
+            number = (name) =>
+              query.get(name) === null || query.get(name) === '' ? NaN : Number(query.get(name));
+          calculation = astrologyService.prepare({
+            operation: 'signs',
+            timeKnown: Boolean(time),
+            birth: {
+              datetime: zonedDateTime(query.get('date') || '', time || '12:00', timezone),
+              latitude: number('latitude'),
+              longitude: number('longitude'),
+              timezone,
+            },
+          });
+        } else
+          calculation = astrologyService.prepare({
+            operation: 'places',
+            query: query.get('query') || '',
+            limit: 6,
+          });
+        const today = new Date().toISOString().slice(0, 10);
+        if (publicUse.day !== today) Object.assign(publicUse, { day: today, count: 0 });
+        if (publicUse.count >= publicDailyCap)
+          throw new ApiError(
+            429,
+            'calculator_busy',
+            'The calculator is busy today. Try again tomorrow.',
+          );
+        publicUse.count += 1;
+        const data = await timed('calculation', () => calculation.run());
+        logger.info?.(`public ${calculation.operation} ${requestId}`);
+        return send(200, { data });
+      }
       const match = route.match(ROUTE);
       const bookRoute = route.match(BOOK_ROUTE);
       if (!match && !bookRoute && !astrology)

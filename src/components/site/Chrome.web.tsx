@@ -16,8 +16,11 @@ const nav: [string, string][] = [
   ['/docs', 'Docs'],
   ['/library', 'Library'],
   ['/astrology-api', 'Astrology'],
+  ['/calculators', 'Calculators'],
+  ['/blog', 'Blog'],
   ['/pricing', 'Pricing'],
 ];
+const serverRoutes = new Set(['/blog']);
 
 export function Arrow() {
   return (
@@ -171,7 +174,14 @@ export function SiteFrame({
             className={menu ? 'mh-links is-open' : 'mh-links'}
             aria-label="Main navigation"
           >
-            {nav.map(([href, label]) => (
+            {nav.map(([href, label]) =>
+              // The blog is served by the console service, so it needs a full page load:
+              // in-app navigation would look for a /blog route here and show the 404.
+              serverRoutes.has(href) ? (
+                <a key={href} href={href} aria-current={active(href) ? 'page' : undefined}>
+                  {label}
+                </a>
+              ) : (
               <Link
                 key={href}
                 href={href}
@@ -180,7 +190,8 @@ export function SiteFrame({
               >
                 {label}
               </Link>
-            ))}
+              ),
+            )}
             <a href={signInUrl} className="mh-links-signin">
               Sign in
             </a>
@@ -249,6 +260,7 @@ export function SiteFrame({
             <Link href="/sacred-audio-api">Sacred audio</Link>
             <Link href="/books-api">Books</Link>
             <Link href="/astrology-api">Astrology</Link>
+            <Link href="/calculators">Sign calculators</Link>
           </nav>
           <nav aria-label="Developers">
             <p className="mh-footer-label">Developers</p>

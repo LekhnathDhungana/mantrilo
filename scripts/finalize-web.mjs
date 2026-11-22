@@ -84,7 +84,8 @@ await writeFile(
 await writeFile(
   path.join(root, 'robots.txt'),
   enabled
-    ? `User-agent: *\nAllow: /\n\nSitemap: ${origin}/sitemap.xml\n`
+    ? // The blog's sitemap is served live by the blog renderer (developer/server/blog.mjs).
+      `User-agent: *\nAllow: /\n\nSitemap: ${origin}/sitemap.xml\nSitemap: ${origin}/blog/sitemap.xml\n`
     : 'User-agent: *\nDisallow: /\n',
 );
 let missingPage = await readFile(path.join(root, '+not-found.html'), 'utf8').catch(() =>

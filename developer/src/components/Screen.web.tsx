@@ -7,6 +7,7 @@ import Billing from './screens/Billing.web';
 import Settings from './screens/Settings.web';
 import Administrator from './screens/Admin.web';
 import Docs from './screens/Docs.web';
+import Blog from './screens/Blog.web';
 
 // Each console route renders one screen; route files pass their page key here.
 const screens: Record<string, () => ReactNode> = {
@@ -17,6 +18,7 @@ const screens: Record<string, () => ReactNode> = {
   settings: Settings,
   admin: Administrator,
   docs: Docs,
+  blog: Blog,
 };
 export default function Screen({ page }: { page: string }) {
   const Component = screens[page];

@@ -1,7 +1,7 @@
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import plans from '../../shared/content-plans.json' with { type: 'json' };
 export { plans };
-export const INITIAL_ADMIN_EMAIL = 'bebaslekhnath@gmail.com';
+export const INITIAL_ADMIN_EMAIL = 'sri@mantrilo.com';
 export class ApiError extends Error {
   constructor(status, code, message) {
     super(message);
@@ -46,11 +46,11 @@ export function cleanText(value, name, max = 120) {
   );
   return value.trim();
 }
-export async function readJson(request) {
+export async function readJson(request, limit = 16384) {
   let raw = '';
   for await (const chunk of request) {
     raw += chunk;
-    insist(Buffer.byteLength(raw) < 16384, 413, 'request_too_large', 'Request is too large.');
+    insist(Buffer.byteLength(raw) < limit, 413, 'request_too_large', 'Request is too large.');
   }
   if (!raw) return {};
   try {

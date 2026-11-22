@@ -65,6 +65,7 @@ async function fixture(t, options = {}) {
       options.emailCodes === null ? null : new EmailCodes(store, mailer, { now: () => clock.now }),
     ...(options.codeThrottle ? { codeThrottle: options.codeThrottle } : {}),
     ...(options.mailer ? { mailer: options.mailer } : {}),
+    ...(options.social ? { googleSignIn: true, appleSignIn: true } : {}),
   });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   t.after(() => new Promise((resolve) => server.close(resolve)));
@@ -150,9 +151,18 @@ test('email sign-in reports when it is unavailable or the provider fails', async
   assert.equal((await off.request('a@b.co')).body.error.code, 'email_unavailable');
   assert.equal((await off.call('/api/auth/config')).body.emailCodes, false);
   assert.equal((await off.call('/api/auth/config')).body.phoneCodes, false);
+  assert.equal((await off.call('/api/auth/config')).body.googleSignIn, false);
+  assert.equal((await off.call('/api/auth/config')).body.appleSignIn, false);
   const failing = await fixture(t, { mailFails: true });
   assert.equal((await failing.request('a@b.co')).body.error.code, 'email_failed');
   assert.equal(failing.store.authCodes.size, 0);
+});
+
+test('Google and Apple sign-in show only when the server turns them on', async (t) => {
+  const on = await fixture(t, { social: true });
+  const config = (await on.call('/api/auth/config')).body;
+  assert.equal(config.googleSignIn, true);
+  assert.equal(config.appleSignIn, true);
 });
 
 test('a first sign-in creates a Free workspace with a key and asks for onboarding once', async (t) => {

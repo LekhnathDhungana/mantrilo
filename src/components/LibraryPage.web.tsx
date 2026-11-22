@@ -29,15 +29,57 @@ function UpanishadsFeature() {
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
 
 export default function LibraryPage() {
-  const { books } = useLoaderData<typeof loader>();
+  const { books, mantras } = useLoaderData<typeof loader>();
   return (
     <SiteFrame path="/library">
       <PageHero
         crumb="Library"
         eyebrow="Content library"
         title="Explore Mantrilo’s Content Library"
-        lede="Read Sanskrit books verse by verse with English, explore the English epic retellings and mantras, and see the API request behind each one."
+        lede={`${mantras.total} mantras and stotras, ${books.length} Sanskrit books verse by verse, and the English epics. Every page shows the API request behind it.`}
       />
+      <section className="mh-section-sm" id="mantras" aria-labelledby="mantras-heading">
+        <div className="mh-wrap">
+          <h2 id="mantras-heading">Mantras & stotras</h2>
+          <p>
+            {mantras.total} hymns in Devanagari and transliteration, {mantras.audio} with
+            recordings. Each page has the text, the request and the exact JSON response.
+          </p>
+          <div className="mh-cards-3">
+            {mantras.featured.map((mantra) => (
+              <Link
+                key={mantra.slug}
+                href={mantra.path}
+                className="mh-card mh-card-pad mh-card-link"
+              >
+                <h3>{mantra.title}</h3>
+                <p>
+                  {mantra.deity} · {plural(mantra.verseCount, 'verse')}
+                  {mantra.hasAudio ? ' · Recording' : ''}
+                </p>
+              </Link>
+            ))}
+          </div>
+          <h3>By deity</h3>
+          <nav className="mh-chips" aria-label="Mantras by deity">
+            {mantras.deities.map((deity) => (
+              <Link key={deity.id} href={deity.path} className="mh-chip">
+                {deity.name} · {deity.count}
+              </Link>
+            ))}
+          </nav>
+          <p>
+            <Link className="mh-btn mh-btn-ghost" href="/library/mantras">
+              All {mantras.total} mantras <Arrow />
+            </Link>
+          </p>
+          <p>
+            <Link href="/mantra-api">Mantra API</Link> ·{' '}
+            <Link href="/sacred-audio-api">Sacred Audio API</Link> ·{' '}
+            <Link href="/docs/guides/search-mantras">Build a searchable library</Link>
+          </p>
+        </div>
+      </section>
       <section className="mh-section-sm" id="books" aria-labelledby="books-heading">
         <div className="mh-wrap">
           <h2 id="books-heading">Books</h2>
@@ -68,16 +110,6 @@ export default function LibraryPage() {
             <Link href="/library/books/upanishads">Browse the Upanishads</Link> ·{' '}
             <Link href="/books-api">Books API</Link> ·{' '}
             <Link href="/docs/guides/book-reader">Build a book reader</Link>
-          </p>
-        </div>
-      </section>
-      <section className="mh-section-sm" aria-labelledby="feature-heading">
-        <div className="mh-wrap">
-          <h2 id="feature-heading">Mantra preview</h2>
-          <p>
-            <Link href="/library/mantras/aham-vaishvanaro-bhutva">
-              Aham Vaishvanaro Bhutva · Bhagavad Gita 15.14
-            </Link>
           </p>
         </div>
       </section>

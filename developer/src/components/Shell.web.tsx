@@ -134,6 +134,14 @@ export default function Shell() {
               <NavIcon name="admin" />
               Administrator
             </Link>
+            <Link
+              href="/blog"
+              className={pathname === '/blog' ? 'nav-item active' : 'nav-item'}
+              onPress={() => setMenu(false)}
+            >
+              <NavIcon name="docs" />
+              Blog
+            </Link>
           </div>
         )}
         <div className="sidebar-bottom">
@@ -163,11 +171,15 @@ export default function Shell() {
             Workspace <span className="slash">/</span>{' '}
             {pathname === '/admin'
               ? 'Administrator'
-              : navigation.find((n) => n[0] === pathname)?.[2] || 'Settings'}
+              : pathname === '/blog'
+                ? 'Blog'
+                : navigation.find((n) => n[0] === pathname)?.[2] || 'Settings'}
           </span>
           <div>
             <Link href="/billing" className="plan-pill">
-              {session.allowance.requests === null ? 'Unlimited requests' : `${session.plan.name} plan`}
+              {session.allowance.requests === null
+                ? 'Unlimited requests'
+                : `${session.plan.name} plan`}
             </Link>
           </div>
         </header>

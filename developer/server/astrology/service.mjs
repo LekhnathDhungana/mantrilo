@@ -6,7 +6,16 @@ import {
   catalogRequest,
   publicAstrologyResult,
 } from './catalog.mjs';
-import { calculate, ENGINE_VERSION, OPERATIONS, validateInput } from './engine.mjs';
+import {
+  ascendantLongitude,
+  calculate,
+  ENGINE_VERSION,
+  OPERATIONS,
+  RASHIS,
+  tropicalLongitude,
+  validateInput,
+  ZODIAC_SIGNS,
+} from './engine.mjs';
 
 export const VEDIC_VERSION = 'mantrilo-vedic-1';
 const VEDIC_OPERATIONS = [
@@ -29,6 +38,11 @@ const VEDIC_OPERATIONS = [
     id: 'chart-image',
     name: 'Vedic chart image',
     description: 'A PNG in a North, South or East Indian layout.',
+  },
+  {
+    id: 'signs',
+    name: 'Zodiac and Vedic signs',
+    description: 'Sun, Moon and Rising signs, plus Rashi, Lagna, Vedic Sun sign and Nakshatra.',
   },
   {
     id: 'places',
@@ -307,6 +321,95 @@ function compatibility(raw) {
   };
 }
 
+/** Converts a local date ("1995-06-20") and time ("12:30") in an IANA zone to an ISO date-time
+ * with that zone's UTC offset, or refuses a time the clocks skipped. */
+export function zonedDateTime(date, time, timezone) {
+  calendarDate(date);
+  insist(
+    typeof time === 'string' && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time),
+    400,
+    'invalid_time',
+    'Use a 24-hour time such as 14:30.',
+  );
+  const { clock } = location({ latitude: 0, longitude: 0, timezone });
+  const wall = Date.parse(`${date}T${time}:00Z`);
+  const offsetAt = (instant) => Date.parse(clock.format(instant).replace(' ', 'T') + 'Z') - instant;
+  let instant = wall - offsetAt(wall);
+  instant = wall - offsetAt(instant);
+  insist(
+    clock.format(instant) === `${date} ${time}:00`,
+    400,
+    'invalid_local_time',
+    'That time did not exist in this time zone, because the clocks moved forward.',
+  );
+  const minutes = Math.round(offsetAt(instant) / 60_000),
+    absolute = Math.abs(minutes),
+    pad = (value) => String(value).padStart(2, '0');
+  return `${date}T${time}:00${minutes < 0 ? '-' : '+'}${pad(Math.floor(absolute / 60))}:${pad(absolute % 60)}`;
+}
+
+const zodiac = (longitude) => {
+  const index = Math.floor(longitude / 30);
+  return {
+    number: index + 1,
+    name: ZODIAC_SIGNS[index],
+    degreesWithinSign: Math.round((longitude - index * 30) * 100) / 100,
+  };
+};
+const rashi = (number) => ({
+  number,
+  name: RASHIS[number - 1],
+  english: ZODIAC_SIGNS[number - 1],
+});
+const vedicPlacement = (row) => ({
+  rashi: rashi(row.rashi.number),
+  degreesWithinRashi:
+    typeof row.degreesWithinRashi === 'number'
+      ? Math.round(row.degreesWithinRashi * 100) / 100
+      : null,
+  nakshatra: row.nakshatra
+    ? {
+        number: row.nakshatra.number,
+        name: row.nakshatra.name,
+        pada: row.nakshatra.pada ?? null,
+        lord: row.nakshatra.lord ?? null,
+      }
+    : null,
+});
+
+/** Builds the signs result from the provider's Lahiri D1 chart and local tropical positions. */
+function signsResult(raw, birthDate, place, timeKnown, dayBounds) {
+  const d1 = chart(raw?.chart, 1);
+  const body = (name) => d1.planets.find((row) => row.body?.toLowerCase() === name);
+  const sun = body('sun'),
+    moon = body('moon');
+  requireResult(
+    sun?.rashi?.number >= 1 &&
+      sun.rashi.number <= 12 &&
+      moon?.rashi?.number >= 1 &&
+      moon.rashi.number <= 12,
+  );
+  const western = {
+    zodiac: 'tropical',
+    sun: zodiac(tropicalLongitude('Sun', birthDate)),
+    moon: zodiac(tropicalLongitude('Moon', birthDate)),
+    rising: timeKnown ? zodiac(ascendantLongitude(birthDate, place.lat, place.lng)) : null,
+  };
+  const vedic = {
+    zodiac: 'sidereal',
+    ayanamsa: 'lahiri',
+    sun: vedicPlacement(sun),
+    moon: vedicPlacement(moon),
+    lagna: timeKnown ? vedicPlacement(d1.ascendant) : null,
+  };
+  if (!timeKnown) {
+    // Without a birth time the Moon's sign is only certain if it stays in one sign all day.
+    const [start, end] = dayBounds.map((instant) => zodiac(tropicalLongitude('Moon', instant)));
+    if (start.number !== end.number) western.moon.possible = [start.name, end.name];
+  }
+  return { datetime: place.datetime, timezone: place.tz_str, timeKnown, western, vedic };
+}
+
 async function boundedBody(response, maxBytes) {
   if (Number(response.headers.get('content-length')) > maxBytes || !response.body) {
     await response.body?.cancel();
@@ -515,6 +618,40 @@ export function createAstrologyService({
       fields(input, ['operation', 'person1', 'person2']);
       const payload = { person1: birth(input.person1), person2: birth(input.person2) };
       return wrap(async () => compatibility(await request('/vedic/match', payload)));
+    }
+    if (operation === 'signs') {
+      fields(input, ['operation', 'birth', 'timeKnown']);
+      const { timeKnown = true } = input;
+      insist(
+        typeof timeKnown === 'boolean',
+        400,
+        'invalid_time_known',
+        'timeKnown must be true or false.',
+      );
+      const natal = birth(input.birth);
+      const birthDate = new Date(input.birth.datetime);
+      const day = input.birth.datetime.slice(0, 10);
+      const dayBounds = timeKnown
+        ? null
+        : ['00:00', '23:59'].map((time) => new Date(zonedDateTime(day, time, natal.tz_str)));
+      const payload = {
+        ...natal,
+        vargas: [1],
+        dasha_levels: 0,
+        include_yogas: false,
+        include_panchang: false,
+        include_shadbala: false,
+        include_ashtakavarga: false,
+      };
+      return wrap(async () =>
+        signsResult(
+          await request('/vedic/calculate', payload),
+          birthDate,
+          { ...natal, datetime: input.birth.datetime },
+          timeKnown,
+          dayBounds,
+        ),
+      );
     }
     if (operation === 'chart-image') {
       fields(input, ['operation', 'birth', 'divisions', 'layout']);

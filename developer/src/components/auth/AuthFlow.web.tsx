@@ -2,7 +2,41 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { useConsole } from '../Session.web';
 import { mutate } from '../../lib/api';
-import { authErrorMessage } from '../../lib/auth-errors';
+import { authCancelled, authErrorMessage } from '../../lib/auth-errors';
+import type { SocialProvider } from '../../lib/firebase';
+
+function GoogleMark() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+      <path
+        fill="#FFC107"
+        d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"
+      />
+      <path
+        fill="#FF3D00"
+        d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"
+      />
+      <path
+        fill="#4CAF50"
+        d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"
+      />
+      <path
+        fill="#1976D2"
+        d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"
+      />
+    </svg>
+  );
+}
+function AppleMark() {
+  return (
+    <svg width="16" height="18" viewBox="0 0 384 512" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"
+      />
+    </svg>
+  );
+}
 
 const LENGTH = 6;
 const RESEND_SECONDS = 30;
@@ -17,10 +51,12 @@ export default function AuthFlow() {
   const { config, refresh } = useConsole();
   // The public site's "Get API key" links here with ?mode=signup to open on account creation.
   const { mode } = useLocalSearchParams<{ mode?: string }>();
-  const codesEnabled = Boolean(config?.emailCodes || config?.phoneCodes);
-  const [step, setStep] = useState<Step>(codesEnabled ? 'options' : 'password'),
+  const socialEnabled = Boolean(config?.googleSignIn || config?.appleSignIn);
+  const hasOptions = Boolean(config?.emailCodes || config?.phoneCodes || socialEnabled);
+  const [step, setStep] = useState<Step>(hasOptions ? 'options' : 'password'),
     [creating, setCreating] = useState(mode === 'signup'),
     [password, setPassword] = useState(''),
+    [confirm, setConfirm] = useState(''),
     [channel, setChannel] = useState<'email' | 'phone'>('email'),
     [email, setEmail] = useState(''),
     [phone, setPhone] = useState('+'),
@@ -33,6 +69,11 @@ export default function AuthFlow() {
   const firebaseConfig = config?.firebase;
   const address = email.trim().toLowerCase(),
     number = toPhone(phone);
+  // New passwords are typed twice so a typo can't lock someone out of a fresh account.
+  const mismatch = creating && confirm.length > 0 && confirm !== password;
+  const passwordReady = creating
+    ? password.length >= MIN_PASSWORD && confirm === password
+    : password.length > 0;
 
   useEffect(() => {
     if (wait <= 0) return;
@@ -49,6 +90,10 @@ export default function AuthFlow() {
   async function submitPassword(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!firebaseConfig) return;
+    if (creating && password !== confirm) {
+      setError('Passwords do not match.');
+      return;
+    }
     setBusy(true);
     setError('');
     setInfo('');
@@ -58,6 +103,7 @@ export default function AuthFlow() {
         creating ? firebase.createPasswordAccount : firebase.signInWithPassword
       )(firebaseConfig, address, password);
       setPassword('');
+      setConfirm('');
       await mutate('/api/auth/session', 'POST', { idToken });
       await refresh();
     } catch (e) {
@@ -65,6 +111,28 @@ export default function AuthFlow() {
     } finally {
       setBusy(false);
     }
+  }
+  async function social(provider: SocialProvider) {
+    if (!firebaseConfig) return;
+    setBusy(true);
+    setError('');
+    setInfo('');
+    try {
+      const firebase = await import('../../lib/firebase');
+      const idToken = await firebase.signInWithSocial(firebaseConfig, provider);
+      await mutate('/api/auth/session', 'POST', { idToken });
+      await refresh();
+    } catch (e) {
+      if (!authCancelled(e)) setError(authErrorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+  function toggleCreating() {
+    setError('');
+    setInfo('');
+    setConfirm('');
+    setCreating(!creating);
   }
   async function forgotPassword() {
     if (!firebaseConfig) return;
@@ -210,36 +278,38 @@ export default function AuthFlow() {
               required
             />
           </label>
-          {creating && <p className="small muted">Use at least {MIN_PASSWORD} characters.</p>}
+          {creating && (
+            <>
+              <label>
+                Confirm password
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  disabled={busy || !firebaseConfig}
+                  aria-invalid={mismatch}
+                  aria-describedby="password-hint"
+                  required
+                />
+              </label>
+              <p id="password-hint" className={mismatch ? 'small field-error' : 'small muted'}>
+                {mismatch ? 'Passwords do not match.' : `Use at least ${MIN_PASSWORD} characters.`}
+              </p>
+            </>
+          )}
           <button
             className="button"
-            disabled={
-              busy ||
-              !firebaseConfig ||
-              !EMAIL.test(address) ||
-              password.length < (creating ? MIN_PASSWORD : 1)
-            }
+            disabled={busy || !firebaseConfig || !EMAIL.test(address) || !passwordReady}
           >
             {busy ? 'Please wait…' : creating ? 'Create account' : 'Sign in'} <span>↗</span>
           </button>
         </form>
         <div className="auth-links">
-          {codesEnabled ? (
-            back('options')
-          ) : (
-            <button
-              type="button"
-              className="text-button"
-              onClick={() => {
-                setError('');
-                setInfo('');
-                setCreating(!creating);
-              }}
-              disabled={busy}
-            >
-              {creating ? 'Have an account? Sign in' : 'New here? Create an account'}
-            </button>
-          )}
+          {hasOptions && back('options')}
+          <button type="button" className="text-button" onClick={toggleCreating} disabled={busy}>
+            {creating ? 'Have an account? Sign in' : 'New here? Create an account'}
+          </button>
           {!creating && (
             <button
               type="button"
@@ -374,29 +444,51 @@ export default function AuthFlow() {
       <p>Sign in or create your account. New accounts start free with 500 API calls a month.</p>
       {notices}
       <div className="auth-options">
-        <button
-          className="button"
-          onClick={() => go('email')}
-          disabled={!firebaseConfig || !config?.emailCodes}
-        >
-          Continue with email <span>↗</span>
-        </button>
+        {config?.googleSignIn && (
+          <button
+            className="button social google"
+            onClick={() => social('google')}
+            disabled={busy || !firebaseConfig}
+          >
+            <GoogleMark /> Continue with Google
+          </button>
+        )}
+        {config?.appleSignIn && (
+          <button
+            className="button social apple"
+            onClick={() => social('apple')}
+            disabled={busy || !firebaseConfig}
+          >
+            <AppleMark /> Continue with Apple
+          </button>
+        )}
+        {socialEnabled && (
+          <div className="auth-divider" role="separator">
+            <span>or</span>
+          </div>
+        )}
+        {config?.emailCodes && (
+          <button className="button" onClick={() => go('email')} disabled={busy || !firebaseConfig}>
+            Continue with email <span>↗</span>
+          </button>
+        )}
         <button
           className="button outline"
           onClick={() => go('password')}
-          disabled={!firebaseConfig}
+          disabled={busy || !firebaseConfig}
         >
           Continue with password <span>→</span>
         </button>
         {config?.phoneCodes && (
-          <button className="button outline" onClick={() => go('phone')} disabled={!firebaseConfig}>
+          <button
+            className="button outline"
+            onClick={() => go('phone')}
+            disabled={busy || !firebaseConfig}
+          >
             Continue with phone <span>→</span>
           </button>
         )}
       </div>
-      {firebaseConfig && !config?.emailCodes && (
-        <p className="setup-note">Email sign-in needs a mail provider on this server.</p>
-      )}
       {!firebaseConfig && (
         <p className="setup-note">Sign-in requires Firebase configuration on this server.</p>
       )}

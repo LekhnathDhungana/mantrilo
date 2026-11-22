@@ -4,6 +4,8 @@ import {
   getAuth,
   inMemoryPersistence,
   connectAuthEmulator,
+  GoogleAuthProvider,
+  OAuthProvider,
   RecaptchaVerifier,
   createUserWithEmailAndPassword,
   sendEmailVerification,
@@ -11,6 +13,7 @@ import {
   signInWithCustomToken,
   signInWithEmailAndPassword,
   signInWithPhoneNumber,
+  signInWithPopup,
   signOut,
   type Auth,
   type ConfirmationResult,
@@ -104,4 +107,21 @@ export function confirmPhoneCode(config: Config, code: string) {
   if (!confirmation)
     throw Object.assign(new Error('No code was requested'), { code: 'auth/code-expired' });
   return idToken(clientAuth(config), confirmation.confirm(code));
+}
+
+export type SocialProvider = 'google' | 'apple';
+
+// Google and Apple open in a popup; a new account is created on first sign-in.
+export function signInWithSocial(config: Config, provider: SocialProvider) {
+  const auth = clientAuth(config);
+  let authProvider;
+  if (provider === 'google') {
+    authProvider = new GoogleAuthProvider();
+    authProvider.setCustomParameters({ prompt: 'select_account' });
+  } else {
+    authProvider = new OAuthProvider('apple.com');
+    authProvider.addScope('email');
+    authProvider.addScope('name');
+  }
+  return idToken(auth, signInWithPopup(auth, authProvider));
 }
