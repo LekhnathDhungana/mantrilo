@@ -157,7 +157,10 @@
 .mx-hero {
   position: relative;
   isolation: isolate;
+  /* The ribbon is wider than the screen. Clip, unlike hidden, leaves no scroll box, so focus,
+     find-in-page or a link can't slide the hero sideways. Hidden stays for older browsers. */
   overflow: hidden;
+  overflow: clip;
   margin-top: -68px;
   padding: calc(68px + 48px) 0 88px;
   border-bottom: 1px solid var(--line);
@@ -888,6 +891,89 @@ a.mx-chip:hover {
   gap: 8px;
 }
 .mx-card .mh-audio-preview audio {
+  width: 100%;
+}
+
+/* The hero's Play button: the recording one click from the top of a mantra page. While it plays,
+   the button fills left to right with the track's progress. */
+.mh .mx-play {
+  gap: 10px;
+  padding: 0 18px 0 6px;
+  color: var(--ink) !important;
+  border-color: color-mix(in srgb, var(--saffron) 50%, var(--line-2));
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--saffron) 26%, transparent) var(--p, 0%),
+      transparent var(--p, 0%)
+    ),
+    color-mix(in srgb, var(--saffron) 10%, var(--surface));
+  font-variant-numeric: tabular-nums;
+}
+.mh .mx-play:hover:not(:disabled) {
+  border-color: var(--saffron);
+  transform: translateY(-1px);
+}
+.mh .mx-play:disabled {
+  cursor: default;
+}
+.mh .mx-play.is-limit {
+  opacity: 0.7;
+}
+.mx-play-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: var(--saffron);
+  color: var(--on-saffron);
+}
+.mx-play.is-idle .mx-play-icon {
+  animation: mx-pulse 1.8s ease-out infinite;
+}
+.mx-play-icon svg {
+  width: 14px;
+  height: 14px;
+}
+.mx-play-spin {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 999px;
+  animation: mx-spin 0.7s linear infinite;
+}
+.mx-play-time {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+.mx-play-eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+}
+.mx-play-eq i {
+  width: 3px;
+  height: 100%;
+  border-radius: 1px;
+  background: var(--saffron);
+  transform-origin: bottom;
+  animation: mx-wave 0.9s ease-in-out infinite;
+}
+.mx-play-eq i:nth-child(2) {
+  animation-delay: -0.45s;
+}
+.mx-play-eq i:nth-child(3) {
+  animation-delay: -0.2s;
+}
+.mx-play-eq i:nth-child(4) {
+  animation-delay: -0.65s;
+}
+.mx-audio-slot audio {
   width: 100%;
 }
 .mx-card .mh-audio-preview p {
@@ -1656,6 +1742,9 @@ a.mx-chip:hover {
   .mx-tick,
   .mx-pulse,
   .mx-wave span,
+  .mx-play-icon,
+  .mx-play-spin,
+  .mx-play-eq i,
   .mx-ring svg,
   .mx-vol-bar span,
   .mx-link,

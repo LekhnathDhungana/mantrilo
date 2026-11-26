@@ -42,7 +42,8 @@ try {
   );
 
   const store = new FirestoreStore(db),
-    billingMode = billingModeFrom(process.env);
+    billingMode = billingModeFrom(process.env),
+    media = new StorageMedia(bucket);
   const server = createApiServer({
     keys: new KeyResolver(store, { billingMode }),
     billingMode,
@@ -52,15 +53,19 @@ try {
       key: process.env.MANTRILO_ASTROLOGY_API_KEY,
       limited: (process.env.MANTRILO_ASTROLOGY_LIMITED || '').split(',').filter(Boolean),
     }),
-    media: new StorageMedia(bucket),
+    media,
     meter: new UsageMeter(new FirestoreUsageSink(db), { keyActivity: store }),
     trustProxy: onCloudRun,
   });
   server.requestTimeout = 15000;
   server.headersTimeout = 10000;
-  server.listen(port, onCloudRun ? '0.0.0.0' : '127.0.0.1', () =>
-    console.log(`Mantrilo API listening on ${onCloudRun ? port : `http://127.0.0.1:${port}/v1`}`),
-  );
+  server.listen(port, onCloudRun ? '0.0.0.0' : '127.0.0.1', () => {
+    console.log(`Mantrilo API listening on ${onCloudRun ? port : `http://127.0.0.1:${port}/v1`}`);
+    // A new instance's first database read and first signed link each open a connection and
+    // fetch a token (about 0.8 s together). Do that now, not while a visitor waits on play.
+    if (onCloudRun)
+      Promise.allSettled([db.collection('shlokam').limit(1).get(), media.sign('warm-up')]);
+  });
 } catch (error) {
   console.error(`Mantrilo API startup failed: ${error.message}`);
   process.exitCode = 1;

@@ -10,7 +10,7 @@ async function data() {
   const hub = (await mantras()).mantraHub();
   const meta: PageMeta = {
     title: 'Mantra & Stotra Library with API Access | Mantrilo',
-    description: `Browse ${hub.total} Sanskrit mantras and stotras by deity, ${hub.audio} with recordings. Each page shows the text, the API request and the exact JSON response.`,
+    description: `Browse nearly ${hub.catalog.roughly.records} Sanskrit mantras and stotras by deity, about ${hub.catalog.roughly.recordings} with recordings. Each page shows the text, the API request and the exact JSON response.`,
     label: 'Mantras',
     indexable: true,
   };

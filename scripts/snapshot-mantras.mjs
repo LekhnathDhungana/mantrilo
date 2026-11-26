@@ -117,13 +117,18 @@ for (const group of groups.values()) {
 }
 mantras.sort((a, b) => a.title.localeCompare(b.title));
 
+// The API serves every record, so the catalog totals count records, not pages.
+const catalog = {
+  records: records.length,
+  recordings: records.filter((r) => r.hasAudio && text(r.audioPath)).length,
+};
 const out = path.join(root, 'src/data/mantra-catalog.json');
 // One mantra per line keeps refreshes reviewable in a diff.
 writeFileSync(
   out,
-  `{"fetchedAt":${JSON.stringify(new Date().toISOString())},"mantras":[\n${mantras.map((m) => JSON.stringify(m)).join(',\n')}\n]}\n`,
+  `{"fetchedAt":${JSON.stringify(new Date().toISOString())},"catalog":${JSON.stringify(catalog)},"mantras":[\n${mantras.map((m) => JSON.stringify(m)).join(',\n')}\n]}\n`,
 );
 console.log(
-  `Wrote ${mantras.length} mantras (${records.length} records, ${mantras.filter((m) => m.hasAudio).length} with audio) to ${path.relative(root, out)}.`,
+  `Wrote ${mantras.length} mantra pages (${catalog.records} records, ${catalog.recordings} with audio) to ${path.relative(root, out)}.`,
 );
 process.exit(0);

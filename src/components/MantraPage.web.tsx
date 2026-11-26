@@ -9,7 +9,7 @@ import type { PageMeta } from '../data/metadata';
 import { useState } from 'react';
 import { audioResponse, curlGet } from '../data/examples';
 import { consoleSandboxUrl } from '../data/site';
-import MantraAudio from './MantraAudio.web';
+import MantraAudio, { PlayButton } from './MantraAudio.web';
 import NotFound from './NotFound';
 import { Arrow, Callout, DataTable, KeyButton, PageHero, SiteFrame } from './site/Chrome.web';
 import { CodePanel, JsonCode } from './site/Code.web';
@@ -192,6 +192,7 @@ function MantraDetail({ page }: { page: Mantra }) {
               <Link href="/docs#get-mantra" className="mh-btn mh-btn-ghost">
                 Read the docs
               </Link>
+              {mantra.hasAudio && <PlayButton id={mantra.id} title={mantra.title} />}
             </div>
             <Checks
               className="mx-rise mx-d6"
@@ -748,8 +749,9 @@ function Hub({ hub, meta, path }: { hub: MantraHub; meta: PageMeta; path: string
             </div>
             <h1 className="mx-rise mx-d2">Every mantra, one request away.</h1>
             <p className="mx-lede mx-rise mx-d3">
-              {hub.total} mantras and stotras in Devanagari with transliteration, {hub.audio} with
-              recordings. Filter by deity, then fetch any hymn by its stable id.
+              Nearly {hub.catalog.roughly.records} mantras and stotras in Devanagari with
+              transliteration, about {hub.catalog.roughly.recordings} with recordings. Filter by deity,
+              then fetch any hymn by its stable id.
             </p>
             <div className="mx-rise mx-d4">
               <EndpointPill path={LIST_PATH} />
@@ -757,13 +759,13 @@ function Hub({ hub, meta, path }: { hub: MantraHub; meta: PageMeta; path: string
             <div className="mx-actions mx-rise mx-d5">
               <KeyButton />
               <a href="#all" className="mh-btn mh-btn-ghost">
-                Browse all {hub.total}
+                Browse the library
               </a>
             </div>
             <Stats
               items={[
-                [hub.total, 'mantras and stotras'],
-                [hub.audio, 'with recordings'],
+                [hub.catalog.records, 'mantras and stotras'],
+                [hub.catalog.recordings, 'with recordings'],
                 [hub.deities.length, 'deities'],
               ]}
             />
@@ -981,7 +983,7 @@ function Hub({ hub, meta, path }: { hub: MantraHub; meta: PageMeta; path: string
             </div>
             <div className="mx-table-foot">
               <span aria-live="polite">
-                Showing {shown} of {hub.total} mantras
+                Showing {shown} of {hub.total} hymns
                 {active ? ` · ${active.name}` : ''}
                 {onlyAudio ? ' · with a recording' : ''}
               </span>

@@ -36,14 +36,15 @@ export default function LibraryPage() {
         crumb="Library"
         eyebrow="Content library"
         title="Explore Mantrilo’s Content Library"
-        lede={`${mantras.total} mantras and stotras, ${books.length} Sanskrit books verse by verse, and the English epics. Every page shows the API request behind it.`}
+        lede={`Nearly ${mantras.catalog.roughly.records} mantras and stotras, ${books.length} Sanskrit books verse by verse, and the English epics. Every page shows the API request behind it.`}
       />
       <section className="mh-section-sm" id="mantras" aria-labelledby="mantras-heading">
         <div className="mh-wrap">
           <h2 id="mantras-heading">Mantras & stotras</h2>
           <p>
-            {mantras.total} hymns in Devanagari and transliteration, {mantras.audio} with
-            recordings. Each page has the text, the request and the exact JSON response.
+            Nearly {mantras.catalog.roughly.records} hymns in Devanagari and transliteration, about{' '}
+            {mantras.catalog.roughly.recordings} with recordings. Each page has the text, the request
+            and the exact JSON response.
           </p>
           <div className="mh-cards-3">
             {mantras.featured.map((mantra) => (
@@ -70,7 +71,7 @@ export default function LibraryPage() {
           </nav>
           <p>
             <Link className="mh-btn mh-btn-ghost" href="/library/mantras">
-              All {mantras.total} mantras <Arrow />
+              All mantras <Arrow />
             </Link>
           </p>
           <p>

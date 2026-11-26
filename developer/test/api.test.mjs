@@ -354,6 +354,33 @@ test('public recording previews need no key, are limited per IP and are not mete
   assert.equal(f.sink.events.length, 0);
 });
 
+test('repeat previews reuse the recording path and signed link', async (t) => {
+  const content = new MemoryContent({
+    mantras: [mantra(2), mantra(13, { hasAudio: false, audioPath: null })],
+  });
+  const media = new MemoryMedia({});
+  let reads = 0,
+    signs = 0;
+  const get = content.get.bind(content),
+    sign = media.sign.bind(media);
+  content.get = (...args) => (reads++, get(...args));
+  media.sign = (...args) => (signs++, sign(...args));
+  const f = await fixture(t, { content, media });
+
+  const first = await f.call('/v1/public/mantras/mantra-02/preview');
+  const second = await f.call('/v1/public/mantras/mantra-02/preview');
+  assert.equal(first.status, 200);
+  assert.equal(second.body.data.url, first.body.data.url);
+  assert.equal(second.body.data.expiresAt, first.body.data.expiresAt);
+  assert.equal(reads, 1);
+  assert.equal(signs, 1);
+  assert.doesNotMatch(second.headers.get('server-timing'), /content|sign/);
+  // A mantra without a recording is never cached as playable.
+  assert.equal((await f.call('/v1/public/mantras/mantra-13/preview')).status, 404);
+  assert.equal((await f.call('/v1/public/mantras/mantra-13/preview')).status, 404);
+  assert.equal(signs, 1);
+});
+
 test('Free plan audio stops at its allowance', async (t) => {
   const f = await fixture(t, { plan: 'Free', rate: { rate: 1000, burst: 1000 } });
   const perFile = 4 * 1024 * 1024,

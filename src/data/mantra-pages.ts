@@ -68,11 +68,22 @@ export type DeityPage = {
 
 export type OpeningListing = MantraListing & { opening: string | null };
 
+/**
+ * What the API serves: every record, including a hymn filed under several deities, which the
+ * site shows as one page. `roughly` is for prose: "nearly 700 mantras, about 350 with recordings".
+ */
+export type Catalog = {
+  records: number;
+  recordings: number;
+  roughly: { records: number; recordings: number };
+};
+
 export type MantraHub = {
   deities: Deity[];
   mantras: MantraListing[];
+  /** Pages: one per hymn. */
   total: number;
-  audio: number;
+  catalog: Catalog;
   /** The most requested hymns, each with the first line of its opening verse. */
   featured: OpeningListing[];
   /** Shiva mantras with a recording, for the hero's list response. */
@@ -100,6 +111,7 @@ type Index = {
   bySlug: Map<string, Record>;
   deities: Map<string, Deity>;
   byDeity: Map<string, Record[]>;
+  catalog: Catalog;
   fetchedAt: string;
 };
 let index: Index | null = null;
@@ -107,9 +119,10 @@ let index: Index | null = null;
 function build(): Index {
   if (index) return index;
   const file = path.join(process.cwd(), 'src/data/mantra-catalog.json');
-  const { mantras, fetchedAt } = JSON.parse(fs.readFileSync(file, 'utf8')) as {
+  const { mantras, fetchedAt, catalog } = JSON.parse(fs.readFileSync(file, 'utf8')) as {
     mantras: Record[];
     fetchedAt: string;
+    catalog: { records: number; recordings: number };
   };
   const byDeity = new Map<string, Record[]>();
   for (const record of mantras)
@@ -131,6 +144,13 @@ function build(): Index {
     bySlug: new Map(mantras.map((record) => [record.slug, record])),
     deities,
     byDeity,
+    catalog: {
+      ...catalog,
+      roughly: {
+        records: Math.ceil(catalog.records / 50) * 50,
+        recordings: Math.round(catalog.recordings / 50) * 50,
+      },
+    },
     fetchedAt,
   };
   return index;
@@ -270,7 +290,7 @@ const SAMPLE = ['shiva-tandava-stotram', 'om-tryambakam-yajamahe', 'chandrashekh
 const DEVANAGARI = /[ऀ-ॿ]/;
 
 export function mantraHub(): MantraHub {
-  const { records, bySlug, deities } = build();
+  const { records, bySlug, deities, catalog } = build();
   // The list endpoint filters on each record's own deity and pages in id order.
   const shiva = records
     .filter((record) => record.deity?.id === 'shiva')
@@ -288,7 +308,7 @@ export function mantraHub(): MantraHub {
     // A to Z by title. Sorted here, not in the page, so the export and the browser agree.
     mantras: [...records].sort((a, b) => a.title.localeCompare(b.title, 'en')).map(listing),
     total: records.length,
-    audio: records.filter((record) => record.hasAudio).length,
+    catalog,
     featured: FEATURED.slice(0, 6).flatMap((slug) => {
       const record = bySlug.get(slug);
       return record ? [withOpening(record)] : [];
@@ -319,18 +339,16 @@ const FEATURED = [
 ];
 
 export type MantraFeature = {
-  total: number;
-  audio: number;
+  catalog: Catalog;
   deities: Deity[];
   featured: (MantraListing & { deity: string })[];
 };
 
 // What the Library page shows: totals, every deity and a dozen well-known hymns.
 export function mantraFeature(): MantraFeature {
-  const { records, bySlug, deities } = build();
+  const { bySlug, deities, catalog } = build();
   return {
-    total: records.length,
-    audio: records.filter((record) => record.hasAudio).length,
+    catalog,
     deities: [...deities.values()],
     featured: FEATURED.flatMap((slug) => {
       const record = bySlug.get(slug);

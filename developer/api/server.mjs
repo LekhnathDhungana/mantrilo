@@ -59,6 +59,32 @@ export function createApiServer({
   instances = 10,
 }) {
   const publicUse = { day: '', count: 0 };
+  // Previews repeat (a few well-known recordings get most plays), so each instance remembers a
+  // recording's path for 10 minutes and hands out the same signed link while 5+ minutes of it
+  // remain. A warm preview then skips the database read and the signing call, and the browser
+  // can reuse the audio it already downloaded for that link.
+  const previewPaths = new Map(); // mantra id -> { path, until }
+  const previewLinks = new Map(); // audio path -> { url, expiresAt }
+  async function previewLink(id, timed) {
+    const now = Date.now();
+    let entry = previewPaths.get(id);
+    if (!entry || entry.until <= now) {
+      const doc = await timed('content', () => content.get('mantras', id));
+      if (!doc?.hasAudio || !doc.audioPath) {
+        previewPaths.delete(id);
+        throw new ApiError(404, 'audio_unavailable', 'This mantra has no recording.');
+      }
+      entry = { path: doc.audioPath, until: now + 10 * 60_000 };
+      if (previewPaths.size >= 2000) previewPaths.clear();
+      previewPaths.set(id, entry);
+    }
+    const cached = previewLinks.get(entry.path);
+    if (cached && Date.parse(cached.expiresAt) - now > 5 * 60_000) return cached;
+    const signed = await timed('sign', () => media.sign(entry.path));
+    if (previewLinks.size >= 2000) previewLinks.clear();
+    previewLinks.set(entry.path, signed);
+    return signed;
+  }
   return createServer(async (request, response) => {
     const requestId = randomUUID();
     const durations = {};
@@ -132,10 +158,7 @@ export function createApiServer({
           response.setHeader('Retry-After', String(taken.retryAfter));
           throw new ApiError(429, 'preview_limited', 'Too many previews. Try again later.');
         }
-        const doc = await timed('content', () => content.get('mantras', preview[1]));
-        if (!doc?.hasAudio || !doc.audioPath)
-          throw new ApiError(404, 'audio_unavailable', 'This mantra has no recording.');
-        const signed = await timed('sign', () => media.sign(doc.audioPath));
+        const signed = await previewLink(preview[1], timed);
         logger.info?.(`preview ${preview[1]} ${requestId}`);
         return send(200, { data: { url: signed.url, expiresAt: signed.expiresAt } });
       }
