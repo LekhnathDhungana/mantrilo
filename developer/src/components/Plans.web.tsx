@@ -9,7 +9,7 @@ export const billingSupport = 'mailto:hello@mantrilo.com?subject=Mantrilo%20bill
 type Interval = 'month' | 'year';
 type StripeRequest = { plan?: string; promotionCode?: string; market?: 'IN'; interval?: Interval };
 
-// Shows cents only when there are any: $1,428, $479.88, ₹14,388.
+// Shows cents only when there are any: $1,429.99, ₹14,399.
 function money(amount: number, currency: 'USD' | 'INR') {
   return amount.toLocaleString(currency === 'INR' ? 'en-IN' : 'en-US', {
     style: 'currency',
@@ -18,8 +18,6 @@ function money(amount: number, currency: 'USD' | 'INR') {
     maximumFractionDigits: 2,
   });
 }
-// Twelve months of an annual per-month price, computed in cents to avoid rounding drift.
-const yearly = (perMonth: number) => (Math.round(perMonth * 100) * 12) / 100;
 
 export function useBillingActions() {
   const billing = useLoad<{
@@ -91,6 +89,7 @@ export function Plans({
     plans: Plan[];
     indiaPrices: Record<string, number | null>;
     indiaAnnualPrices?: Record<string, number | null>;
+    indiaAnnualTotals?: Record<string, number | null>;
   }>('/api/config');
   const dialog = useRef<HTMLDialogElement>(null);
   const checkoutTitle = useId();
@@ -257,6 +256,9 @@ export function Plans({
             const quote = india && regionalPrice === null;
             const perMonth = india ? (regionalPrice ?? 0) : annual ? plan.annualPrice : plan.price;
             const currency = india ? 'INR' : 'USD';
+            const yearlyTotal = india
+              ? (config.data?.indiaAnnualTotals?.[plan.name] ?? null)
+              : plan.annualTotal;
             return (
               <article
                 className={`plan-card ${plan.name === current.name ? 'current' : ''}`}
@@ -274,8 +276,8 @@ export function Plans({
                   {quote ? 'Custom quote' : money(perMonth, currency)}
                   {!quote && <small>{plan.price ? '/ month' : 'Forever, no card needed'}</small>}
                 </div>
-                {annual && plan.price > 0 && !quote && (
-                  <p className="small muted">Billed {money(yearly(perMonth), currency)} a year</p>
+                {annual && plan.price > 0 && !quote && yearlyTotal !== null && (
+                  <p className="small muted">Billed {money(yearlyTotal, currency)} a year</p>
                 )}
                 <ul>
                   <li>

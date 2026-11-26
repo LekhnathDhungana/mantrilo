@@ -58,8 +58,9 @@ export type Workspace = {
 export type Plan = {
   name: string;
   price: number;
-  // The per-month price when billed annually (twelve of these are charged at once).
+  // The per-month price shown when billed annually, and what a year of it is actually charged.
   annualPrice: number;
+  annualTotal: number;
   requests: string;
   audio: string;
   catalog: string;

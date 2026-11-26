@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { promisify } from 'node:util';
 import indiaPrices from '../../shared/india-prices.json' with { type: 'json' };
 import indiaAnnualPrices from '../../shared/india-annual-prices.json' with { type: 'json' };
+import indiaAnnualTotals from '../../shared/india-annual-totals.json' with { type: 'json' };
 import { brotliCompress, gzip, constants as zlib } from 'node:zlib';
 import {
   ApiError,
@@ -527,6 +528,7 @@ export function createConsoleServer({
             rateLimits: RATE_LIMITS,
             indiaPrices,
             indiaAnnualPrices,
+            indiaAnnualTotals,
             accountingPolicy,
           });
         }
@@ -916,7 +918,7 @@ export function createConsoleServer({
           const inr = record?.currency === 'inr';
           return send(200, {
             plan,
-            // Per month; an annual subscription is billed twelve of these at once.
+            // Per month as advertised; an annual subscription is billed its yearly total at once.
             monthlyTotal: inr
               ? (annual ? indiaAnnualPrices : indiaPrices)[plan.name]
               : annual

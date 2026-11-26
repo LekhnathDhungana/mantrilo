@@ -3,7 +3,11 @@ import assert from 'node:assert/strict';
 import Stripe from 'stripe';
 import { createConsoleServer } from '../server/app.mjs';
 import { MemoryStore } from '../server/store.mjs';
-import { StripeBilling, createBilling, stripeModeOf } from '../server/billing.mjs';
+import { StripeBilling, amountCents, createBilling, stripeModeOf } from '../server/billing.mjs';
+import contentPlans from '../../shared/content-plans.json' with { type: 'json' };
+import indiaPrices from '../../shared/india-prices.json' with { type: 'json' };
+import indiaAnnualPrices from '../../shared/india-annual-prices.json' with { type: 'json' };
+import indiaAnnualTotals from '../../shared/india-annual-totals.json' with { type: 'json' };
 
 const webhookSecret = 'whsec_test',
   prices = { Starter: 'price_s', Growth: 'price_g', Business: 'price_b' },
@@ -700,13 +704,13 @@ test('a verified price is not fetched again; a failing one is', async () => {
   assert.equal(reads, 5);
 });
 
-// Yearly prices charge twelve months of annualPrice: $39.99, $119 and $319 a month.
+// Yearly prices charge each plan's annualTotal: $479.99, $1,429.99 and $3,829.99.
 const annualPrices = { Starter: 'price_s_y', Growth: 'price_g_y', Business: 'price_b_y' };
 function yearlyPrices(stripe) {
   for (const [id, unit_amount] of Object.entries({
-    price_s_y: 47988,
-    price_g_y: 142800,
-    price_b_y: 382800,
+    price_s_y: 47999,
+    price_g_y: 142999,
+    price_b_y: 382999,
   }))
     stripe.priceOverrides[id] = { unit_amount, recurring: { interval: 'year', interval_count: 1 } };
 }
@@ -749,7 +753,7 @@ test('annual checkout is unavailable until yearly prices are configured and corr
   const f = await fixture(t, { annualPrices });
   yearlyPrices(f.stripe);
   // A monthly price configured as annual, and a yearly price at the undiscounted amount.
-  f.stripe.priceOverrides.price_s_y = { unit_amount: 47988 };
+  f.stripe.priceOverrides.price_s_y = { unit_amount: 47999 };
   f.stripe.priceOverrides.price_g_y = {
     unit_amount: 178800,
     recurring: { interval: 'year', interval_count: 1 },
@@ -788,14 +792,14 @@ test('India annual checkout uses the yearly INR price', async (t) => {
   const f = await fixture(t, { indiaAnnualPrices: { Starter: 'price_in_s_y' } });
   f.stripe.priceOverrides.price_in_s_y = {
     currency: 'inr',
-    unit_amount: 1438800,
+    unit_amount: 1439900,
     recurring: { interval: 'year', interval_count: 1 },
   };
   const create = f.stripe.checkout.sessions.create;
   f.stripe.checkout.sessions.create = async (params) => ({
     ...(await create(params)),
     currency: 'inr',
-    amount_subtotal: 1438800,
+    amount_subtotal: 1439900,
   });
   await f.store.transact(workspaceId, (workspace) => {
     workspace.indiaPricing = true;
@@ -823,4 +827,28 @@ test('annual price ids are read from the environment when set', () => {
   assert.equal(billing.planFor('b_y'), 'Growth');
   assert.equal(billing.intervalFor('b_y'), 'year');
   assert.equal(billing.intervalFor('b'), 'month');
+});
+
+// The yearly totals are rounded up by hand, so check they still honour "save 20%" (within 1%)
+// and that the per-month figure shown beside each is that total spread over twelve months.
+test('yearly totals are about 20% off and match the advertised per-month price', () => {
+  const rows = [
+    ...contentPlans.map((p) => [p.name, p.price, p.annualPrice, p.annualTotal, undefined]),
+    ...Object.keys(indiaAnnualTotals).map((name) => [
+      name,
+      indiaPrices[name],
+      indiaAnnualPrices[name],
+      indiaAnnualTotals[name],
+      'IN',
+    ]),
+  ];
+  for (const [name, monthly, perMonth, total, market] of rows) {
+    if (!monthly || total === null) continue;
+    const label = `${name}${market ? ' (India)' : ''}`;
+    const saving = 1 - total / (monthly * 12);
+    assert.ok(saving >= 0.19 && saving <= 0.21, `${label} saves ${(saving * 100).toFixed(1)}%`);
+    assert.equal(Math.floor((total / 12) * 100) / 100 >= perMonth, true, `${label} per month`);
+    assert.ok(total / 12 - perMonth < 1, `${label} per month is within a unit of the total`);
+    assert.equal(amountCents(name, market, 'year'), Math.round(total * 100));
+  }
 });

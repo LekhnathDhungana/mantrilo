@@ -3,6 +3,7 @@ import { rateLimits } from '../../data/api-reference';
 import { consoleUrl, signUpUrl } from '../../data/site';
 import indiaPrices from '../../../shared/india-prices.json';
 import indiaAnnualPrices from '../../../shared/india-annual-prices.json';
+import indiaAnnualTotals from '../../../shared/india-annual-totals.json';
 import { intlLocale, useI18n, type I18n } from '../../i18n';
 
 // Plan cards shared by the homepage and /pricing. Values come from shared/content-plans.json,
@@ -25,8 +26,9 @@ const money = ({ lang }: I18n, amount: number, currency: 'USD' | 'INR') =>
     maximumFractionDigits: Number.isInteger(amount) ? 0 : 2,
   }).format(amount);
 
-// The per-month amount for a plan. Annual plans are 20% off and also shown per month; twelve of
-// them are billed at once (planYearlyTotal). null means India's Business plan, priced by quote.
+// The per-month amount for a plan. Annual plans are 20% off and also shown per month; they are
+// billed their yearly total at once (planYearlyTotal). null means India's Business plan, priced
+// by quote.
 function perMonth(plan: Plan, india: boolean, annual: boolean): number | null {
   if (!india) return annual ? plan.annualPrice : plan.price;
   const table = annual ? indiaAnnualPrices : indiaPrices;
@@ -38,12 +40,13 @@ export function planPrice(i18n: I18n, plan: Plan, india: boolean, annual = false
   return amount === null ? i18n.t('plans.customQuote') : money(i18n, amount, india ? 'INR' : 'USD');
 }
 
-// What an annual plan charges once a year, computed in cents so 12 × $39.99 is $479.88.
+// What an annual plan charges once a year: a round figure such as $479.99, the same amount
+// billing checks the Stripe price against.
 function planYearlyTotal(i18n: I18n, plan: Plan, india: boolean) {
-  const amount = perMonth(plan, india, true);
-  return amount === null
-    ? null
-    : money(i18n, (Math.round(amount * 100) * 12) / 100, india ? 'INR' : 'USD');
+  const amount = india
+    ? indiaAnnualTotals[plan.name as keyof typeof indiaAnnualTotals]
+    : plan.annualTotal;
+  return amount === null ? null : money(i18n, amount, india ? 'INR' : 'USD');
 }
 
 // The line under a plan's price that says how it is billed.

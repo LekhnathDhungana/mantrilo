@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import Stripe from 'stripe';
 import indiaAmounts from '../../shared/india-prices.json' with { type: 'json' };
-import indiaAnnualAmounts from '../../shared/india-annual-prices.json' with { type: 'json' };
+import indiaAnnualTotals from '../../shared/india-annual-totals.json' with { type: 'json' };
 import {
   ApiError,
   FREE_PLAN,
@@ -44,8 +44,9 @@ const BRANDING = {
 const PRICE_CHECK_TTL_MS = 10 * 60 * 1000;
 const OUTREACH_CODE = 'STARTER99';
 const FIRST_MONTH_CENTS = 99;
-// Plans bill monthly or yearly. A yearly price charges twelve months of the plan's annual
-// per-month price (annualPrice in shared/content-plans.json, 20% below the monthly price).
+// Plans bill monthly or yearly. A yearly price charges the plan's annualTotal (in
+// shared/content-plans.json, or shared/india-annual-totals.json for India): about 20% off twelve
+// monthly payments, rounded up to a round figure such as $479.99 or ₹14,399.
 export const BILLING_INTERVALS = ['month', 'year'];
 const priceKey = (plan, market, interval = 'month') =>
   `${market === 'IN' ? 'IN:' : ''}${interval === 'year' ? 'year:' : ''}${plan}`;
@@ -53,15 +54,15 @@ const priceLabel = (plan, interval) => (interval === 'year' ? `${plan} (annual)`
 // What Stripe should charge per billing period, in the smallest currency unit.
 export function amountCents(plan, market, interval = 'month') {
   const regional = market === 'IN';
-  const perMonth =
+  const amount =
     interval === 'year'
       ? regional
-        ? indiaAnnualAmounts[plan]
-        : getPlan(plan).annualPrice
+        ? indiaAnnualTotals[plan]
+        : getPlan(plan).annualTotal
       : regional
         ? indiaAmounts[plan]
         : getPlan(plan).price;
-  return Math.round(perMonth * 100) * (interval === 'year' ? 12 : 1);
+  return Math.round(amount * 100);
 }
 
 export class StripeBilling {
