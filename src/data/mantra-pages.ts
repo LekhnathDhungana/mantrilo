@@ -51,7 +51,8 @@ export type MantraPage = {
   /** Exactly what GET /v1/mantras/{id} returns for this mantra, verses trimmed for display. */
   response: unknown;
   shownVerses: number;
-  related: MantraListing[];
+  /** Other mantras of the first deity, each with the first line of its opening verse. */
+  related: (MantraListing & { opening: string | null })[];
 };
 
 export type DeityPage = {
@@ -182,7 +183,10 @@ export function mantraPage(slug: string): MantraPage | null {
   const related = (primary ? byDeity.get(primary)! : [])
     .filter((other) => other.slug !== slug)
     .slice(0, 12)
-    .map(listing);
+    .map((other) => ({
+      ...listing(other),
+      opening: other.verses.find((verse) => verse.sanskrit)?.sanskrit?.split('\n')[0] ?? null,
+    }));
   const names = record.deities.map((deity) => deityName(deity.id));
   const deityLabel =
     names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : (names[0] ?? '');

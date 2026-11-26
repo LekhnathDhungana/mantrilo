@@ -15,6 +15,7 @@ type Theme = 'light' | 'dark';
 const nav: [string, string][] = [
   ['/docs', 'Docs'],
   ['/library', 'Library'],
+  ['/library/books', 'Books'],
   ['/astrology-api', 'Astrology'],
   ['/calculators', 'Calculators'],
   ['/blog', 'Blog'],
@@ -149,7 +150,12 @@ export function SiteFrame({
     } catch {}
   }
 
-  const active = (href: string) => pathname === href || pathname.startsWith(href + '/');
+  // The most specific link wins, so a book page marks Books rather than Library.
+  const currentNav = nav
+    .map(([href]) => href)
+    .filter((href) => pathname === href || pathname.startsWith(href + '/'))
+    .sort((a, b) => b.length - a.length)[0];
+  const active = (href: string) => href === currentNav;
 
   return (
     <div

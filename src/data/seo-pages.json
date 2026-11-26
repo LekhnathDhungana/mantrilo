@@ -35,6 +35,12 @@
     "label": "Library",
     "indexable": true
   },
+  "/library/books": {
+    "title": "Hindu Scripture Books API: Gita, Upanishads & Epics | Mantrilo",
+    "description": "Browse every book in the Mantrilo catalog by collection: the Bhagavad Gita, the Upanishads, Advaita classics, the sutras and the epics, each with its API id and verse count.",
+    "label": "Books",
+    "indexable": true
+  },
   "/pricing": {
     "title": "Mantrilo API Pricing & Request Limits",
     "description": "Compare Mantrilo’s monthly API plans: Free, $49.99, $149, and $399, with request limits, audio data delivery, catalog access, and customer-product allowances.",

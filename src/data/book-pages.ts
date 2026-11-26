@@ -279,7 +279,9 @@ export const textPage = (book: string, section?: string) =>
 export type BookListing = {
   slug: string;
   path: string;
+  apiId: string;
   title: string;
+  author: string;
   collection: string;
   chapterTerm: string;
   chapters: number;
@@ -291,7 +293,9 @@ export const bookList = (): BookListing[] =>
   allBooks().map((book) => ({
     slug: book.slug,
     path: book.path,
+    apiId: book.apiId,
     title: book.title,
+    author: book.author,
     collection: book.collection,
     chapterTerm: book.chapterTerm,
     chapters: book.chapters.length,
