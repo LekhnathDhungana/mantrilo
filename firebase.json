@@ -80,26 +80,6 @@
         "type": 301
       },
       {
-        "source": "/hi",
-        "destination": "/",
-        "type": 302
-      },
-      {
-        "source": "/hi/astrology-api/daily-panchang",
-        "destination": "/astrology-api/daily-panchang",
-        "type": 302
-      },
-      {
-        "source": "/ne",
-        "destination": "/",
-        "type": 302
-      },
-      {
-        "source": "/ne/astrology-api/daily-panchang",
-        "destination": "/astrology-api/daily-panchang",
-        "type": 302
-      },
-      {
         "source": "/library/mantras/aham-vaishvanaro-bhutva",
         "destination": "/library/mantras/aham-vaishvanaro-bhuthva",
         "type": 301
