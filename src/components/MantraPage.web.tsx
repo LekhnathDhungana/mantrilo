@@ -7,7 +7,7 @@ import type {
 } from '../data/mantra-pages';
 import type { PageMeta } from '../data/metadata';
 import { useState } from 'react';
-import { audioResponse, auth, curlGet } from '../data/examples';
+import { audioResponse, curlGet } from '../data/examples';
 import { consoleSandboxUrl } from '../data/site';
 import MantraAudio from './MantraAudio.web';
 import NotFound from './NotFound';
@@ -20,6 +20,7 @@ import {
   Ribbon,
   Ring,
   Specimen,
+  Stats,
   toDeva,
   type Snippet,
 } from './site/Shlokam.web';
@@ -629,36 +630,413 @@ function Deity({ page }: { page: DeityPage }) {
   );
 }
 
+// Devanagari names for the deity tiles. A deity without one shows its English name alone.
+const DEITY_SANSKRIT: Record<string, string> = {
+  devi: 'देवी',
+  shiva: 'शिव',
+  shankara: 'शङ्कर',
+  vishnu: 'विष्णु',
+  govinda: 'गोविन्द',
+  krishna: 'कृष्ण',
+  navagraha: 'नवग्रह',
+  rama: 'राम',
+  hanuman: 'हनुमान्',
+  lakshmi: 'लक्ष्मी',
+  om: 'ॐ',
+  durga: 'दुर्गा',
+  saraswati: 'सरस्वती',
+  surya: 'सूर्य',
+  ganesha: 'गणेश',
+};
+
+const LIST_PATH = '/v1/mantras?deity=shiva&limit=20';
+
+const listSnippets: Snippet[] = [
+  { lang: 'curl', label: 'cURL', file: 'request.sh', code: curlGet(LIST_PATH) },
+  {
+    lang: 'js',
+    label: 'JavaScript',
+    file: 'list.mjs',
+    code: `let cursor = null;
+do {
+  const url = new URL('/v1/mantras', process.env.MANTRILO_API_URL);
+  url.searchParams.set('deity', 'shiva');
+  url.searchParams.set('limit', '20');
+  if (cursor) url.searchParams.set('cursor', cursor);
+  const res = await fetch(url, {
+    headers: { Authorization: \`Bearer \${process.env.MANTRILO_API_KEY}\` },
+  });
+  const { data, nextCursor } = await res.json();
+  for (const mantra of data) console.log(mantra.id, mantra.verseCount);
+  cursor = nextCursor;
+} while (cursor);`,
+  },
+  {
+    lang: 'python',
+    label: 'Python',
+    file: 'list.py',
+    code: `import os
+import requests
+
+cursor = None
+while True:
+    params = {"deity": "shiva", "limit": 20}
+    if cursor:
+        params["cursor"] = cursor
+    res = requests.get(
+        f"{os.environ['MANTRILO_API_URL']}/v1/mantras",
+        params=params,
+        headers={"Authorization": f"Bearer {os.environ['MANTRILO_API_KEY']}"},
+        timeout=10,
+    )
+    res.raise_for_status()
+    body = res.json()
+    for mantra in body["data"]:
+        print(mantra["id"], mantra["verseCount"])
+    cursor = body["nextCursor"]
+    if not cursor:
+        break`,
+  },
+];
+
 function Hub({ hub, meta, path }: { hub: MantraHub; meta: PageMeta; path: string }) {
+  const [deity, setDeity] = useState('');
+  const [query, setQuery] = useState('');
+  const [onlyAudio, setOnlyAudio] = useState(false);
+
+  const names = new Map(hub.deities.map((entry) => [entry.id, entry.name]));
+  const tiles = hub.deities.slice(0, 12);
+  const more = hub.deities.slice(12);
+  const most = hub.deities[0]?.count ?? 1;
+  const active = hub.deities.find((entry) => entry.id === deity);
+  const needle = query.trim().toLowerCase();
+  // Every row stays in the exported HTML; filters only hide the ones that don't match.
+  const matches = (mantra: MantraListing) =>
+    (!deity || mantra.deities.includes(deity)) &&
+    (!onlyAudio || mantra.hasAudio) &&
+    (!needle || mantra.title.toLowerCase().includes(needle));
+  const shown = hub.mantras.filter(matches).length;
+
+  const pick = (id: string) => {
+    const next = deity === id ? '' : id;
+    setDeity(next);
+    if (!next) return;
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.getElementById('all')?.scrollIntoView({ behavior: still ? 'auto' : 'smooth' });
+  };
+
   return (
     <SiteFrame path={path} meta={meta}>
-      <PageHero
-        eyebrow="Mantra API · Library"
-        title="Mantra & stotra library"
-        lede={`${hub.total} Sanskrit mantras and stotras, ${hub.audio} with recordings. Each page shows the text, the request and the exact JSON response.`}
-        actions={<KeyButton />}
-      />
-      <section className="mh-section-sm">
-        <div className="mh-wrap mh-prose">
-          <h2>By deity</h2>
-          <nav className="mh-chips" aria-label="Mantras by deity">
-            {hub.deities.map((deity) => (
-              <Link key={deity.id} href={deity.path} className="mh-chip">
-                {deity.name} · {deity.count}
+      <section className="mx-hero">
+        <Ribbon />
+        <div className="mh-wrap mx-hero-grid">
+          <div>
+            <nav className="mh-crumbs mx-rise" aria-label="Breadcrumb">
+              <Link href="/">Home</Link>
+              <span aria-hidden="true">/</span>
+              <Link href="/library">Library</Link>
+              <span aria-hidden="true">/</span>
+              <span aria-current="page">Mantras</span>
+            </nav>
+            <div className="mx-chips mx-rise mx-d1">
+              <Link href="/mantra-api" className="mx-chip">
+                <span lang="sa-Deva" className="mh-deva">
+                  मन्त्र
+                </span>
+                Mantra API
+              </Link>
+            </div>
+            <h1 className="mx-rise mx-d2">Every mantra, one request away.</h1>
+            <p className="mx-lede mx-rise mx-d3">
+              {hub.total} mantras and stotras in Devanagari with transliteration, {hub.audio} with
+              recordings. Filter by deity, then fetch any hymn by its stable id.
+            </p>
+            <div className="mx-rise mx-d4">
+              <EndpointPill path={LIST_PATH} />
+            </div>
+            <div className="mx-actions mx-rise mx-d5">
+              <KeyButton />
+              <a href="#all" className="mh-btn mh-btn-ghost">
+                Browse all {hub.total}
+              </a>
+            </div>
+            <Stats
+              items={[
+                [hub.total, 'mantras and stotras'],
+                [hub.audio, 'with recordings'],
+                [hub.deities.length, 'deities'],
+              ]}
+            />
+          </div>
+          <div className="mx-art mx-rise mx-d3" aria-hidden="true">
+            <div className="mx-stack">
+              <div className="mx-sheet">
+                <span>nextCursor · page 2</span>
+              </div>
+              <div className="mx-spec mx-dots">
+                <div className="mx-scan" />
+                <div className="mx-spec-head">
+                  <span className="mx-ok">GET</span>
+                  <span>/v1/mantras?deity=shiva</span>
+                  <span className="mx-ok">200</span>
+                </div>
+                <div className="mx-spec-body">
+                  <span className="mx-field">data[]</span>
+                  <ol className="mx-lrows">
+                    {hub.sample.map((mantra, i) => (
+                      <li key={mantra.slug} style={{ animationDelay: `${0.5 + i * 0.12}s` }}>
+                        <span className="mx-lrow-i">{i}</span>
+                        <span className="mx-lrow-text">
+                          <span lang="sa-Deva">{mantra.opening}</span>
+                          <b>{mantra.title}</b>
+                        </span>
+                        <span className="mx-lrow-v">{mantra.verseCount}</span>
+                        {mantra.hasAudio && <span className="mx-lrow-audio">audio</span>}
+                      </li>
+                    ))}
+                  </ol>
+                  <p className="mx-lrow-cursor">
+                    <span>&quot;nextCursor&quot;</span>: &quot;…&quot;
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-section" aria-labelledby="by-deity">
+        <div className="mh-wrap">
+          <div data-reveal>
+            <p className="mx-kicker">By deity</p>
+            <h2 className="mx-h2" id="by-deity">
+              {hub.deities.length} deities. One filter.
+            </h2>
+            <p className="mx-sub">
+              Pick a deity to filter the list below, or pass the same id as <code>?deity=</code> in
+              your request.
+            </p>
+          </div>
+          <div className="mx-tiles">
+            {tiles.map((entry) => (
+              <button
+                key={entry.id}
+                type="button"
+                className="mx-tile mx-dots"
+                aria-pressed={deity === entry.id}
+                onClick={() => pick(entry.id)}
+                data-reveal
+              >
+                <span className="mx-tile-top">
+                  <code>?deity={entry.id}</code>
+                  <b>{entry.count}</b>
+                </span>
+                {DEITY_SANSKRIT[entry.id] && (
+                  <span className="mx-tile-sa" lang="sa-Deva">
+                    {DEITY_SANSKRIT[entry.id]}
+                  </span>
+                )}
+                <span className="mx-tile-name">{entry.name}</span>
+                <span className="mx-vol-bar" aria-hidden="true">
+                  <span
+                    style={{ width: `${Math.max(4, Math.round((entry.count / most) * 100))}%` }}
+                  />
+                </span>
+              </button>
+            ))}
+          </div>
+          <div className="mx-more" data-reveal>
+            <span>More</span>
+            {more.map((entry) => (
+              <button
+                key={entry.id}
+                type="button"
+                className="mx-chip"
+                aria-pressed={deity === entry.id}
+                onClick={() => pick(entry.id)}
+              >
+                {entry.name} <small>{entry.count}</small>
+              </button>
+            ))}
+          </div>
+          <nav className="mx-deity-links" aria-label="Mantra pages by deity" data-reveal>
+            <span>Open a deity’s page</span>
+            {hub.deities.map((entry) => (
+              <Link key={entry.id} href={entry.path}>
+                {entry.name} mantras
               </Link>
             ))}
           </nav>
-          <h2>All mantras</h2>
-          <MantraList mantras={hub.mantras} />
-          <CodePanel
-            title="/v1/mantras?limit=20"
-            method="GET"
-            code={curlGet('/v1/mantras?limit=20')}
-          />
-          <p className="mh-muted">
-            Requests need an API key in the header: <code>{auth}</code>.{' '}
-            <Link href="/docs#list-mantras">List endpoint reference</Link>
-          </p>
+        </div>
+      </section>
+
+      <section className="mx-section">
+        <div className="mh-wrap">
+          <div className="mx-head" data-reveal>
+            <div>
+              <p className="mx-kicker">Most requested</p>
+              <h2 className="mx-h2">Start with the ones people chant most.</h2>
+            </div>
+          </div>
+          <div className="mx-grid mx-grid-wide">
+            {hub.featured.map((mantra) => (
+              <Link key={mantra.slug} href={mantra.path} className="mx-mcard mx-dots" data-reveal>
+                <span className="mx-field">deity: &quot;{mantra.deities[0]}&quot;</span>
+                {mantra.opening && (
+                  <p className="mx-mcard-sa" lang="sa-Deva">
+                    {mantra.opening}
+                  </p>
+                )}
+                <h3>{mantra.title}</h3>
+                <div className="mx-tags">
+                  <span>{plural(mantra.verseCount, 'verse')}</span>
+                  {mantra.hasAudio && <span className="mx-tag-ok">audio ✓</span>}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-section" id="all" style={{ scrollMarginTop: 84 }}>
+        <div className="mh-wrap">
+          <div className="mx-head" data-reveal>
+            <div>
+              <p className="mx-kicker">All mantras</p>
+              <h2 className="mx-h2">
+                {active ? `${active.name} mantras` : 'Find a mantra by name.'}
+              </h2>
+            </div>
+            <div className="mx-filters">
+              <label className="mx-search">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-3.5-3.5" />
+                </svg>
+                <span className="mh-sr">Search mantras by name</span>
+                <input
+                  type="search"
+                  value={query}
+                  placeholder="Search by name"
+                  autoComplete="off"
+                  onChange={(event) => setQuery(event.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={onlyAudio}
+                className="mx-switch"
+                onClick={() => setOnlyAudio(!onlyAudio)}
+              >
+                <i aria-hidden="true" />
+                With recording
+              </button>
+              {active && (
+                <button
+                  type="button"
+                  className="mx-chip mx-chip-clear"
+                  aria-label={`Clear the ${active.name} filter`}
+                  onClick={() => setDeity('')}
+                >
+                  {active.name} <span aria-hidden="true">×</span>
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="mx-table" data-reveal>
+            <div className="mx-table-head" aria-hidden="true">
+              <span>Mantra</span>
+              <span>Deity</span>
+              <span>Verses</span>
+              <span>Audio</span>
+              <span />
+            </div>
+            <div className="mx-table-scroll" tabIndex={0} role="region" aria-label="Mantras">
+              <ul>
+                {hub.mantras.map((mantra) => (
+                  <li key={mantra.slug} hidden={!matches(mantra)}>
+                    <Link href={mantra.path} className="mx-row">
+                      <span className="mx-row-title">
+                        <b>{mantra.title}</b>
+                        <code>GET /v1/mantras/{mantra.id}</code>
+                      </span>
+                      <span className="mx-row-deity">
+                        {mantra.deities.map((id) => names.get(id) ?? id).join(', ')}
+                      </span>
+                      <span className="mx-row-verses">{plural(mantra.verseCount, 'verse')}</span>
+                      <span className="mx-row-audio">
+                        {mantra.hasAudio && <span>audio</span>}
+                      </span>
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="m9 6 6 6-6 6" />
+                      </svg>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              {shown === 0 && (
+                <p className="mx-empty">No mantras match. Try another name or clear the filters.</p>
+              )}
+            </div>
+            <div className="mx-table-foot">
+              <span aria-live="polite">
+                Showing {shown} of {hub.total} mantras
+                {active ? ` · ${active.name}` : ''}
+                {onlyAudio ? ' · with a recording' : ''}
+              </span>
+              <span>Sorted A to Z</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-section">
+        <div className="mh-wrap mx-response mx-list-demo">
+          <div data-reveal>
+            <p className="mx-kicker">List and filter</p>
+            <h2 className="mx-h2">Page through a deity’s mantras.</h2>
+            <p className="mx-sub">
+              Each page holds up to 20 mantras with their ids, verse counts and whether a recording
+              exists. Pass <code>nextCursor</code> back as <code>cursor</code> until it comes back
+              null.
+            </p>
+            <CodePanel
+              title={`${LIST_PATH} · first 2 of 20`}
+              status="200 OK"
+              json={hub.response}
+            />
+          </div>
+          <div data-reveal>
+            <CodeTabs snippets={listSnippets} label="Request language" />
+            <p className="mx-links">
+              <Link href="/docs#list-mantras">List endpoint reference</Link> ·{' '}
+              <Link href="/docs/guides/search-mantras">Build a searchable library</Link> ·{' '}
+              <Link href="/mantra-api">Mantra API</Link>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-section" style={{ paddingBottom: 96 }}>
+        <div className="mh-wrap">
+          <div className="mx-closing" data-reveal>
+            <div>
+              <p className="mx-kicker">Start free</p>
+              <h2 className="mx-h2">Fetch your first mantra in a minute.</h2>
+              <p>
+                Every account starts with a sandbox key and sample mantras, so you can build before
+                you subscribe.
+              </p>
+              <div className="mx-actions">
+                <KeyButton />
+                <Link href="/docs" className="mh-btn mh-btn-ghost">
+                  Read the docs
+                </Link>
+              </div>
+            </div>
+            <Ring />
+          </div>
         </div>
       </section>
     </SiteFrame>

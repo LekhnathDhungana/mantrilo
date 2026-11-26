@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, usePathname } from 'expo-router';
 import Seo from '../Seo.web';
 import type { PageMeta } from '../../data/metadata';
 import Brand, { Rosette } from '../Brand.web';
 import { signInUrl, signUpUrl } from '../../data/site';
 import { rememberConsoleChannel, tagConsoleEntry } from './consoleSource.web';
+import { installPageTransitions, pageShown } from './pageTransition.web';
 import './site.css';
 
 // Shared frame for every public page: fonts, theme, header, footer and scroll reveals.
@@ -14,7 +15,7 @@ type Theme = 'light' | 'dark';
 
 const nav: [string, string][] = [
   ['/docs', 'Docs'],
-  ['/library', 'Library'],
+  ['/library/mantras', 'Mantras'],
   ['/library/books', 'Books'],
   ['/astrology-api', 'Astrology'],
   ['/calculators', 'Calculators'],
@@ -97,12 +98,25 @@ export function SiteFrame({
   const [menu, setMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  useEffect(() => {
+  // Before the first paint of each page: the saved theme (also on <html>, whose background shows
+  // between pages) and the reveal start state, so neither flickers in after a navigation.
+  useLayoutEffect(() => {
     try {
       const saved = localStorage.getItem(THEME_KEY);
-      if ((saved === 'light' || saved === 'dark') && root.current)
+      if ((saved === 'light' || saved === 'dark') && root.current) {
         root.current.dataset.theme = saved;
+        document.documentElement.dataset.theme = saved;
+      }
     } catch {}
+    if ('IntersectionObserver' in window) root.current?.classList.add('mh-js');
+    installPageTransitions();
+  }, []);
+
+  useLayoutEffect(() => {
+    pageShown(pathname);
+  }, [pathname]);
+
+  useEffect(() => {
     rememberConsoleChannel();
     const onScroll = () => setScrolled(window.scrollY > 8);
     onScroll();
@@ -114,7 +128,6 @@ export function SiteFrame({
   useEffect(() => {
     const el = root.current;
     if (!el || !('IntersectionObserver' in window)) return;
-    el.classList.add('mh-js');
     const io = new IntersectionObserver(
       (entries) =>
         entries.forEach((e) => {
@@ -145,6 +158,7 @@ export function SiteFrame({
       (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     const next: Theme = current === 'dark' ? 'light' : 'dark';
     el.dataset.theme = next;
+    document.documentElement.dataset.theme = next;
     try {
       localStorage.setItem(THEME_KEY, next);
     } catch {}

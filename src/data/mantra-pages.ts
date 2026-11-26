@@ -33,6 +33,8 @@ type Record = {
 export type Deity = { id: string; name: string; path: string; count: number };
 
 export type MantraListing = {
+  /** The API id, as in GET /v1/mantras/{id}. */
+  id: string;
   slug: string;
   path: string;
   title: string;
@@ -52,7 +54,7 @@ export type MantraPage = {
   response: unknown;
   shownVerses: number;
   /** Other mantras of the first deity, each with the first line of its opening verse. */
-  related: (MantraListing & { opening: string | null })[];
+  related: OpeningListing[];
 };
 
 export type DeityPage = {
@@ -64,11 +66,19 @@ export type DeityPage = {
   response: unknown;
 };
 
+export type OpeningListing = MantraListing & { opening: string | null };
+
 export type MantraHub = {
   deities: Deity[];
   mantras: MantraListing[];
   total: number;
   audio: number;
+  /** The most requested hymns, each with the first line of its opening verse. */
+  featured: OpeningListing[];
+  /** Shiva mantras with a recording, for the hero's list response. */
+  sample: OpeningListing[];
+  /** What GET /v1/mantras?deity=shiva returns first: two records by id, then a cursor. */
+  response: unknown;
 };
 
 const SHOWN_VERSES = 2;
@@ -127,12 +137,19 @@ function build(): Index {
 }
 
 const listing = (record: Record): MantraListing => ({
+  id: record.id,
   slug: record.slug,
   path: mantraPath(record.slug),
   title: record.title,
   deities: record.deities.map((deity) => deity.id),
   verseCount: record.verses.length,
   hasAudio: record.hasAudio,
+});
+
+// A listing plus the first line of the mantra's first verse that has Sanskrit text.
+const withOpening = (record: Record): OpeningListing => ({
+  ...listing(record),
+  opening: record.verses.find((verse) => verse.sanskrit)?.sanskrit?.split('\n')[0] ?? null,
 });
 
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
@@ -183,10 +200,7 @@ export function mantraPage(slug: string): MantraPage | null {
   const related = (primary ? byDeity.get(primary)! : [])
     .filter((other) => other.slug !== slug)
     .slice(0, 12)
-    .map((other) => ({
-      ...listing(other),
-      opening: other.verses.find((verse) => verse.sanskrit)?.sanskrit?.split('\n')[0] ?? null,
-    }));
+    .map(withOpening);
   const names = record.deities.map((deity) => deityName(deity.id));
   const deityLabel =
     names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : (names[0] ?? '');
@@ -251,13 +265,40 @@ export function deityPage(param: string): DeityPage | null {
   };
 }
 
+// Shiva hymns the hub's list response leads with; the rest fill in by id.
+const SAMPLE = ['shiva-tandava-stotram', 'om-tryambakam-yajamahe', 'chandrashekhara-ashtakam'];
+const DEVANAGARI = /[ऀ-ॿ]/;
+
 export function mantraHub(): MantraHub {
-  const { records, deities } = build();
+  const { records, bySlug, deities } = build();
+  // The list endpoint filters on each record's own deity and pages in id order.
+  const shiva = records
+    .filter((record) => record.deity?.id === 'shiva')
+    .sort((a, b) => a.id.localeCompare(b.id));
+  const sample = [...SAMPLE.map((slug) => bySlug.get(slug)), ...shiva]
+    .filter(
+      (record, i, all): record is Record =>
+        !!record && all.indexOf(record) === i && record.deity?.id === 'shiva' && record.hasAudio,
+    )
+    .map(withOpening)
+    .filter((entry) => DEVANAGARI.test(entry.opening ?? ''))
+    .slice(0, 4);
   return {
     deities: [...deities.values()],
-    mantras: records.map(listing),
+    // A to Z by title. Sorted here, not in the page, so the export and the browser agree.
+    mantras: [...records].sort((a, b) => a.title.localeCompare(b.title, 'en')).map(listing),
     total: records.length,
     audio: records.filter((record) => record.hasAudio).length,
+    featured: FEATURED.slice(0, 6).flatMap((slug) => {
+      const record = bySlug.get(slug);
+      return record ? [withOpening(record)] : [];
+    }),
+    sample,
+    response: {
+      data: shiva.slice(0, 2).map(summary),
+      nextCursor: shiva.length > 2 ? '…' : null,
+      requestId: 'request-id',
+    },
   };
 }
 

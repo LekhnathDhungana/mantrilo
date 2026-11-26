@@ -137,6 +137,55 @@ html:has(.mh) body {
 body:has(.mh) {
   background: #fffbf5;
 }
+/* <html> carries the page background too, so a frame between two pages is never white. */
+html {
+  background-color: #fffbf5;
+}
+html[data-theme='dark'] {
+  background-color: #0f0c14;
+}
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme='light']) {
+    background-color: #0f0c14;
+  }
+}
+
+/* Page transitions (pageTransition.web.ts for in-app links; full page loads opt in here). The
+   header holds still while the page fades out and the next one rises into place. */
+@view-transition {
+  navigation: auto;
+}
+.mh-header {
+  view-transition-name: mh-header;
+}
+::view-transition-group(mh-header) {
+  z-index: 1;
+}
+::view-transition-old(root) {
+  animation: mh-page-out 0.16s cubic-bezier(0.4, 0, 1, 1) both;
+}
+::view-transition-new(root) {
+  animation: mh-page-in 0.44s cubic-bezier(0.22, 1, 0.36, 1) 0.06s both;
+}
+@keyframes mh-page-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes mh-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
 body:has(.mh[data-theme='dark']) {
   background: #0f0c14;
 }

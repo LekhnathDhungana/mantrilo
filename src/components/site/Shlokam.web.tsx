@@ -1,4 +1,4 @@
-import { useId, useState, type ReactNode } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import { CopyButton, SourceCode, type Lang } from './Code.web';
 import './shlokam.css';
 
@@ -38,6 +38,37 @@ export function Checks({ items, className = '' }: { items: string[]; className?:
         </li>
       ))}
     </ul>
+  );
+}
+
+/** Hero numbers. The exported HTML holds the final values; once the page runs they count up. */
+export function Stats({ items }: { items: [number, string][] }) {
+  const [progress, setProgress] = useState(1);
+  const [counting, setCounting] = useState(false);
+  useEffect(() => {
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let frame = 0;
+    let start = 0;
+    const step = (now: number) => {
+      setCounting(true);
+      if (still) return;
+      start ||= now;
+      const t = Math.min(1, (now - start) / 1600);
+      setProgress(1 - Math.pow(1 - t, 3));
+      if (t < 1) frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return (
+    <div className={counting ? 'mx-stats mx-rise mx-d6 is-counting' : 'mx-stats mx-rise mx-d6'}>
+      {items.map(([value, label]) => (
+        <p key={label}>
+          <b>{Math.round(value * progress).toLocaleString('en-US')}</b>
+          <span>{label}</span>
+        </p>
+      ))}
+    </div>
   );
 }
 

@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { Link, useLoaderData } from 'expo-router';
 import type { loader } from '../app/library/books/index';
 import type { BookListing } from '../data/book-pages';
@@ -6,7 +6,7 @@ import { collections } from '../data/examples';
 import { epicBooks } from '../../developer/src/data/epic-books';
 import { Arrow, KeyButton, SiteFrame } from './site/Chrome.web';
 import { CodePanel, JsonCode } from './site/Code.web';
-import { Checks, EndpointPill, Ribbon, Ring, plural } from './site/Shlokam.web';
+import { Checks, EndpointPill, Ribbon, Ring, Stats, plural } from './site/Shlokam.web';
 
 // /library/books: the bookshelf. Every book in the catalog on its collection's shelf, each with
 // its API id, then what a chapter response looks like and how a reader pages through it.
@@ -99,37 +99,6 @@ function Cover({ volume, spine, index }: { volume: Volume; spine: string; index?
         <span style={{ width: `${volume.size}%` }} />
       </span>
       <span className="mx-vol-count">{volume.count}</span>
-    </div>
-  );
-}
-
-function Stats({ items }: { items: [number, string][] }) {
-  const [progress, setProgress] = useState(1);
-  const [counting, setCounting] = useState(false);
-  // The exported HTML holds the final numbers; once the page runs they count up from zero.
-  useEffect(() => {
-    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let frame = 0;
-    let start = 0;
-    const step = (now: number) => {
-      setCounting(true);
-      if (still) return;
-      start ||= now;
-      const t = Math.min(1, (now - start) / 1600);
-      setProgress(1 - Math.pow(1 - t, 3));
-      if (t < 1) frame = requestAnimationFrame(step);
-    };
-    frame = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(frame);
-  }, []);
-  return (
-    <div className={counting ? 'mx-stats mx-rise mx-d6 is-counting' : 'mx-stats mx-rise mx-d6'}>
-      {items.map(([value, label]) => (
-        <p key={label}>
-          <b>{Math.round(value * progress).toLocaleString('en-US')}</b>
-          <span>{label}</span>
-        </p>
-      ))}
     </div>
   );
 }
