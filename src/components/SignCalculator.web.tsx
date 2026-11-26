@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { SignFocus } from '../data/calculator-pages';
 import { KeyButton } from './site/Chrome.web';
 import { CodePanel } from './site/Code.web';
+import { useI18n } from '../i18n';
+import type { TFunction } from 'i18next';
 
 // The free sign calculator. It calls the API's keyless public endpoints (limited per visitor):
 // /v1/public/places to find the birthplace and /v1/public/signs for the result. Birth details
@@ -74,9 +76,16 @@ const degrees = (value: number | null) => {
   return `${whole}°${String(Math.floor((value - whole) * 60)).padStart(2, '0')}′`;
 };
 
-function westernFacts(number: number) {
+// Element, modality and planet names are display labels; sign and nakshatra names come from the
+// API and stay as returned.
+const planet = (t: TFunction, name: string) => t(`calc.planets.${name}`) || name;
+function westernFacts(t: TFunction, number: number) {
   const i = number - 1;
-  return `${ELEMENTS[i % 4]} · ${MODES[i % 3]} · ruled by ${RULERS[i]}`;
+  return t('calc.westernFacts', {
+    element: t(`calc.elements.${ELEMENTS[i % 4]}`),
+    mode: t(`calc.modes.${MODES[i % 3]}`),
+    ruler: planet(t, RULERS[i]),
+  });
 }
 
 type CardProps = {
@@ -115,6 +124,7 @@ function SignCard({ label, sub, number, name, detail, note, primary, devanagari 
 }
 
 function Missing({ label, sub }: { label: string; sub: string }) {
+  const { t } = useI18n();
   return (
     <div className="mh-sign is-missing">
       <span className="mh-sign-glyph" aria-hidden="true">
@@ -124,7 +134,7 @@ function Missing({ label, sub }: { label: string; sub: string }) {
         <p className="mh-sign-label">
           {label} <span>{sub}</span>
         </p>
-        <p className="mh-sign-detail">Add your birth time to calculate this.</p>
+        <p className="mh-sign-detail">{t('calc.addTime')}</p>
       </div>
     </div>
   );
@@ -132,71 +142,71 @@ function Missing({ label, sub }: { label: string; sub: string }) {
 
 function Results({ result, focus }: { result: Result; focus: SignFocus }) {
   const { western, vedic } = result;
+  const { t, number } = useI18n();
   const vedicDetail = (row: Vedic, lord: string) =>
-    `${row.rashi.english} · ${degrees(row.degreesWithinRashi)} · lord ${lord}`;
+    `${row.rashi.english} · ${degrees(row.degreesWithinRashi)} · ${t('calc.lord', { lord: planet(t, lord) })}`;
   const rashiLord = (row: Vedic) => RULERS[row.rashi.number - 1];
   const moonNote = western.moon.possible
-    ? `The Moon moved from ${western.moon.possible[0]} to ${western.moon.possible[1]} that day. Add your birth time to be sure.`
+    ? t('calc.moonMoved', { from: western.moon.possible[0], to: western.moon.possible[1] })
     : undefined;
+  const western_ = t('calc.western');
   const nak = vedic.moon.nakshatra;
 
   const cards: Record<Exclude<SignFocus, 'all'>, React.ReactNode> = {
     sun: (
       <SignCard
         key="sun"
-        label="Sun sign"
-        sub="Western"
+        label={t('calc.sun')}
+        sub={western_}
         primary={focus === 'sun'}
         number={western.sun.number}
         name={western.sun.name}
-        detail={`${degrees(western.sun.degreesWithinSign)} · ${westernFacts(western.sun.number)}`}
+        detail={`${degrees(western.sun.degreesWithinSign)} · ${westernFacts(t, western.sun.number)}`}
       />
     ),
     moon: (
       <SignCard
         key="moon"
-        label="Moon sign"
-        sub="Western"
+        label={t('calc.moon')}
+        sub={western_}
         primary={focus === 'moon'}
         number={western.moon.number}
         name={western.moon.name}
-        detail={`${degrees(western.moon.degreesWithinSign)} · ${westernFacts(western.moon.number)}`}
+        detail={`${degrees(western.moon.degreesWithinSign)} · ${westernFacts(t, western.moon.number)}`}
         note={moonNote}
       />
     ),
     rising: western.rising ? (
       <SignCard
         key="rising"
-        label="Rising sign"
-        sub="Ascendant"
+        label={t('calc.rising')}
+        sub={t('calc.ascendant')}
         primary={focus === 'rising'}
         number={western.rising.number}
         name={western.rising.name}
-        detail={`${degrees(western.rising.degreesWithinSign)} · ${westernFacts(western.rising.number)}`}
+        detail={`${degrees(western.rising.degreesWithinSign)} · ${westernFacts(t, western.rising.number)}`}
       />
     ) : (
-      <Missing key="rising" label="Rising sign" sub="Ascendant" />
+      <Missing key="rising" label={t('calc.rising')} sub={t('calc.ascendant')} />
     ),
     rashi: (
       <SignCard
         key="rashi"
-        label="Rashi"
-        sub="Vedic Moon sign"
+        label={t('calc.rashi')}
+        sub={t('calc.vedicMoon')}
         devanagari
         primary={focus === 'rashi'}
         number={vedic.moon.rashi.number}
         name={vedic.moon.rashi.name}
         detail={vedicDetail(vedic.moon, rashiLord(vedic.moon))}
-        note={
-          result.timeKnown ? undefined : 'Calculated for midday. Add your birth time to be sure.'
-        }
+        note={result.timeKnown ? undefined : t('calc.midday')}
       />
     ),
     lagna: vedic.lagna ? (
       <SignCard
         key="lagna"
-        label="Lagna"
-        sub="Vedic ascendant"
+        label={t('calc.lagna')}
+        sub={t('calc.vedicAscendant')}
         devanagari
         primary={focus === 'lagna'}
         number={vedic.lagna.rashi.number}
@@ -204,12 +214,15 @@ function Results({ result, focus }: { result: Result; focus: SignFocus }) {
         detail={vedicDetail(vedic.lagna, rashiLord(vedic.lagna))}
         note={
           vedic.lagna.nakshatra
-            ? `In ${vedic.lagna.nakshatra.name} nakshatra, pada ${vedic.lagna.nakshatra.pada}`
+            ? t('calc.inNakshatra', {
+                name: vedic.lagna.nakshatra.name,
+                pada: vedic.lagna.nakshatra.pada == null ? '' : number(vedic.lagna.nakshatra.pada),
+              })
             : undefined
         }
       />
     ) : (
-      <Missing key="lagna" label="Lagna" sub="Vedic ascendant" />
+      <Missing key="lagna" label={t('calc.lagna')} sub={t('calc.vedicAscendant')} />
     ),
     nakshatra: nak ? (
       <div key="nakshatra" className={focus === 'nakshatra' ? 'mh-sign is-primary' : 'mh-sign'}>
@@ -218,19 +231,15 @@ function Results({ result, focus }: { result: Result; focus: SignFocus }) {
         </span>
         <div>
           <p className="mh-sign-label">
-            Nakshatra <span>Birth star</span>
+            {t('calc.nakshatra')} <span>{t('calc.birthStar')}</span>
           </p>
           <p className="mh-sign-name">{nak.name}</p>
           <p className="mh-sign-detail">
-            {nak.number} of 27{nak.pada ? ` · pada ${nak.pada}` : ''}
-            {nak.lord ? ` · lord ${nak.lord}` : ''}
+            {t('calc.ofTotal', { n: number(nak.number), total: number(27) })}
+            {nak.pada ? ` · ${t('calc.pada', { n: number(nak.pada) })}` : ''}
+            {nak.lord ? ` · ${t('calc.lord', { lord: planet(t, nak.lord) })}` : ''}
           </p>
-          {!result.timeKnown && (
-            <p className="mh-sign-note">
-              Calculated for midday. The Moon changes Nakshatra about once a day, so add your birth
-              time to be sure.
-            </p>
-          )}
+          {!result.timeKnown && <p className="mh-sign-note">{t('calc.middayNakshatra')}</p>}
         </div>
       </div>
     ) : null,
@@ -238,8 +247,8 @@ function Results({ result, focus }: { result: Result; focus: SignFocus }) {
   const vedicSun = (
     <SignCard
       key="vedic-sun"
-      label="Sun sign"
-      sub="Vedic"
+      label={t('calc.sun')}
+      sub={t('calc.vedic')}
       devanagari
       number={vedic.sun.rashi.number}
       name={vedic.sun.rashi.name}
@@ -253,7 +262,7 @@ function Results({ result, focus }: { result: Result; focus: SignFocus }) {
       <div className="mh-signs-grid">
         <section>
           <h3>
-            Western <span>Tropical zodiac</span>
+            {western_} <span>{t('calc.tropical')}</span>
           </h3>
           {(['sun', 'moon', 'rising'] as const)
             .filter((key) => key !== focus)
@@ -261,7 +270,7 @@ function Results({ result, focus }: { result: Result; focus: SignFocus }) {
         </section>
         <section>
           <h3>
-            Vedic <span>Sidereal · Lahiri</span>
+            {t('calc.vedic')} <span>{t('calc.sidereal')}</span>
           </h3>
           {(['rashi', 'lagna'] as const).filter((key) => key !== focus).map((key) => cards[key])}
           {vedicSun}
@@ -279,6 +288,7 @@ export default function SignCalculator({
   focus: SignFocus;
   needsTime: boolean;
 }) {
+  const { t } = useI18n();
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [unknownTime, setUnknownTime] = useState(false);
@@ -306,7 +316,7 @@ export default function SignCalculator({
         );
         const body = await response.json();
         if (id !== searchId.current) return;
-        if (!response.ok) throw new Error(body?.error?.message || 'Place search failed.');
+        if (!response.ok) throw new Error(body?.error?.message || t('calc.errors.places'));
         setPlaces(body.data.places);
         setOpen(true);
       } catch (failure) {
@@ -316,7 +326,7 @@ export default function SignCalculator({
       }
     }, 350);
     return () => clearTimeout(timer);
-  }, [query, place]);
+  }, [query, place, t]);
 
   function choose(next: Place) {
     setPlace(next);
@@ -329,10 +339,10 @@ export default function SignCalculator({
   async function calculate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
-    if (!date) return setError('Enter your birth date.');
-    if (!place) return setError('Choose your birthplace from the list.');
+    if (!date) return setError(t('calc.errors.date'));
+    if (!place) return setError(t('calc.errors.place'));
     if (!unknownTime && !time && needsTime)
-      return setError('Enter your birth time, or tick “I don’t know my birth time”.');
+      return setError(t('calc.errors.time', { unknown: t('calc.unknownTime') }));
     const params = new URLSearchParams({
       date,
       latitude: String(place.latitude),
@@ -344,7 +354,7 @@ export default function SignCalculator({
     try {
       const response = await fetch(`${API_URL}/v1/public/signs?${params}`);
       const body = await response.json();
-      if (!response.ok) throw new Error(body?.error?.message || 'The calculation failed.');
+      if (!response.ok) throw new Error(body?.error?.message || t('calc.errors.failed'));
       setResult(body.data);
       requestAnimationFrame(() =>
         resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
@@ -352,9 +362,7 @@ export default function SignCalculator({
     } catch (failure) {
       setResult(null);
       setError(
-        failure instanceof TypeError
-          ? 'Could not reach the calculator. Check your connection and try again.'
-          : (failure as Error).message,
+        failure instanceof TypeError ? t('calc.errors.network') : (failure as Error).message,
       );
     } finally {
       setBusy(false);
@@ -377,7 +385,7 @@ export default function SignCalculator({
       <form className="mh-form mh-calc-form" onSubmit={calculate} noValidate>
         <div className="mh-calc-row">
           <label>
-            Birth date
+            {t('calc.birthDate')}
             <input
               type="date"
               value={date}
@@ -388,7 +396,8 @@ export default function SignCalculator({
             />
           </label>
           <label>
-            Birth time{!needsTime && <span className="mh-calc-optional"> (optional)</span>}
+            {t('calc.birthTime')}
+            {!needsTime && <span className="mh-calc-optional"> {t('calc.optional')}</span>}
             <input
               type="time"
               value={unknownTime ? '' : time}
@@ -404,15 +413,15 @@ export default function SignCalculator({
               checked={unknownTime}
               onChange={(event) => setUnknownTime(event.target.checked)}
             />
-            I don’t know my birth time
+            {t('calc.unknownTime')}
           </label>
         )}
         <label className="mh-calc-place">
-          Birthplace
+          {t('calc.birthplace')}
           <input
             type="text"
             value={query}
-            placeholder="Start typing a city, e.g. Kathmandu"
+            placeholder={t('calc.placePlaceholder')}
             autoComplete="off"
             role="combobox"
             aria-expanded={open && places.length > 0}
@@ -448,7 +457,7 @@ export default function SignCalculator({
             </ul>
           )}
           {open && !searching && query.trim().length >= 2 && !place && places.length === 0 && (
-            <span className="mh-calc-hint">No matching places. Try a nearby larger city.</span>
+            <span className="mh-calc-hint">{t('calc.noPlaces')}</span>
           )}
         </label>
         {error && (
@@ -457,9 +466,9 @@ export default function SignCalculator({
           </p>
         )}
         <button type="submit" className="mh-btn mh-btn-primary" disabled={busy}>
-          {busy ? 'Calculating…' : 'Calculate my signs'}
+          {busy ? t('calc.calculating') : t('calc.submit')}
         </button>
-        <p className="mh-calc-privacy">Your birth details are not stored.</p>
+        <p className="mh-calc-privacy">{t('calc.privacy')}</p>
       </form>
 
       <div ref={resultRef} className="mh-calc-result">
@@ -467,11 +476,8 @@ export default function SignCalculator({
           <>
             <Results result={result} focus={focus} />
             <details className="mh-calc-api">
-              <summary>Building an app? See this as an API call</summary>
-              <p>
-                This result comes from Mantrilo’s astrology API. Send the same request from your
-                server with an API key and you get the same JSON back.
-              </p>
+              <summary>{t('calc.apiSummary')}</summary>
+              <p>{t('calc.apiCopy')}</p>
               <CodePanel
                 title="/v1/astrology/calculate"
                 method="POST"
@@ -480,11 +486,11 @@ export default function SignCalculator({
                 code={`curl https://api.mantrilo.com/v1/astrology/calculate \\\n  -H "Authorization: Bearer $MANTRILO_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '${JSON.stringify(request)}'`}
               />
               <CodePanel
-                title="Response"
+                title={t('calc.response')}
                 status="200 OK"
                 json={{ data: { operation: 'signs', ...result } }}
               />
-              <KeyButton>Get a free API key</KeyButton>
+              <KeyButton>{t('calc.getKey')}</KeyButton>
             </details>
           </>
         )}

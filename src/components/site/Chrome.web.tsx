@@ -1,11 +1,26 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { Link, usePathname } from 'expo-router';
+import { router, usePathname } from 'expo-router';
+import { Link } from '../../i18n/Link.web';
 import Seo from '../Seo.web';
 import type { PageMeta } from '../../data/metadata';
 import Brand, { Rosette } from '../Brand.web';
 import { signInUrl, signUpUrl } from '../../data/site';
 import { rememberConsoleChannel, tagConsoleEntry } from './consoleSource.web';
 import { installPageTransitions, pageShown } from './pageTransition.web';
+import {
+  applyDocumentLocale,
+  detectLocale,
+  hasLocalizedUrl,
+  intlLocale,
+  loadLocale,
+  localizePath,
+  locales,
+  saveLocale,
+  setPreferredLocale,
+  splitLocale,
+  useI18n,
+  type Locale,
+} from '../../i18n';
 import './site.css';
 
 // Shared frame for every public page: fonts, theme, header, footer and scroll reveals.
@@ -14,13 +29,13 @@ const THEME_KEY = 'mantrilo-theme';
 type Theme = 'light' | 'dark';
 
 const nav: [string, string][] = [
-  ['/docs', 'Docs'],
-  ['/library/mantras', 'Mantras'],
-  ['/library/books', 'Books'],
-  ['/astrology-api', 'Astrology'],
-  ['/calculators', 'Calculators'],
-  ['/blog', 'Blog'],
-  ['/pricing', 'Pricing'],
+  ['/docs', 'nav.docs'],
+  ['/library/mantras', 'nav.mantras'],
+  ['/library/books', 'nav.books'],
+  ['/astrology-api', 'nav.astrology'],
+  ['/calculators', 'nav.calculators'],
+  ['/blog', 'nav.blog'],
+  ['/pricing', 'nav.pricing'],
 ];
 const serverRoutes = new Set(['/blog']);
 
@@ -67,17 +82,51 @@ export function Divider() {
 // "Get API key" opens sign-up in the developer console.
 export function KeyButton({
   className = 'mh-btn mh-btn-primary',
-  children = 'Get API key',
+  children,
   href = signUpUrl,
 }: {
   className?: string;
   children?: ReactNode;
   href?: string;
 }) {
+  const { t } = useI18n();
   return (
     <a href={href} className={className}>
-      {children} <Arrow />
+      {children ?? t('common.getApiKey')} <Arrow />
     </a>
+  );
+}
+
+// Lists each language in its own script. Switching keeps the visitor on the same page: a page with
+// localized URLs moves to the chosen language's address; a catalog page re-renders in place.
+export function LanguageSwitcher({ className = '' }: { className?: string }) {
+  const { t, lang, path } = useI18n();
+  const pathname = usePathname();
+  async function choose(code: Locale) {
+    saveLocale(code);
+    await loadLocale(code);
+    applyDocumentLocale(code);
+    if (hasLocalizedUrl(path)) {
+      const { search, hash } = window.location;
+      const target = localizePath(path, code) + search + hash;
+      if (target !== pathname + search + hash) router.replace(target as never);
+    } else setPreferredLocale(code);
+  }
+  return (
+    <label className={`mh-lang ${className}`}>
+      <span className="mh-visually-hidden">{t('common.language')}</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z" />
+      </svg>
+      <select value={lang} onChange={(e) => choose(e.target.value as Locale)}>
+        {locales.map((l) => (
+          <option key={l.code} value={l.code} lang={l.code}>
+            {l.name}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
@@ -95,6 +144,7 @@ export function SiteFrame({
 }) {
   const root = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const { t, lang } = useI18n();
   const [menu, setMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -114,6 +164,19 @@ export function SiteFrame({
 
   useLayoutEffect(() => {
     pageShown(pathname);
+  }, [pathname]);
+
+  // <html lang dir> follows the page's language through client-side navigation.
+  useLayoutEffect(() => {
+    applyDocumentLocale(lang);
+  }, [lang]);
+
+  // A catalog page has one English URL: show it in the visitor's saved or browser language. A page
+  // under /<lang>/ also makes that the language for catalog pages opened from it.
+  useEffect(() => {
+    const [urlLang, bare] = splitLocale(pathname);
+    if (urlLang) setPreferredLocale(urlLang);
+    else if (!hasLocalizedUrl(bare)) setPreferredLocale(detectLocale());
   }, [pathname]);
 
   useEffect(() => {
@@ -165,9 +228,10 @@ export function SiteFrame({
   }
 
   // The most specific link wins, so a book page marks Books rather than Library.
+  const [, barePath] = splitLocale(pathname);
   const currentNav = nav
     .map(([href]) => href)
-    .filter((href) => pathname === href || pathname.startsWith(href + '/'))
+    .filter((href) => barePath === href || barePath.startsWith(href + '/'))
     .sort((a, b) => b.length - a.length)[0];
   const active = (href: string) => href === currentNav;
 
@@ -181,53 +245,55 @@ export function SiteFrame({
     >
       <Seo path={path} meta={meta} notFound={notFound} />
       <a className="mh-skip" href="#main">
-        Skip to content
+        {t('chrome.skip')}
       </a>
 
       <header className={scrolled ? 'mh-header is-scrolled' : 'mh-header'}>
         <div className="mh-wrap mh-nav">
-          <Link href="/" aria-label="Mantrilo home" className="mh-logo">
+          <Link href="/" aria-label={t('chrome.home')} className="mh-logo">
             <Brand />
           </Link>
           <nav
             id="mh-navigation"
             className={menu ? 'mh-links is-open' : 'mh-links'}
-            aria-label="Main navigation"
+            aria-label={t('chrome.mainNav')}
           >
             {nav.map(([href, label]) =>
               // The blog is served by the console service, so it needs a full page load:
               // in-app navigation would look for a /blog route here and show the 404.
               serverRoutes.has(href) ? (
                 <a key={href} href={href} aria-current={active(href) ? 'page' : undefined}>
-                  {label}
+                  {t(label)}
                 </a>
               ) : (
-              <Link
-                key={href}
-                href={href}
-                aria-current={active(href) ? 'page' : undefined}
-                onPress={() => setMenu(false)}
-              >
-                {label}
-              </Link>
+                <Link
+                  key={href}
+                  href={href}
+                  aria-current={active(href) ? 'page' : undefined}
+                  onPress={() => setMenu(false)}
+                >
+                  {t(label)}
+                </Link>
               ),
             )}
             <a href={signInUrl} className="mh-links-signin">
-              Sign in
+              {t('common.signIn')}
             </a>
+            <LanguageSwitcher className="mh-links-lang" />
             <span className="mh-links-cta">
               <KeyButton className="mh-btn mh-btn-primary" />
             </span>
           </nav>
           <div className="mh-nav-actions">
             <a href={signInUrl} className="mh-signin">
-              Sign in
+              {t('common.signIn')}
             </a>
+            <LanguageSwitcher className="mh-nav-lang" />
             <button
               type="button"
               className="mh-icon-btn"
               onClick={toggleTheme}
-              aria-label="Toggle dark mode"
+              aria-label={t('chrome.theme')}
             >
               <svg className="mh-sun" viewBox="0 0 24 24" aria-hidden="true">
                 <circle cx="12" cy="12" r="4" />
@@ -243,7 +309,7 @@ export function SiteFrame({
               className="mh-icon-btn mh-menu-btn"
               aria-expanded={menu}
               aria-controls="mh-navigation"
-              aria-label={menu ? 'Close menu' : 'Open menu'}
+              aria-label={menu ? t('chrome.closeMenu') : t('chrome.openMenu')}
               onClick={() => setMenu(!menu)}
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -269,38 +335,44 @@ export function SiteFrame({
         </svg>
         <div className="mh-wrap mh-footer-grid">
           <div className="mh-footer-brand">
-            <Link href="/" aria-label="Mantrilo home">
+            <Link href="/" aria-label={t('chrome.home')}>
               <Brand />
             </Link>
-            <p>Sacred content, thoughtfully connected.</p>
+            <p>{t('footer.tagline')}</p>
           </div>
-          <nav aria-label="Products">
-            <p className="mh-footer-label">Products</p>
-            <Link href="/mantra-api">Mantras</Link>
-            <Link href="/sacred-audio-api">Sacred audio</Link>
-            <Link href="/books-api">Books</Link>
-            <Link href="/astrology-api">Astrology</Link>
-            <Link href="/calculators">Sign calculators</Link>
+          <nav aria-label={t('footer.products')}>
+            <p className="mh-footer-label">{t('footer.products')}</p>
+            <Link href="/mantra-api">{t('footer.mantras')}</Link>
+            <Link href="/sacred-audio-api">{t('footer.sacredAudio')}</Link>
+            <Link href="/books-api">{t('footer.books')}</Link>
+            <Link href="/astrology-api">{t('footer.astrology')}</Link>
+            <Link href="/calculators">{t('footer.signCalculators')}</Link>
           </nav>
-          <nav aria-label="Developers">
-            <p className="mh-footer-label">Developers</p>
-            <Link href="/docs">API docs</Link>
-            <Link href="/docs#guides">Guides by goal</Link>
-            <Link href="/library">Content library</Link>
-            <Link href="/pricing">Pricing</Link>
-            <a href={signUpUrl}>Get API key</a>
+          <nav aria-label={t('footer.developers')}>
+            <p className="mh-footer-label">{t('footer.developers')}</p>
+            <Link href="/docs">{t('footer.apiDocs')}</Link>
+            <Link href="/docs#guides">{t('footer.guides')}</Link>
+            <Link href="/library">{t('footer.library')}</Link>
+            <Link href="/pricing">{t('footer.pricing')}</Link>
+            <a href={signUpUrl}>{t('common.getApiKey')}</a>
           </nav>
-          <nav aria-label="Company">
-            <p className="mh-footer-label">Company</p>
-            <Link href="/about">About Mantrilo</Link>
-            <Link href="/license">Content license</Link>
-            <Link href="/privacy">Privacy</Link>
-            <Link href="/terms">Terms</Link>
-            <Link href="/contact">Contact</Link>
+          <nav aria-label={t('footer.company')}>
+            <p className="mh-footer-label">{t('footer.company')}</p>
+            <Link href="/about">{t('footer.about')}</Link>
+            <Link href="/license">{t('footer.license')}</Link>
+            <Link href="/privacy">{t('footer.privacy')}</Link>
+            <Link href="/terms">{t('footer.terms')}</Link>
+            <Link href="/contact">{t('footer.contact')}</Link>
           </nav>
         </div>
         <div className="mh-wrap mh-footer-base">
-          <span>© {new Date().getFullYear()} Mantrilo</span>
+          <span>
+            ©{' '}
+            <span dir="ltr">
+              {new Intl.DateTimeFormat(intlLocale(lang), { year: 'numeric' }).format(new Date())}
+            </span>{' '}
+            Mantrilo
+          </span>
           <span lang="sa-Deva" className="mh-footer-sanskrit">
             सर्वे भवन्तु सुखिनः
           </span>
@@ -328,6 +400,7 @@ export function PageHero({
   crumb?: string;
   children?: ReactNode;
 }) {
+  const { t } = useI18n();
   return (
     <section className={aside ? 'mh-page-hero has-aside' : 'mh-page-hero'}>
       <div className="mh-mesh mh-mesh-soft" aria-hidden="true">
@@ -338,8 +411,8 @@ export function PageHero({
       <div className="mh-wrap mh-page-hero-grid">
         <div className="mh-page-hero-copy">
           {crumb && (
-            <nav className="mh-crumbs" aria-label="Breadcrumb">
-              <Link href="/">Home</Link>
+            <nav className="mh-crumbs" aria-label={t('chrome.breadcrumb')}>
+              <Link href="/">{t('chrome.crumbHome')}</Link>
               <span aria-hidden="true">/</span>
               <span aria-current="page">{crumb}</span>
             </nav>
@@ -410,6 +483,7 @@ export function DataTable({
 }
 
 export function CtaBand({ title, copy }: { title: string; copy: string }) {
+  const { t } = useI18n();
   return (
     <section className="mh-section">
       <div className="mh-wrap">
@@ -426,7 +500,7 @@ export function CtaBand({ title, copy }: { title: string; copy: string }) {
           <div className="mh-actions">
             <KeyButton className="mh-btn mh-btn-ink" />
             <Link href="/docs" className="mh-btn mh-btn-glass">
-              Read the docs <Arrow />
+              {t('common.readDocs')} <Arrow />
             </Link>
           </div>
         </div>

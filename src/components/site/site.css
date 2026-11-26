@@ -254,7 +254,7 @@ body:has(.mh[data-theme='dark']) {
 }
 .mh-skip {
   position: absolute;
-  left: 16px;
+  inset-inline-start: 16px;
   top: -60px;
   z-index: 100;
   padding: 10px 16px;
@@ -493,7 +493,7 @@ body:has(.mh[data-theme='dark']) {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 .mh-menu-btn {
   display: none;
@@ -533,7 +533,7 @@ body:has(.mh[data-theme='dark']) {
   width: 42vw;
   height: 42vw;
   top: -18%;
-  right: -8%;
+  inset-inline-end: -8%;
   animation: mh-drift-1 22s ease-in-out infinite alternate;
 }
 .mh-blob-2 {
@@ -541,7 +541,7 @@ body:has(.mh[data-theme='dark']) {
   width: 34vw;
   height: 34vw;
   top: 28%;
-  right: 18%;
+  inset-inline-end: 18%;
   animation: mh-drift-2 26s ease-in-out infinite alternate;
 }
 .mh-blob-3 {
@@ -549,14 +549,14 @@ body:has(.mh[data-theme='dark']) {
   width: 30vw;
   height: 30vw;
   bottom: -12%;
-  right: -4%;
+  inset-inline-end: -4%;
   opacity: 0.7;
   animation: mh-drift-3 30s ease-in-out infinite alternate;
 }
 .mh-blob-4 {
   background: var(--rose);
   top: -14%;
-  right: 30%;
+  inset-inline-end: 30%;
   width: 24vw;
   height: 24vw;
   opacity: 0.55;
@@ -593,7 +593,8 @@ body:has(.mh[data-theme='dark']) {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 4px 14px 4px 4px;
+  padding-block: 4px 4px;
+  padding-inline: 4px 14px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--surface) 80%, transparent);
   border: 1px solid var(--line);
@@ -834,7 +835,7 @@ body:has(.mh[data-theme='dark']) {
 
 .mh .mh-verse-float {
   position: absolute;
-  left: -40px;
+  inset-inline-start: -40px;
   bottom: -44px;
   width: min(330px, 80%);
   padding: 18px 20px;
@@ -924,7 +925,7 @@ body:has(.mh[data-theme='dark']) {
 }
 .mh-heading-left {
   margin: 0;
-  text-align: left;
+  text-align: start;
 }
 
 /* Customer story */
@@ -965,7 +966,7 @@ body:has(.mh[data-theme='dark']) {
   position: absolute;
   width: 460px;
   height: 460px;
-  left: -170px;
+  inset-inline-start: -170px;
   bottom: -200px;
   color: var(--saffron);
   opacity: 0.12;
@@ -1020,7 +1021,7 @@ body:has(.mh[data-theme='dark']) {
   color: var(--ink-3);
 }
 .mh-story-visit {
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 .mh-story-side {
   padding: 28px;
@@ -1082,7 +1083,7 @@ body:has(.mh[data-theme='dark']) {
     padding: 40px 24px 28px;
   }
   .mh-story-visit {
-    margin-left: 0;
+    margin-inline-start: 0;
     flex-basis: 100%;
   }
   .mh-story-side {
@@ -1179,7 +1180,8 @@ body:has(.mh[data-theme='dark']) {
 .mh-field output {
   height: 40px;
   min-width: 210px;
-  padding: 0 38px 0 14px;
+  padding-block: 0 0;
+  padding-inline: 14px 38px;
   border-radius: 10px;
   border: 1px solid var(--line-2);
   background: var(--surface-2)
@@ -1202,12 +1204,12 @@ body:has(.mh[data-theme='dark']) {
   display: flex;
   align-items: center;
   background-image: none;
-  padding-right: 14px;
+  padding-inline-end: 14px;
   cursor: default;
   color: var(--ink-2);
 }
 .mh-demo-path {
-  margin-left: auto;
+  margin-inline-start: auto;
   align-self: center;
   font-family: var(--mono);
   font-size: 13px;
@@ -1306,8 +1308,8 @@ body:has(.mh[data-theme='dark']) {
 }
 .mh-render-verse {
   margin: 24px 0;
-  padding-left: 18px;
-  border-left: 2px solid var(--saffron);
+  padding-inline-start: 18px;
+  border-inline-start: 2px solid var(--saffron);
 }
 .mh-render-verse .mh-deva {
   font-size: clamp(22px, 2.3vw, 30px);
@@ -1569,15 +1571,15 @@ body:has(.mh[data-theme='dark']) {
 .mh-tabs [aria-selected='true']::after {
   content: '';
   position: absolute;
-  left: 12px;
-  right: 12px;
+  inset-inline-start: 12px;
+  inset-inline-end: 12px;
   bottom: -9px;
   height: 2px;
   border-radius: 2px;
   background: var(--saffron);
 }
 .mh-tabs .mh-copy {
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 .mh-code-file {
   padding: 14px 20px 0;
@@ -1736,7 +1738,7 @@ body:has(.mh[data-theme='dark']) {
   font-variant-numeric: tabular-nums;
 }
 .mh-price span {
-  margin-left: 4px;
+  margin-inline-start: 4px;
   font-size: 14px;
   font-weight: 500;
   letter-spacing: 0;
@@ -1783,7 +1785,7 @@ body:has(.mh[data-theme='dark']) {
   color: var(--ink-3) !important;
 }
 .mh-plans-note .mh-textlink {
-  margin-left: 6px;
+  margin-inline-start: 6px;
 }
 
 /* FAQ */
@@ -1827,7 +1829,8 @@ body:has(.mh[data-theme='dark']) {
   transform: rotate(45deg);
 }
 .mh-faq-list details p {
-  padding: 0 40px 24px 0;
+  padding-block: 0 24px;
+  padding-inline: 0 40px;
   font-size: 16px;
   line-height: 1.6;
 }
@@ -1855,22 +1858,22 @@ body:has(.mh[data-theme='dark']) {
 }
 .mh-mesh-cta .mh-blob-1 {
   top: -60%;
-  right: -10%;
+  inset-inline-end: -10%;
 }
 .mh-mesh-cta .mh-blob-2 {
   top: 0;
-  left: -10%;
-  right: auto;
+  inset-inline-start: -10%;
+  inset-inline-end: auto;
 }
 .mh-mesh-cta .mh-blob-3 {
   bottom: -90%;
-  right: 20%;
+  inset-inline-end: 20%;
 }
 .mh-cta-ring {
   position: absolute;
   width: 520px;
   height: 520px;
-  right: -140px;
+  inset-inline-end: -140px;
   top: -140px;
   color: #fff;
   opacity: 0.35;
@@ -2105,7 +2108,7 @@ body:has(.mh[data-theme='dark']) {
 }
 .mh-prose ul,
 .mh-prose ol {
-  padding-left: 20px !important;
+  padding-inline-start: 20px !important;
 }
 .mh-prose ul {
   list-style: disc;
@@ -2141,7 +2144,7 @@ body:has(.mh[data-theme='dark']) {
 .mh-table th,
 .mh-table td {
   padding: 12px 16px;
-  text-align: left;
+  text-align: start;
   vertical-align: top;
   border-bottom: 1px solid var(--line);
   color: var(--ink-2);
@@ -2204,7 +2207,7 @@ body:has(.mh[data-theme='dark']) {
   box-shadow: var(--shadow-sm);
 }
 .mh-segment .mh-count {
-  margin-left: 6px;
+  margin-inline-start: 6px;
   font-size: 12px;
   color: var(--ink-3);
 }
@@ -2257,7 +2260,7 @@ body:has(.mh[data-theme='dark']) {
 }
 .mh-search svg {
   position: absolute;
-  left: 16px;
+  inset-inline-start: 16px;
   width: 18px;
   height: 18px;
   fill: none;
@@ -2268,8 +2271,8 @@ body:has(.mh[data-theme='dark']) {
 }
 .mh-search .mh-input {
   min-height: 52px;
-  padding-left: 46px;
-  padding-right: 64px;
+  padding-inline-start: 46px;
+  padding-inline-end: 64px;
   font-size: 16px;
   border-radius: 14px;
   box-shadow: var(--shadow-sm);
@@ -2277,7 +2280,7 @@ body:has(.mh[data-theme='dark']) {
 .mh-search kbd,
 .mh-kbd {
   position: absolute;
-  right: 14px;
+  inset-inline-end: 14px;
   padding: 2px 7px;
   border-radius: 6px;
   border: 1px solid var(--line-2);
@@ -2413,7 +2416,7 @@ a.mh-card {
 .mh-steps li {
   counter-increment: step;
   position: relative;
-  padding-left: 40px;
+  padding-inline-start: 40px;
   min-height: 26px;
   line-height: 1.6;
   color: var(--ink-2);
@@ -2421,7 +2424,7 @@ a.mh-card {
 .mh-steps li::before {
   content: counter(step);
   position: absolute;
-  left: 0;
+  inset-inline-start: 0;
   top: 0;
   display: inline-grid;
   place-items: center;
@@ -2478,8 +2481,8 @@ a.mh-card {
     clip-path: polygon(0 0, 100% 0, 100% 94%, 0 100%);
   }
   .mh .mh-verse-float {
-    left: auto;
-    right: 16px;
+    inset-inline-start: auto;
+    inset-inline-end: 16px;
   }
   .mh-hero .mh-blob-1 {
     top: 38%;
@@ -2510,8 +2513,8 @@ a.mh-card {
   .mh-links {
     position: absolute;
     top: 68px;
-    left: 0;
-    right: 0;
+    inset-inline-start: 0;
+    inset-inline-end: 0;
     display: none;
     flex-direction: column;
     align-items: stretch;
@@ -2548,7 +2551,7 @@ a.mh-card {
     min-height: 0;
   }
   .mh-demo-path {
-    margin-left: 0;
+    margin-inline-start: 0;
     flex-basis: 100%;
   }
 }
@@ -2565,7 +2568,7 @@ a.mh-card {
   }
   .mh-heading {
     margin-bottom: 40px;
-    text-align: left;
+    text-align: start;
   }
   .mh-actions .mh-btn {
     flex: 1 1 auto;
@@ -2576,8 +2579,8 @@ a.mh-card {
   }
   .mh .mh-verse-float {
     position: relative;
-    left: auto;
-    right: auto;
+    inset-inline-start: auto;
+    inset-inline-end: auto;
     bottom: auto;
     width: auto;
     margin: -28px 12px 0;
@@ -2758,7 +2761,7 @@ a.mh-card {
 .mh-guide-nav a {
   display: block;
   padding: 5px 10px;
-  margin-left: -10px;
+  margin-inline-start: -10px;
   border-radius: 8px;
   color: var(--ink-2);
   font-size: 14px;
@@ -2905,7 +2908,7 @@ a.mh-card {
   font-weight: 600;
 }
 .mh-params dt span {
-  margin-left: 6px;
+  margin-inline-start: 6px;
   font-size: 12px;
   color: var(--ink-3);
 }
@@ -3219,7 +3222,7 @@ a.mh-card {
   color: var(--ink-3);
 }
 .mh-compare tbody th {
-  text-align: left;
+  text-align: start;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -3282,7 +3285,7 @@ a.mh-card {
   }
   .mh-docs-group a,
   .mh-guide-nav a {
-    margin-left: 0;
+    margin-inline-start: 0;
     padding: 4px 10px;
     font-size: 13px;
     border: 1px solid var(--line);
@@ -3462,7 +3465,7 @@ a.mh-card {
 .mh .mh-mantra-list {
   columns: 2 260px;
   column-gap: 32px;
-  padding-left: 18px;
+  padding-inline-start: 18px;
 }
 .mh .mh-mantra-list li {
   break-inside: avoid;
@@ -3507,7 +3510,7 @@ a.mh-card {
   z-index: -1;
   pointer-events: none;
   background: linear-gradient(to right, var(--line) 1px, transparent 1px) 0 0 / 25% 100%;
-  border-right: 1px solid var(--line);
+  border-inline-end: 1px solid var(--line);
   -webkit-mask-image: repeating-linear-gradient(#000 0 4px, transparent 4px 9px);
   mask-image: repeating-linear-gradient(#000 0 4px, transparent 4px 9px);
   opacity: 0.8;
@@ -3585,8 +3588,8 @@ a.mh-card {
 }
 .mh .mh-blog-row-main > .mh-blog-kicker,
 .mh .mh-blog-date {
-  padding-left: 14px;
-  border-left: 1.5px solid var(--saffron);
+  padding-inline-start: 14px;
+  border-inline-start: 1.5px solid var(--saffron);
   line-height: 1.25;
 }
 
@@ -3696,7 +3699,7 @@ a.mh-card {
   background: #28c840;
 }
 .mh .mh-blog-window-bar span {
-  margin-left: auto;
+  margin-inline-start: auto;
   color: #8f86a8;
   font: 12px var(--mono);
   letter-spacing: 0.06em;
@@ -3847,13 +3850,14 @@ a.mh-card {
   margin: 0;
   padding: 0;
   list-style: none;
-  border-left: 1px solid var(--line-2);
+  border-inline-start: 1px solid var(--line-2);
 }
 .mh .mh-blog-toc a {
   display: block;
-  margin-left: -1px;
-  padding: 6px 0 6px 14px;
-  border-left: 1.5px solid transparent;
+  margin-inline-start: -1px;
+  padding-block: 6px 6px;
+  padding-inline: 14px 0;
+  border-inline-start: 1.5px solid transparent;
   color: var(--ink-3);
   font-size: 14px;
   line-height: 1.4;
@@ -3863,7 +3867,7 @@ a.mh-card {
     border-color 0.2s;
 }
 .mh .mh-blog-toc a:hover {
-  border-left-color: var(--saffron);
+  border-inline-start-color: var(--saffron);
   color: var(--ink);
 }
 .mh .mh-blog-lede {
@@ -3897,7 +3901,7 @@ a.mh-card {
 .mh .mh-blog-body blockquote {
   margin: 24px 0;
   padding: 4px 20px;
-  border-left: 3px solid var(--saffron);
+  border-inline-start: 3px solid var(--saffron);
   color: var(--ink-2);
 }
 .mh .mh-blog-body table {
@@ -3909,7 +3913,7 @@ a.mh-card {
 .mh .mh-blog-body td {
   padding: 10px 12px;
   border-bottom: 1px solid var(--line);
-  text-align: left;
+  text-align: start;
 }
 .mh .mh-blog-body :not(pre) > code {
   padding: 1px 6px;
@@ -3935,7 +3939,7 @@ a.mh-card {
 .mh .mh-code-lang {
   position: absolute;
   top: 10px;
-  left: 16px;
+  inset-inline-start: 16px;
   color: #8f86a8;
   font: 12px var(--mono);
   text-transform: uppercase;
@@ -3944,7 +3948,7 @@ a.mh-card {
 .mh .mh-copy-code {
   position: absolute;
   top: 8px;
-  right: 10px;
+  inset-inline-end: 10px;
   padding: 3px 10px;
   border: 1px solid var(--code-line);
   border-radius: 8px;
@@ -4182,7 +4186,7 @@ a.mh-card {
 }
 .mh-calc-spinner {
   position: absolute;
-  right: 14px;
+  inset-inline-end: 14px;
   bottom: 13px;
   width: 18px;
   height: 18px;
@@ -4199,8 +4203,8 @@ a.mh-card {
 .mh-calc-places {
   position: absolute;
   top: 100%;
-  left: 0;
-  right: 0;
+  inset-inline-start: 0;
+  inset-inline-end: 0;
   z-index: 20;
   margin: 6px 0 0;
   padding: 6px;
@@ -4272,7 +4276,7 @@ a.mh-card {
   font-size: 18px;
 }
 .mh-signs-grid h3 span {
-  margin-left: 6px;
+  margin-inline-start: 6px;
   font-size: 13px;
   font-weight: 500;
   color: var(--ink-3);
@@ -4311,7 +4315,7 @@ a.mh-card {
   color: var(--accent-text);
 }
 .mh-sign-label span {
-  margin-left: 4px;
+  margin-inline-start: 4px;
   font-weight: 500;
   text-transform: none;
   letter-spacing: 0;
@@ -4323,7 +4327,7 @@ a.mh-card {
   color: var(--ink);
 }
 .mh-sign-deva {
-  margin-left: 10px;
+  margin-inline-start: 10px;
   font-family: 'Tiro Devanagari Sanskrit', serif;
   font-size: 20px;
   font-weight: 400;
@@ -4434,4 +4438,342 @@ a.mh-card {
   .mh-sign.is-primary .mh-sign-name {
     font-size: 28px;
   }
+}
+
+/* ---------- Languages ---------- */
+
+/* Language switcher: in the header from 861px, inside the mobile menu below that. */
+.mh-lang {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding-inline: 10px 8px;
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  color: var(--ink-2);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.mh-lang:hover,
+.mh-lang:focus-within {
+  color: var(--ink);
+  border-color: var(--saffron);
+}
+.mh-lang svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+.mh-lang select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 1.5;
+  padding-inline-end: 14px;
+  cursor: pointer;
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    calc(100% - 5px) 55%,
+    100% 55%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+}
+.mh-lang select:focus {
+  outline: none;
+}
+.mh-lang:focus-within {
+  outline: 2px solid color-mix(in srgb, var(--saffron) 40%, transparent);
+  outline-offset: 2px;
+}
+.mh-lang option {
+  color: var(--ink);
+  background: var(--surface);
+}
+.mh-links .mh-links-lang {
+  display: none;
+}
+@media (max-width: 860px) {
+  .mh-nav-lang {
+    display: none;
+  }
+  .mh-links .mh-links-lang {
+    display: flex;
+    margin-block: 12px 4px;
+    height: 44px;
+    font-size: 16px;
+  }
+  .mh-links .mh-links-lang select {
+    flex: 1;
+  }
+}
+.mh-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Script fonts. Inter stays first so Latin terms (API, JSON, code ids) keep the house face; the
+   browser takes each Indic or Urdu glyph from the Noto family that +html.tsx loads for the page's
+   language only. */
+html[lang='hi'] .mh,
+html[lang='ne'] .mh,
+html[lang='mr'] .mh {
+  --sans: 'Inter', 'Noto Sans Devanagari', ui-sans-serif, system-ui, sans-serif;
+}
+html[lang='gu'] .mh {
+  --sans: 'Inter', 'Noto Sans Gujarati', ui-sans-serif, system-ui, sans-serif;
+}
+html[lang='bn'] .mh,
+html[lang='as'] .mh {
+  --sans: 'Inter', 'Noto Sans Bengali', ui-sans-serif, system-ui, sans-serif;
+}
+html[lang='ta'] .mh {
+  --sans: 'Inter', 'Noto Sans Tamil', ui-sans-serif, system-ui, sans-serif;
+}
+html[lang='te'] .mh {
+  --sans: 'Inter', 'Noto Sans Telugu', ui-sans-serif, system-ui, sans-serif;
+}
+html[lang='kn'] .mh {
+  --sans: 'Inter', 'Noto Sans Kannada', ui-sans-serif, system-ui, sans-serif;
+}
+html[lang='ml'] .mh {
+  --sans: 'Inter', 'Noto Sans Malayalam', ui-sans-serif, system-ui, sans-serif;
+}
+html[lang='pa'] .mh {
+  --sans: 'Inter', 'Noto Sans Gurmukhi', ui-sans-serif, system-ui, sans-serif;
+}
+html[lang='or'] .mh {
+  --sans: 'Inter', 'Noto Sans Oriya', ui-sans-serif, system-ui, sans-serif;
+}
+html[lang='ur'] .mh {
+  --sans: 'Inter', 'Noto Nastaliq Urdu', ui-sans-serif, system-ui, sans-serif;
+}
+/* Router links are react-native-web Text, whose class sets the system font stack. Translated pages
+   need the script font, so links take the font of their surroundings. :where() keeps this at
+   (0,1,1): it beats react-native-web's single class and loses to any site rule for a link. */
+:where(html:not([lang='en']) .mh) a[role='link'] {
+  font-family: inherit;
+}
+
+/* Indic scripts stack vowel signs above and below the line, so the tight display line heights
+   would clip them. Tracking is reset because negative letter-spacing breaks conjuncts and joins. */
+html:not([lang='en'])
+  .mh
+  :is(
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    .mx-h2,
+    .mx-lede,
+    .mh-page-lede,
+    .mx-kicker,
+    .mh-eyebrow,
+    .mx-sub,
+    .mh-btn,
+    .mx-chip,
+    .mh-chip,
+    summary,
+    dt,
+    b,
+    strong
+  ) {
+  letter-spacing: 0;
+}
+html:not([lang='en']) .mh :is(h1, h2, h3, h4, .mx-h2) {
+  line-height: 1.4;
+}
+html:not([lang='en']) .mh :is(.mh-btn, .mx-chip, .mh-chip, .mh-links a) {
+  line-height: 1.5;
+}
+html:not([lang='en']) .mh :is(p, li, dd, td, th, summary, label) {
+  line-height: 1.7;
+}
+html:not([lang='en']) .mh :is(.mx-kicker, .mh-eyebrow, .mh-footer-label, .mx-label) {
+  text-transform: none;
+}
+
+/* Nastaliq needs much more vertical room than Naskh or Latin. */
+html[lang='ur'] body {
+  line-height: 2;
+}
+html[lang='ur'] .mh :is(h1, h2, h3, h4, .mx-h2) {
+  line-height: 1.9;
+}
+html[lang='ur']
+  .mh
+  :is(p, li, dd, td, th, summary, label, .mh-btn, .mx-chip, .mh-chip, .mh-links a) {
+  line-height: 2.1;
+}
+
+/* Right-to-left: code, endpoints and API values always read left to right. */
+.mh :is(pre, code, kbd, samp, .mh-pre, .mx-mono, .mx-field, .mx-idx) {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+.mh pre,
+.mh .mh-pre {
+  text-align: left;
+}
+[dir='rtl'] .mh-arrow,
+[dir='rtl'] .mh-flip,
+[dir='rtl'] .mx-row svg {
+  scale: -1 1;
+}
+[dir='rtl'] .mh-flip {
+  display: inline-block;
+}
+
+/* Header fit. With the language switcher the English header needs about 1130px, so it tightens
+   below 1280px and switches to the menu button below 1160px. Translated labels are set a size
+   smaller; measured with each Noto font, every language then fits in 1160px except Tamil and
+   Malayalam. Their labels need about 1390px and 1330px, more than the 1200px header, so they
+   use the menu button at every width. */
+.mh-signin,
+.mh-links a {
+  white-space: nowrap;
+}
+html:not([lang='en']) .mh-nav {
+  gap: 20px;
+}
+html:not([lang='en']) :is(.mh-links a, .mh-signin) {
+  padding-inline: 8px;
+  font-size: 14px;
+}
+html:not([lang='en']) .mh-nav-cta {
+  font-size: 13px;
+}
+@media (max-width: 1280px) {
+  .mh-nav {
+    gap: 20px;
+  }
+  .mh-links a,
+  .mh-signin {
+    padding-inline: 8px;
+  }
+}
+@media (max-width: 1160px) {
+  html:not([lang='en']) .mh-links a {
+    font-size: 17px;
+  }
+  .mh-links {
+    position: absolute;
+    top: 68px;
+    inset-inline: 0;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 8px 16px 20px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+    box-shadow: var(--shadow-md);
+  }
+  .mh-links.is-open {
+    display: flex;
+  }
+  .mh-links a {
+    padding: 14px 8px;
+    font-size: 17px;
+    border-bottom: 1px solid var(--line);
+  }
+  .mh-menu-btn {
+    display: inline-grid;
+  }
+  .mh-nav-cta,
+  .mh-signin,
+  .mh-nav-lang {
+    display: none;
+  }
+  .mh-links .mh-links-signin {
+    display: block;
+  }
+  .mh-links .mh-links-cta {
+    display: block;
+    margin-top: 16px;
+    border: 0;
+  }
+  .mh-links .mh-links-cta .mh-btn {
+    width: 100%;
+    padding: 0 20px;
+    color: var(--on-saffron) !important;
+    border-bottom: 0;
+  }
+  .mh-links .mh-links-lang {
+    display: flex;
+    margin-block: 12px 4px;
+    height: 44px;
+    font-size: 16px;
+  }
+  .mh-links .mh-links-lang select {
+    flex: 1;
+  }
+}
+html:is([lang='ta'], [lang='ml']) .mh-links {
+  position: absolute;
+  top: 68px;
+  inset-inline: 0;
+  display: none;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 8px 16px 20px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  box-shadow: var(--shadow-md);
+}
+html:is([lang='ta'], [lang='ml']) .mh-links.is-open {
+  display: flex;
+}
+html:is([lang='ta'], [lang='ml']) .mh-links a {
+  padding: 14px 8px;
+  font-size: 17px;
+  border-bottom: 1px solid var(--line);
+}
+html:is([lang='ta'], [lang='ml']) .mh-menu-btn {
+  display: inline-grid;
+}
+html:is([lang='ta'], [lang='ml']) .mh-nav-cta,
+html:is([lang='ta'], [lang='ml']) .mh-signin,
+html:is([lang='ta'], [lang='ml']) .mh-nav-lang {
+  display: none;
+}
+html:is([lang='ta'], [lang='ml']) .mh-links .mh-links-signin {
+  display: block;
+}
+html:is([lang='ta'], [lang='ml']) .mh-links .mh-links-cta {
+  display: block;
+  margin-top: 16px;
+  border: 0;
+}
+html:is([lang='ta'], [lang='ml']) .mh-links .mh-links-cta .mh-btn {
+  width: 100%;
+  padding: 0 20px;
+  color: var(--on-saffron) !important;
+  border-bottom: 0;
+}
+html:is([lang='ta'], [lang='ml']) .mh-links .mh-links-lang {
+  display: flex;
+  margin-block: 12px 4px;
+  height: 44px;
+  font-size: 16px;
+}
+html:is([lang='ta'], [lang='ml']) .mh-links .mh-links-lang select {
+  flex: 1;
 }

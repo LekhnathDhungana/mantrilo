@@ -1,33 +1,36 @@
-import { Link } from 'expo-router';
+import { Link } from '../i18n/Link.web';
 import { calculatorHub, calculatorPages } from '../data/calculator-pages';
 import { Arrow, CtaBand, PageHero, SiteFrame } from './site/Chrome.web';
+import { useI18n } from '../i18n';
+import { calculatorText } from '../i18n/calculators';
 
 export default function CalculatorHub() {
+  const { t } = useI18n();
   return (
     <SiteFrame path={calculatorHub.path}>
       <PageHero
-        eyebrow="Free calculators"
-        crumb={calculatorHub.label}
-        title="Find your signs, Western and Vedic."
-        lede="Enter your birth date, time and place once and see your Sun, Moon and Rising signs alongside your Rashi, Lagna and Nakshatra. Free, with no sign-up."
+        eyebrow={t('calculators.hub.eyebrow')}
+        crumb={t('meta./calculators.label') || calculatorHub.label}
+        title={t('calculators.hub.title')}
+        lede={t('calculators.hub.lede')}
       />
       <section className="mh-section-sm">
         <div className="mh-wrap mh-calc-cards">
-          {calculatorPages.map((page) => (
-            <Link key={page.slug} href={page.path} className="mh-card mh-card-pad">
-              <h3>{page.label}</h3>
-              <p>{page.lede}</p>
-              <span className="mh-card-link">
-                Open calculator <Arrow />
-              </span>
-            </Link>
-          ))}
+          {calculatorPages.map((page) => {
+            const text = calculatorText(t, page);
+            return (
+              <Link key={page.slug} href={page.path} className="mh-card mh-card-pad">
+                <h3>{text.label}</h3>
+                <p>{text.lede}</p>
+                <span className="mh-card-link">
+                  {t('calculators.hub.open')} <Arrow />
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </section>
-      <CtaBand
-        title="Building an astrology app?"
-        copy="Every calculator here runs on Mantrilo’s astrology API. Get the same results as JSON from your own server."
-      />
+      <CtaBand title={t('calculators.hub.ctaTitle')} copy={t('calculators.hub.ctaCopy')} />
     </SiteFrame>
   );
 }

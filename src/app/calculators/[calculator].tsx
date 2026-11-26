@@ -16,7 +16,7 @@ export const loader = createStaticLoader(
 );
 
 export function generateMetadata(_request: unknown, params: Record<string, string | string[]>) {
-  return pageMetadata(`/calculators/${String(params.calculator)}`);
+  return pageMetadata(`/calculators/${String(params.calculator)}`, undefined, params);
 }
 
 export default function Page() {

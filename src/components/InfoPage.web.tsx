@@ -1,23 +1,13 @@
 import { useState } from 'react';
-import { Link, useLocalSearchParams } from 'expo-router';
-import { seoPages, signUpUrl } from '../data/site';
+import { useLocalSearchParams } from 'expo-router';
+import { Link } from '../i18n/Link.web';
+import { signUpUrl } from '../data/site';
+import { useI18n } from '../i18n';
+import { Rich } from '../i18n/Rich';
 import DocsPage from './DocsPage.web';
 import { Arrow, PageHero, SiteFrame } from './site/Chrome.web';
 
-const titles: Record<string, string> = {
-  docs: 'Mantrilo API documentation.',
-  about: 'About Mantrilo.',
-  contact: 'Talk to us.',
-  privacy: 'Privacy & data.',
-  terms: 'Website terms status.',
-  license: 'Content license status.',
-};
-const ledes: Record<string, string> = {
-  about: 'One developer API for Sanskrit content and astrology calculations.',
-  privacy: 'What this website does with the details you enter.',
-  terms: 'The status of Mantrilo’s website terms.',
-  license: 'Reuse guidance for Sanskrit texts, modern editions, and English retellings.',
-};
+const pages = new Set(['about', 'contact', 'privacy', 'terms', 'license']);
 
 export default function InfoPage({ page }: { page: string }) {
   if (page === 'docs') return <DocsPage />;
@@ -25,6 +15,8 @@ export default function InfoPage({ page }: { page: string }) {
 }
 
 function StaticPage({ page }: { page: string }) {
+  const { t } = useI18n();
+  const known = pages.has(page);
   const { interest } = useLocalSearchParams<{ interest?: string }>();
   const astrologyInquiry = interest === 'astrology';
   const [draft, setDraft] = useState('');
@@ -35,7 +27,7 @@ function StaticPage({ page }: { page: string }) {
     const data = new FormData(event.currentTarget);
     const isAstrologyInquiry =
       new URLSearchParams(window.location.search).get('interest') === 'astrology';
-    const request = `${isAstrologyInquiry ? 'Mantrilo astrology inquiry' : 'Mantrilo inquiry'}\n\nName: ${data.get('name')}\nWork email: ${data.get('email')}\nProduct: ${data.get('product')}\n\nMessage:\n${data.get('message')}\n`;
+    const request = `${isAstrologyInquiry ? 'Mantrilo astrology inquiry' : 'Mantrilo inquiry'}\n\n${t('info.contact.draftName')}: ${data.get('name')}\n${t('info.contact.draftEmail')}: ${data.get('email')}\n${t('info.contact.draftProduct')}: ${data.get('product')}\n\n${t('info.contact.draftMessage')}:\n${data.get('message')}\n`;
     setDraft(request);
     if (downloadUrl) URL.revokeObjectURL(downloadUrl);
     setDownloadUrl(URL.createObjectURL(new Blob([request], { type: 'text/plain' })));
@@ -43,53 +35,54 @@ function StaticPage({ page }: { page: string }) {
   return (
     <SiteFrame path={`/${page}`}>
       <PageHero
-        crumb={seoPages[`/${page}`]?.label}
-        eyebrow={page === 'contact' ? 'Contact' : page === 'about' ? 'About' : 'Legal'}
-        title={astrologyInquiry ? 'Plan an astrology inquiry.' : titles[page] || 'Page not found.'}
-        lede={page === 'contact' ? undefined : ledes[page]}
+        crumb={known ? t(`meta./${page}.label`) : undefined}
+        eyebrow={t(
+          page === 'contact'
+            ? 'info.eyebrow.contact'
+            : page === 'about'
+              ? 'info.eyebrow.about'
+              : 'info.eyebrow.legal',
+        )}
+        title={
+          astrologyInquiry
+            ? t('info.contact.astrologyTitle')
+            : known
+              ? t(`info.${page}.title`)
+              : t('info.notFound')
+        }
+        lede={page === 'contact' || !known ? undefined : t(`info.${page}.lede`)}
       />
       <section className="mh-section-sm">
         <div className="mh-wrap mh-prose">
           {page === 'about' ? (
             <>
-              <h2>Who it serves</h2>
+              <h2>{t('info.about.servesTitle')}</h2>
+              <p>{t('info.about.serves')}</p>
+              <h2>{t('info.about.catalogTitle')}</h2>
+              <p>{t('info.about.catalog')}</p>
               <p>
-                Mantrilo helps developers build Hindu devotional, learning and calendar apps. The
-                API organizes mantra verses, scripture collections and available recordings, and
-                calculates astrology data from inputs your app supplies.
-              </p>
-              <h2>How to read the catalog</h2>
-              <p>
-                Original text, transliteration, translation and audio are separate fields. Coverage
-                varies by record. Preserve source references where supplied, and verify the edition,
-                translator or performer with Mantrilo before using a title commercially.
-              </p>
-              <p>
-                The sandbox uses a limited sample. Check the <Link href="/library">Library</Link>{' '}
-                and <Link href="/docs">API docs</Link> to see data formats, then{' '}
-                <Link href="/contact">contact Mantrilo</Link> for title-specific rights and
-                coverage.
+                <Rich
+                  text={t('info.about.sandbox')}
+                  tags={{
+                    library: <Link href="/library" />,
+                    docs: <Link href="/docs" />,
+                    contact: <Link href="/contact" />,
+                  }}
+                />
               </p>
             </>
           ) : page === 'contact' ? (
             <>
+              <p>{astrologyInquiry ? t('info.contact.astrologyIntro') : t('info.contact.intro')}</p>
               <p>
-                {astrologyInquiry
-                  ? 'Tell us what you want to calculate and how your product will use it. Astrology is included in every plan.'
-                  : 'Questions about the catalog, licensing, recordings or a larger plan? Tell us what you’re building.'}
-              </p>
-              <p>
-                Looking for an API key? <a href={signUpUrl}>Create a free account</a> in the
-                developer console and you’ll have a sandbox key straight away.
+                <Rich text={t('info.contact.apiKey')} tags={{ link: <a href={signUpUrl} /> }} />
               </p>
               <div className="mh-callout mh-callout-warn">
-                {contactEmail
-                  ? 'Fill in your details, then send the prepared email from your email app.'
-                  : 'This form is not connected to a submission service yet. You can prepare and download your message below. Nothing is sent or stored on a server.'}
+                {contactEmail ? t('info.contact.emailReady') : t('info.contact.notConnected')}
               </div>
               <form className="mh-form" onSubmit={prepare}>
                 <label>
-                  Your name
+                  {t('info.contact.name')}
                   <input
                     className="mh-input"
                     name="name"
@@ -99,7 +92,7 @@ function StaticPage({ page }: { page: string }) {
                   />
                 </label>
                 <label>
-                  Work email
+                  {t('info.contact.email')}
                   <input
                     className="mh-input"
                     name="email"
@@ -110,130 +103,96 @@ function StaticPage({ page }: { page: string }) {
                   />
                 </label>
                 <label>
-                  App or website
+                  {t('info.contact.product')}
                   <input
                     className="mh-input"
                     name="product"
-                    placeholder="Product name or URL"
+                    placeholder={t('info.contact.productPlaceholder')}
                     required
                     maxLength={250}
                   />
                 </label>
                 <label>
-                  How can we help?
+                  {t('info.contact.message')}
                   <textarea
                     className="mh-input"
                     name="message"
-                    placeholder="Tell us about your product and what you need from the API."
+                    placeholder={t('info.contact.messagePlaceholder')}
                     required
                     maxLength={4000}
                   />
                 </label>
                 <button className="mh-btn mh-btn-primary" type="submit">
-                  {astrologyInquiry ? 'Prepare astrology inquiry' : 'Prepare message'} <Arrow />
+                  {astrologyInquiry
+                    ? t('info.contact.prepareAstrology')
+                    : t('info.contact.prepare')}{' '}
+                  <Arrow />
                 </button>
-                <p className="mh-muted">
-                  Your details stay in your browser until you send the email.
-                </p>
+                <p className="mh-muted">{t('info.contact.local')}</p>
               </form>
               {draft && (
                 <section className="mh-card mh-card-pad mh-draft" aria-live="polite">
-                  <h2>Your message</h2>
-                  <pre className="mh-draft-text">{draft}</pre>
+                  <h2>{t('info.contact.yourMessage')}</h2>
+                  <pre className="mh-draft-text" dir="auto">
+                    {draft}
+                  </pre>
                   {contactEmail && (
                     <a
                       className="mh-btn mh-btn-primary"
                       href={`mailto:${contactEmail}?subject=${encodeURIComponent(astrologyInquiry ? 'Mantrilo astrology inquiry' : 'Mantrilo inquiry')}&body=${encodeURIComponent(draft)}`}
                     >
-                      Open email draft ↗
+                      {t('info.contact.openDraft')} ↗
                     </a>
                   )}
                   <p>
                     <a href={downloadUrl} download="mantrilo-message.txt">
-                      Download as a text file ↓
+                      {t('info.contact.download')} ↓
                     </a>
                   </p>
                   <p className="mh-muted">
-                    {contactEmail
-                      ? 'Send the email from your email app to reach us.'
-                      : 'Your draft has not been submitted. A verified contact address must be configured before you can send it from this website.'}
+                    {contactEmail ? t('info.contact.sendFromApp') : t('info.contact.notSubmitted')}
                   </p>
                 </section>
               )}
             </>
           ) : page === 'license' ? (
             <>
-              <h2>Public-domain Sanskrit</h2>
+              <h2>{t('info.license.publicTitle')}</h2>
+              <p>{t('info.license.public')}</p>
+              <h2>{t('info.license.modernTitle')}</h2>
+              <p>{t('info.license.modern')}</p>
+              <h2>{t('info.license.questionsTitle')}</h2>
               <p>
-                You can reuse original Sanskrit text in a commercial app where the text is in the
-                public domain. Check the specific edition and the countries where you plan to
-                distribute it. Keep the source reference with the text where available.
-              </p>
-              <h2>Modern editions and retellings</h2>
-              <p>
-                Modern translations, commentary, editorial additions, and prose retellings can
-                have separate rights. This includes the English retellings of the Ramayana and
-                Mahabharata in the Books API. Check the terms for the version you plan to use and
-                follow its attribution requirements.
-              </p>
-              <h2>Licensing questions</h2>
-              <p>
-                For reuse questions or rights concerns, <Link href="/contact">contact Mantrilo</Link>{' '}
-                with the title or source reference and a brief description of how you plan to use
-                the material.
+                <Rich
+                  text={t('info.license.questions')}
+                  tags={{ link: <Link href="/contact" /> }}
+                />
               </p>
             </>
           ) : page === 'privacy' ? (
             <>
-              <div className="mh-callout mh-callout-warn">
-                A final operator privacy policy has not been supplied. Review and provide it before
-                launch.
-              </div>
-              <h2>What this preview does</h2>
+              <div className="mh-callout mh-callout-warn">{t('info.privacy.warning')}</div>
+              <h2>{t('info.privacy.previewTitle')}</h2>
+              <p>{t('info.privacy.preview')}</p>
+              <p>{t('info.privacy.referral')}</p>
               <p>
-                The contact form prepares a draft locally in your browser. It does not submit form
-                entries to a server or save them in browser storage. If you download a draft, the
-                file contains the details you entered. If configured, the email link passes the
-                draft to your chosen email app.
-              </p>
-              <p>
-                The public site keeps a broad referral category for the current tab. When you choose
-                to try the API or open signup, the link includes that category and the public page
-                path so Mantrilo can count Console visits and signup starts. It does not include the
-                referring URL, account details, or request inputs. The developer console handles
-                account registration and billing separately.
-              </p>
-              <p>
-                <Link href="/contact">Contact us →</Link>
+                <Link href="/contact">{t('info.privacy.contact')} →</Link>
               </p>
             </>
           ) : page === 'terms' ? (
             <>
-              <div className="mh-callout mh-callout-warn">
-                Final website terms have not been supplied. This status page is not a service
-                agreement.
-              </div>
+              <div className="mh-callout mh-callout-warn">{t('info.terms.warning')}</div>
+              <p>{t('info.terms.site')}</p>
+              <p>{t('info.terms.keys')}</p>
+              <h2>{t('info.terms.commercialTitle')}</h2>
+              <p>{t('info.terms.commercial')}</p>
               <p>
-                This website presents Mantrilo’s content API and monthly plans. Catalog examples use
-                placeholder values unless marked otherwise.
-              </p>
-              <p>
-                API keys are issued in the developer console. Preparing a message on the contact
-                page does not create an account or start a subscription.
-              </p>
-              <h2>Commercial content use</h2>
-              <p>
-                Commercial integration is subject to the documented content license. The final
-                service terms and content license must be provided and reviewed before onboarding
-                customers.
-              </p>
-              <p>
-                <Link href="/license">View content license status →</Link>
+                <Link href="/license">{t('info.terms.license')} →</Link>
               </p>
             </>
           ) : (
             <p>
-              <Link href="/">Return home →</Link>
+              <Link href="/">{t('info.returnHome')} →</Link>
             </p>
           )}
         </div>

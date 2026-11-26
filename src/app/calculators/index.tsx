@@ -5,6 +5,6 @@ export default function Page() {
   return <CalculatorHub />;
 }
 
-export function generateMetadata() {
-  return pageMetadata('/calculators');
+export function generateMetadata(_request?: unknown, params?: Record<string, string | string[]>) {
+  return pageMetadata('/calculators', undefined, params);
 }

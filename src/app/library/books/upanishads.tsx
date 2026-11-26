@@ -8,8 +8,8 @@ export const loader = createStaticLoader(async () => ({
     .filter((book) => book.collection === 'upanishads'),
 }));
 
-export function generateMetadata() {
-  return pageMetadata('/library/books/upanishads');
+export function generateMetadata(_request?: unknown, params?: Record<string, string | string[]>) {
+  return pageMetadata('/library/books/upanishads', undefined, params);
 }
 
 export default function Page() {

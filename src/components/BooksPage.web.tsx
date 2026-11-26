@@ -1,12 +1,15 @@
 import { useState, type CSSProperties } from 'react';
-import { Link, useLoaderData } from 'expo-router';
+import { useLoaderData } from 'expo-router';
+import { Link } from '../i18n/Link.web';
 import type { loader } from '../app/library/books/index';
 import type { BookListing } from '../data/book-pages';
 import { collections } from '../data/examples';
 import { epicBooks } from '../../developer/src/data/epic-books';
 import { Arrow, KeyButton, SiteFrame } from './site/Chrome.web';
 import { CodePanel, JsonCode } from './site/Code.web';
-import { Checks, EndpointPill, Ribbon, Ring, Stats, plural } from './site/Shlokam.web';
+import { Checks, EndpointPill, Ribbon, Ring, Stats } from './site/Shlokam.web';
+import { useI18n, type I18n } from '../i18n';
+import { Rich } from '../i18n/Rich';
 
 // /library/books: the bookshelf. Every book in the catalog on its collection's shelf, each with
 // its API id, then what a chapter response looks like and how a reader pages through it.
@@ -80,8 +83,10 @@ const author = (text: string) => {
   return name.charAt(0).toUpperCase() + name.slice(1);
 };
 
-const parts = (book: BookListing) =>
-  book.chapters > 1 ? plural(book.chapters, book.chapterTerm.toLowerCase()) : 'One text';
+const parts = ({ t, number }: I18n, book: BookListing) =>
+  book.chapters > 1
+    ? t(`books.terms.${book.chapterTerm}`, { count: book.chapters, n: number(book.chapters) })
+    : t('shelf.oneText');
 
 function Cover({ volume, spine, index }: { volume: Volume; spine: string; index?: string }) {
   return (
@@ -118,6 +123,8 @@ export default function BooksPage() {
   const { books, gita, isha } = useLoaderData<typeof loader>();
   const [view, setView] = useState<'reader' | 'json'>('reader');
   const [roman, setRoman] = useState(true);
+  const i18n = useI18n();
+  const { t, number } = i18n;
 
   const longest = Math.max(...books.map((book) => book.verseCount));
   const size = (n: number, max: number) =>
@@ -127,8 +134,8 @@ export default function BooksPage() {
     href: book.path,
     title: book.title,
     sanskrit: bookSanskrit(book.slug),
-    sub: parts(book),
-    count: plural(book.verseCount, 'verse'),
+    sub: parts(i18n, book),
+    count: t('common.verses', { count: book.verseCount, n: number(book.verseCount) }),
     meta: author(book.author),
     id: book.apiId,
     sandbox: book.sandbox,
@@ -140,9 +147,9 @@ export default function BooksPage() {
     href: `/docs#epic-${epic.id}`,
     title: epic.title,
     sanskrit: SANSKRIT[epic.id] ?? '',
-    sub: 'English prose retelling',
-    count: plural(epic.chapters, 'chapter'),
-    meta: 'Chapters with a source reference',
+    sub: t('libraryPage.books.retelling'),
+    count: t('docs.epics.chapters', { count: epic.chapters, n: number(epic.chapters) }),
+    meta: t('shelf.sourceChapters'),
     id: null,
     sandbox: false,
     size: size(epic.chapters, longestEpic),
@@ -156,11 +163,11 @@ export default function BooksPage() {
         : books.filter((book) => book.collection === id).map((book) => volume(book));
     return {
       id,
-      name: id === 'epics' ? 'Itihasa (epics)' : (entry?.name ?? id),
+      name: id === 'epics' ? t('shelf.epics') : (entry?.name ?? id),
       note:
         id === 'epics'
-          ? 'English retellings of the Ramayana and Mahabharata, chapter by chapter.'
-          : (entry?.note ?? ''),
+          ? t('shelf.epicsNote')
+          : t(`library.collections.${id}`) || (entry?.note ?? ''),
       collection: id === 'epics' ? null : id,
       volumes,
     };
@@ -195,48 +202,41 @@ export default function BooksPage() {
         <Ribbon />
         <div className="mh-wrap mx-hero-grid">
           <div>
-            <nav className="mh-crumbs mx-rise" aria-label="Breadcrumb">
-              <Link href="/">Home</Link>
+            <nav className="mh-crumbs mx-rise" aria-label={t('chrome.breadcrumb')}>
+              <Link href="/">{t('chrome.crumbHome')}</Link>
               <span aria-hidden="true">/</span>
-              <Link href="/library">Library</Link>
+              <Link href="/library">{t('meta./library.label')}</Link>
               <span aria-hidden="true">/</span>
-              <span aria-current="page">Books</span>
+              <span aria-current="page">{t('nav.books')}</span>
             </nav>
             <div className="mx-chips mx-rise mx-d1">
               <Link href="/books-api" className="mx-chip">
                 <span lang="sa-Deva" className="mh-deva">
                   ग्रन्थ
                 </span>
-                Books API
+                {t('meta./books-api.label')}
               </Link>
             </div>
-            <h1 className="mx-rise mx-d2">Scripture, served verse by verse.</h1>
-            <p className="mx-lede mx-rise mx-d3">
-              The Bhagavad Gita, the Upanishads, the Advaita classics, the sutras and the epics, as
-              JSON your reader lays out. Every book has a stable id and comes back chapter by
-              chapter in Devanagari with transliteration.
-            </p>
+            <h1 className="mx-rise mx-d2">{t('shelf.title')}</h1>
+            <p className="mx-lede mx-rise mx-d3">{t('shelf.lede')}</p>
             <div className="mx-actions mx-rise mx-d4">
               <Link href="/library/books/bhagavad-gita" className="mh-btn mh-btn-primary">
-                Start with the Gita <Arrow />
+                {t('shelf.startGita')} <Arrow />
               </Link>
               <a href="#shelves" className="mh-btn mh-btn-ghost">
-                Browse all {total} books
+                {t('shelf.browseAll', { count: total, n: number(total) })}
               </a>
             </div>
             <Checks
               className="mx-rise mx-d5"
-              items={[
-                'Gita and Isha Upanishad on every sandbox key',
-                'Devanagari with transliteration',
-              ]}
+              items={[t('shelf.checkSandbox'), t('shelf.checkDeva')]}
             />
             <Stats
               items={[
-                [total, 'books'],
-                [verses, 'Sanskrit verses'],
-                [epicChapters, 'epic chapters'],
-                [shelves.length, 'collections'],
+                [total, t('shelf.stats.books')],
+                [verses, t('shelf.stats.verses')],
+                [epicChapters, t('shelf.stats.epicChapters')],
+                [shelves.length, t('shelf.stats.collections')],
               ]}
             />
           </div>
@@ -266,17 +266,19 @@ export default function BooksPage() {
       <section className="mx-section" id="shelves" style={{ scrollMarginTop: 84 }}>
         <div className="mh-wrap">
           <div data-reveal>
-            <p className="mx-kicker">The library</p>
-            <h2 className="mx-h2">From the Upanishads to the epics.</h2>
-            <p className="mx-sub">
-              Grouped by collection. List any shelf with one request and open a book by its id.
-            </p>
+            <p className="mx-kicker">{t('shelf.shelves.kicker')}</p>
+            <h2 className="mx-h2">{t('shelf.shelves.title')}</h2>
+            <p className="mx-sub">{t('shelf.shelves.copy')}</p>
             <EndpointPill path="/v1/books?collection=upanishads&limit=3" />
           </div>
-          <nav className="mx-chips" aria-label="Collections" style={{ marginTop: 22 }}>
+          <nav
+            className="mx-chips"
+            aria-label={t('libraryPage.upanishads.eyebrow')}
+            style={{ marginTop: 22 }}
+          >
             {shelves.map((shelf) => (
               <a key={shelf.id} href={`#shelf-${shelf.id}`} className="mx-chip">
-                {shelf.name} <small>{shelf.volumes.length}</small>
+                {shelf.name} <small>{number(shelf.volumes.length)}</small>
               </a>
             ))}
           </nav>
@@ -302,7 +304,7 @@ export default function BooksPage() {
                     {shelf.collection ? (
                       <code className="mx-vol-id">?collection={shelf.collection}</code>
                     ) : (
-                      <span className="mx-badge">Live key</span>
+                      <span className="mx-badge">{t('shelf.liveKey')}</span>
                     )}
                   </div>
                   <div className="mx-books">
@@ -311,14 +313,17 @@ export default function BooksPage() {
                         <Cover
                           volume={entry}
                           spine={SPINES[shelf.id]}
-                          index={`vol ${String(i + 1).padStart(2, '0')} / ${String(shelf.volumes.length).padStart(2, '0')}`}
+                          index={t('shelf.volume', {
+                            n: String(i + 1).padStart(2, '0'),
+                            total: String(shelf.volumes.length).padStart(2, '0'),
+                          })}
                         />
                         <h4>{entry.title}</h4>
                         <p>{entry.meta}</p>
                         <div className="mx-book-tags">
                           {entry.id && <code>{entry.id}</code>}
                           <span className={entry.sandbox ? 'mx-badge mx-badge-ok' : 'mx-badge'}>
-                            {entry.sandbox ? 'Sandbox' : 'Live key'}
+                            {entry.sandbox ? t('plans.sandbox') : t('shelf.liveKey')}
                           </span>
                         </div>
                       </Link>
@@ -335,67 +340,44 @@ export default function BooksPage() {
         <section className="mx-section">
           <div className="mh-wrap mx-demo-grid">
             <div data-reveal>
-              <p className="mx-kicker">Inside the response</p>
-              <h2 className="mx-h2">Read the source, not a summary of it.</h2>
-              <p className="mx-sub">
-                Every book comes back as structured verses, so your reader decides the layout. Try
-                the switches on this verse.
-              </p>
+              <p className="mx-kicker">{t('shelf.inside.kicker')}</p>
+              <h2 className="mx-h2">{t('shelf.inside.title')}</h2>
+              <p className="mx-sub">{t('shelf.inside.copy')}</p>
               <ul className="mx-points">
-                <li>
-                  <span aria-hidden="true">अ</span>
-                  <div>
-                    <b>Devanagari as sourced</b>
-                    <p>
-                      <code>sanskrit</code> keeps the original text and its line breaks.
-                    </p>
-                  </div>
-                </li>
-                <li>
-                  <span aria-hidden="true">ā</span>
-                  <div>
-                    <b>Transliteration on every verse</b>
-                    <p>
-                      <code>transliteration</code> gives readers a way to chant along.
-                    </p>
-                  </div>
-                </li>
-                <li>
-                  <span aria-hidden="true">30</span>
-                  <div>
-                    <b>Chapters that page</b>
-                    <p>
-                      Up to 30 verses per call. Pass <code>nextOffset</code> back as{' '}
-                      <code>offset</code> for the rest.
-                    </p>
-                  </div>
-                </li>
-                <li>
-                  <span aria-hidden="true">null</span>
-                  <div>
-                    <b>Nulls you can design for</b>
-                    <p>
-                      Any verse field can be null, and <code>translation</code> is not distributed,
-                      so leave out what is missing.
-                    </p>
-                  </div>
-                </li>
+                {(
+                  [
+                    ['अ', 'deva'],
+                    ['ā', 'translit'],
+                    ['30', 'paging'],
+                    ['null', 'nulls'],
+                  ] as const
+                ).map(([glyph, key]) => (
+                  <li key={key}>
+                    <span aria-hidden="true">{glyph}</span>
+                    <div>
+                      <b>{t(`shelf.inside.${key}.title`)}</b>
+                      <p>
+                        <Rich text={t(`shelf.inside.${key}.copy`)} tags={{ code: <code /> }} />
+                      </p>
+                    </div>
+                  </li>
+                ))}
               </ul>
             </div>
             <div className="mx-demo" data-reveal>
               <div className="mx-demo-bar">
                 <div>
                   <b>Isha Upanishad</b>
-                  <small>ishaUpanishad · verse {isha.key}</small>
+                  <small>ishaUpanishad · {t('shelf.verse', { key: isha.key })}</small>
                 </div>
                 <div>
-                  <div className="mx-seg" role="group" aria-label="View">
+                  <div className="mx-seg" role="group" aria-label={t('shelf.view')}>
                     <button
                       type="button"
                       aria-pressed={view === 'reader'}
                       onClick={() => setView('reader')}
                     >
-                      Rendered
+                      {t('shelf.rendered')}
                     </button>
                     <button
                       type="button"
@@ -429,7 +411,7 @@ export default function BooksPage() {
                       </p>
                     )}
                     <p className="mx-null">
-                      <code>translation: null</code> · your app shows its own translation, or none.
+                      <code>translation: null</code> · {t('shelf.nullNote')}
                     </p>
                   </div>
                 ) : (
@@ -453,34 +435,22 @@ export default function BooksPage() {
       <section className="mx-section">
         <div className="mh-wrap">
           <div data-reveal>
-            <p className="mx-kicker">How an integration flows</p>
-            <h2 className="mx-h2">Collection, book, chapter. Three calls.</h2>
+            <p className="mx-kicker">{t('shelf.flow.kicker')}</p>
+            <h2 className="mx-h2">{t('shelf.flow.title')}</h2>
           </div>
           <div className="mx-flow">
             {[
-              {
-                title: 'List a collection',
-                copy: 'Titles, authors and verse counts, with a cursor for the next page.',
-                path: '/v1/books?collection=upanishads',
-              },
-              {
-                title: 'Open a book',
-                copy: 'The book record lists every chapter with its number and verse count.',
-                path: '/v1/books/bhagavadGita',
-              },
-              {
-                title: 'Read a chapter',
-                copy: 'Up to 30 verses per call, in order, ready for your reader.',
-                path: '/v1/books/bhagavadGita/chapters/2',
-              },
+              { key: 'list', path: '/v1/books?collection=upanishads' },
+              { key: 'book', path: '/v1/books/bhagavadGita' },
+              { key: 'chapter', path: '/v1/books/bhagavadGita/chapters/2' },
             ].map((step, i, all) => (
-              <div key={step.title}>
+              <div key={step.key}>
                 <div className="mx-step" data-reveal>
                   <div className="mx-step-head">
-                    <i>{i + 1}</i>
-                    <b>{step.title}</b>
+                    <i>{number(i + 1)}</i>
+                    <b>{t(`shelf.flow.${step.key}.title`)}</b>
                   </div>
-                  <p>{step.copy}</p>
+                  <p>{t(`shelf.flow.${step.key}.copy`)}</p>
                   <div className="mx-mono">
                     <b>GET</b> {step.path}
                   </div>
@@ -490,13 +460,13 @@ export default function BooksPage() {
             ))}
           </div>
           <div style={{ marginTop: 24 }} data-reveal>
-            <CodePanel title="reader.mjs · page through a chapter" code={readerCode} lang="js" />
+            <CodePanel title={`reader.mjs · ${t('shelf.flow.code')}`} code={readerCode} lang="js" />
           </div>
           <p className="mx-links">
-            <Link href="/docs/guides/book-reader">Build a book reader</Link> ·{' '}
-            <Link href="/docs#get-chapter">Chapter reference</Link> ·{' '}
-            <Link href="/books-api">Books API</Link> ·{' '}
-            <Link href="/library/books/upanishads">Upanishads collection</Link>
+            <Link href="/docs/guides/book-reader">{t('meta./docs/guides/book-reader.label')}</Link>{' '}
+            · <Link href="/docs#get-chapter">{t('shelf.flow.reference')}</Link> ·{' '}
+            <Link href="/books-api">{t('meta./books-api.label')}</Link> ·{' '}
+            <Link href="/library/books/upanishads">{t('shelf.flow.upanishads')}</Link>
           </p>
         </div>
       </section>
@@ -505,16 +475,13 @@ export default function BooksPage() {
         <div className="mh-wrap">
           <div className="mx-closing" data-reveal>
             <div>
-              <p className="mx-kicker">Start free</p>
-              <h2 className="mx-h2">Start with the Gita in the sandbox.</h2>
-              <p>
-                The Bhagavad Gita and the Isha Upanishad are open on every sandbox key. A live key
-                reads the full catalog.
-              </p>
+              <p className="mx-kicker">{t('plans.startFree')}</p>
+              <h2 className="mx-h2">{t('shelf.closing.title')}</h2>
+              <p>{t('shelf.closing.copy')}</p>
               <div className="mx-actions">
                 <KeyButton />
                 <Link href="/docs/guides/book-reader" className="mh-btn mh-btn-ghost">
-                  Book reader guide
+                  {t('shelf.closing.guide')}
                 </Link>
               </div>
             </div>

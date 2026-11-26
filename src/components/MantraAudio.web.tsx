@@ -1,5 +1,6 @@
 import { useEffect, useRef, useSyncExternalStore, type CSSProperties } from 'react';
 import { KeyButton } from './site/Chrome.web';
+import { useI18n } from '../i18n';
 
 // Plays a mantra's recording on its public page. A static page can't hold a signed link (they
 // expire), so the link is fetched from the API's keyless preview endpoint when the visitor
@@ -96,16 +97,15 @@ async function toggle(id: string, title: string) {
   if (player.id === id && player.status === 'loading') return;
   // Replaying a recording this browser already opened doesn't use another preview.
   const used = playsUsed();
-  if (!used.includes(id) && used.length >= GUEST_PLAYS) return update({ ...IDLE, id, status: 'limit' });
+  if (!used.includes(id) && used.length >= GUEST_PLAYS)
+    return update({ ...IDLE, id, status: 'limit' });
   update({ ...IDLE, id, status: 'loading' });
   // Safari starts audio only from a click, and the link arrives after an await: loading the
   // element inside the click lets the later play() through.
   el.removeAttribute('src');
   el.load();
   try {
-    const response = await fetch(
-      `${API_URL}/v1/public/mantras/${encodeURIComponent(id)}/preview`,
-    );
+    const response = await fetch(`${API_URL}/v1/public/mantras/${encodeURIComponent(id)}/preview`);
     if (player.id !== id) return;
     if (response.status === 429) return update({ status: 'limit' });
     if (!response.ok) throw new Error(String(response.status));
@@ -113,7 +113,8 @@ async function toggle(id: string, title: string) {
     if (player.id !== id) return;
     remember(id);
     el.src = data.url;
-    el.setAttribute('aria-label', `${title} recording`);
+    // `title` arrives already worded as the player's accessible name ("<title> recording").
+    el.setAttribute('aria-label', title);
     update({ status: 'ready' });
     el.play().catch(() => {});
   } catch {
@@ -143,32 +144,31 @@ const clock = (seconds: number) =>
 /** The hero's Play button: starts the recording, then shows pause, progress and time. */
 export function PlayButton({ id, title }: { id: string; title: string }) {
   const { status, playing, time, duration } = usePlayer(id);
+  const { t, number } = useI18n();
   const ended = status === 'ready' && !playing && duration > 0 && time >= duration - 0.25;
   const label =
     status === 'loading'
-      ? 'Loading…'
+      ? t('audio.loading')
       : status === 'limit'
-        ? 'Free previews used'
+        ? t('audio.used')
         : status === 'error'
-          ? 'Try again'
+          ? t('audio.retry')
           : playing
-            ? 'Pause'
+            ? t('audio.pause')
             : ended
-              ? 'Play again'
+              ? t('audio.again')
               : status === 'ready' && time > 0
-                ? 'Resume'
-                : 'Play recording';
+                ? t('audio.resume')
+                : t('audio.play');
   const progress = duration ? Math.min(100, (time / duration) * 100) : 0;
   return (
     <button
       type="button"
       className={`mh-btn mx-play is-${playing ? 'playing' : status}`}
       style={{ '--p': `${progress}%` } as CSSProperties}
-      onClick={() => toggle(id, title)}
+      onClick={() => toggle(id, t('audio.label', { title }))}
       disabled={status === 'loading' || status === 'limit'}
-      title={
-        status === 'limit' ? `This browser’s ${GUEST_PLAYS} free previews are used` : undefined
-      }
+      title={status === 'limit' ? t('audio.usedTitle', { n: number(GUEST_PLAYS) }) : undefined}
     >
       <span className="mx-play-icon" aria-hidden="true">
         {status === 'loading' ? (
@@ -180,7 +180,10 @@ export function PlayButton({ id, title }: { id: string; title: string }) {
           </svg>
         ) : (
           <svg viewBox="0 0 16 16">
-            <path d="M5 2.8v10.4a.8.8 0 0 0 1.2.7l8.3-5.2a.8.8 0 0 0 0-1.4L6.2 2.1A.8.8 0 0 0 5 2.8z" fill="currentColor" />
+            <path
+              d="M5 2.8v10.4a.8.8 0 0 0 1.2.7l8.3-5.2a.8.8 0 0 0 0-1.4L6.2 2.1A.8.8 0 0 0 5 2.8z"
+              fill="currentColor"
+            />
           </svg>
         )}
       </span>
@@ -205,6 +208,8 @@ export function PlayButton({ id, title }: { id: string; title: string }) {
 /** The Recording card's player: a Play button until the link arrives, then audio controls. */
 export default function MantraAudio({ id, title }: { id: string; title: string }) {
   const { status } = usePlayer(id);
+  const { t, number } = useI18n();
+  const plays = { n: number(GUEST_PLAYS) };
   const slot = useRef<HTMLDivElement>(null);
   const ready = status === 'ready';
   useEffect(() => {
@@ -218,10 +223,7 @@ export default function MantraAudio({ id, title }: { id: string; title: string }
   if (status === 'limit')
     return (
       <div className="mh-audio-preview">
-        <p>
-          You’ve used this browser’s {GUEST_PLAYS} free previews. Get an API key to stream every
-          recording in your own app.
-        </p>
+        <p>{t('audio.limit', plays)}</p>
         <KeyButton />
       </div>
     );
@@ -232,20 +234,14 @@ export default function MantraAudio({ id, title }: { id: string; title: string }
         <button
           type="button"
           className="mh-btn mh-btn-ghost"
-          onClick={() => toggle(id, title)}
+          onClick={() => toggle(id, t('audio.label', { title }))}
           disabled={status === 'loading'}
         >
-          {status === 'loading' ? 'Loading…' : `▶ Play the recording`}
+          {status === 'loading' ? t('audio.loading') : `▶ ${t('audio.playThe')}`}
         </button>
       )}
-      {status === 'error' && (
-        <p className="mh-muted">The recording couldn’t be loaded. Try again in a moment.</p>
-      )}
-      {!ready && (
-        <p className="mh-muted">
-          Free preview: {GUEST_PLAYS} recordings per browser. Your app streams them with an API key.
-        </p>
-      )}
+      {status === 'error' && <p className="mh-muted">{t('audio.error')}</p>}
+      {!ready && <p className="mh-muted">{t('audio.free', plays)}</p>}
     </div>
   );
 }

@@ -27,7 +27,7 @@ export const loader = createStaticLoader((params) => {
 });
 
 export function generateMetadata(_request: unknown, params: Record<string, string | string[]>) {
-  return pageMetadata(`/astrology-api/${String(params.capability)}`);
+  return pageMetadata(`/astrology-api/${String(params.capability)}`, undefined, params);
 }
 
 export default function Page() {

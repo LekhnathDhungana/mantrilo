@@ -1,5 +1,6 @@
-import { Link } from 'expo-router';
+import { Link } from '../../i18n/Link.web';
 import { Arrow, KeyButton } from './Chrome.web';
+import { Rich } from '../../i18n/Rich';
 import { CodePanel } from './Code.web';
 import {
   astrologyGuides,
@@ -11,6 +12,8 @@ import {
 import { curlGet, curlPost } from '../../data/examples';
 import { consoleSandboxUrl } from '../../data/site';
 import { publicGuides } from '../../data/public-guides';
+import { useI18n } from '../../i18n';
+import { guideText } from '../../i18n/guides';
 
 // Guides by goal, shown inside /docs. Each leads with a working request, then the server-side
 // integration, then pagination and quota. The data is shared with the console's Docs guides.
@@ -19,7 +22,11 @@ export const astrology = astrologyGuides();
 export const allGuides: Guide[] = [...contentGuides, ...astrology];
 export const findGuide = (id: string | undefined) => allGuides.find((g) => g.id === id);
 
-export const GOALS = Object.values(publicGuides).map(({ id, label }) => ({ id, goal: label }));
+// Each goal's label is its guide page's breadcrumb label (meta./docs/guides/<slug>.label).
+export const GOALS = Object.entries(publicGuides).map(([slug, { id }]) => ({
+  id,
+  goalKey: `meta./docs/guides/${slug}.label`,
+}));
 
 const DOCS: Record<string, string> = {
   'search-mantras': '/docs#list-mantras',
@@ -48,22 +55,24 @@ function libraryHref(guide: Guide) {
 
 // The page heading (name, area and summary) is rendered by the docs header above this.
 export function GuideView({ guide }: { guide: Guide }) {
+  const { t } = useI18n();
+  const text = guideText(t, guide);
   const sandbox = guideSandboxHref(guide);
   return (
     <div className="mh-guide">
       <section>
         <h2>
-          <span className="mh-flow-n">1</span> Make a working request
+          <span className="mh-flow-n">1</span> {t('guide.step1')}
         </h2>
         <div className="mh-guide-pair">
           <CodePanel title={guide.path} method={guide.method} code={request(guide)} />
-          <CodePanel title={guide.sampleLabel ?? 'Response'} status="200 OK" json={guide.sample} />
+          <CodePanel title={text.sampleLabel} status="200 OK" json={guide.sample} />
         </div>
         {guide.followupPaths && (
           <ul className="mh-followups">
-            {guide.followupPaths.map(([label, path]) => (
+            {guide.followupPaths.map(([label, path], index) => (
               <li key={path}>
-                <span>{label}</span>
+                <span>{text.followup(index, label)}</span>
                 <code>GET {path}</code>
               </li>
             ))}
@@ -73,43 +82,42 @@ export function GuideView({ guide }: { guide: Guide }) {
 
       <section>
         <h2>
-          <span className="mh-flow-n">2</span> Call it from your server
+          <span className="mh-flow-n">2</span> {t('guide.step2')}
         </h2>
-        <p>
-          Keep the key in your backend and return only the content to your app. This Node.js server
-          exposes one route your app can call.
-        </p>
+        <p>{t('guide.step2Copy')}</p>
         <CodePanel title="server.mjs" code={backendExample(guide, productionApi)} lang="js" />
-        {guide.viewCode && <CodePanel title="In your view" code={guide.viewCode} lang="js" />}
+        {guide.viewCode && <CodePanel title={t('guide.inView')} code={guide.viewCode} lang="js" />}
       </section>
 
       <section>
         <h2>
-          <span className="mh-flow-n">3</span> Inputs and pagination
+          <span className="mh-flow-n">3</span> {t('guide.step3')}
         </h2>
-        <p>{guide.inputs}</p>
-        <p>{guide.render}</p>
+        <p>{text.inputs}</p>
+        <p>{text.render}</p>
       </section>
 
       <section>
         <h2>
-          <span className="mh-flow-n">4</span> Quota
+          <span className="mh-flow-n">4</span> {t('guide.step4')}
         </h2>
-        <p>{guide.usage}</p>
+        <p>{text.usage}</p>
       </section>
 
       <div className="mh-actions">
         <Link className="mh-btn mh-btn-ghost" href={libraryHref(guide)}>
-          See it in the Library <Arrow />
+          {t('guide.library')} <Arrow />
         </Link>
         <Link className="mh-btn mh-btn-ghost" href={DOCS[guide.id] ?? '/docs#astrology-calculate'}>
-          Endpoint reference <Arrow />
+          {t('guide.reference')} <Arrow />
         </Link>
-        {sandbox && <KeyButton href={sandbox}>Try this request in the sandbox</KeyButton>}
+        {sandbox && <KeyButton href={sandbox}>{t('guide.trySandbox')}</KeyButton>}
       </div>
       <p className="mh-muted">
-        Requests read the base URL from <code>MANTRILO_API_URL</code>. The server example falls back
-        to <code>{productionApi}</code>.
+        <Rich
+          text={t('guide.baseUrl', { api: productionApi })}
+          tags={{ env: <code>MANTRILO_API_URL</code>, api: <code>{productionApi}</code> }}
+        />
       </p>
     </div>
   );

@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { useI18n } from '../../i18n';
 
 const DEVANAGARI = /[\u0900-\u097F]/;
 
@@ -95,7 +96,8 @@ export function SourceCode({ code, lang }: { code: string; lang: Lang }) {
   return <code>{out}</code>;
 }
 
-export function CopyButton({ text, label = 'Copy' }: { text: string; label?: string }) {
+export function CopyButton({ text, label }: { text: string; label?: string }) {
+  const { t } = useI18n();
   const [state, setState] = useState<'idle' | 'done' | 'failed'>('idle');
   async function copy() {
     try {
@@ -113,17 +115,17 @@ export function CopyButton({ text, label = 'Copy' }: { text: string; label?: str
           <svg viewBox="0 0 16 16" aria-hidden="true">
             <path d="M3 8.5l3 3 7-7" />
           </svg>
-          Copied
+          {t('code.copied')}
         </>
       ) : state === 'failed' ? (
-        'Copy failed'
+        t('code.copyFailed')
       ) : (
         <>
           <svg viewBox="0 0 16 16" aria-hidden="true">
             <rect x="5" y="5" width="8.5" height="8.5" rx="1.5" />
             <path d="M10.5 5V3.5A1.5 1.5 0 009 2H3.5A1.5 1.5 0 002 3.5V9a1.5 1.5 0 001.5 1.5H5" />
           </svg>
-          {label}
+          {label ?? t('code.copy')}
         </>
       )}
     </button>

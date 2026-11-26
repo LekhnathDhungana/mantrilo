@@ -1,5 +1,6 @@
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { CopyButton, SourceCode, type Lang } from './Code.web';
+import { useI18n } from '../../i18n';
 import './shlokam.css';
 
 // Shared pieces for the mantra pages and the bookshelf (styles in shlokam.css).
@@ -7,9 +8,6 @@ import './shlokam.css';
 const DIGITS = '०१२३४५६७८९';
 export const toDeva = (value: number | string) =>
   String(value).replace(/\d/g, (digit) => DIGITS[Number(digit)]);
-
-export const plural = (count: number, word: string) =>
-  `${count.toLocaleString('en-US')} ${word}${count === 1 ? '' : 's'}`;
 
 /** The drifting stripes behind a hero. */
 export function Ribbon() {
@@ -43,6 +41,7 @@ export function Checks({ items, className = '' }: { items: string[]; className?:
 
 /** Hero numbers. The exported HTML holds the final values; once the page runs they count up. */
 export function Stats({ items }: { items: [number, string][] }) {
+  const { number } = useI18n();
   const [progress, setProgress] = useState(1);
   const [counting, setCounting] = useState(false);
   useEffect(() => {
@@ -64,7 +63,7 @@ export function Stats({ items }: { items: [number, string][] }) {
     <div className={counting ? 'mx-stats mx-rise mx-d6 is-counting' : 'mx-stats mx-rise mx-d6'}>
       {items.map(([value, label]) => (
         <p key={label}>
-          <b>{Math.round(value * progress).toLocaleString('en-US')}</b>
+          <b>{number(Math.round(value * progress))}</b>
           <span>{label}</span>
         </p>
       ))}

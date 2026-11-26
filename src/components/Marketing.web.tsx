@@ -1,13 +1,15 @@
 import { useState, type ReactNode } from 'react';
-import { Link } from 'expo-router';
+import { Link } from '../i18n/Link.web';
 import { Rosette } from './Brand.web';
 import { Arrow, Divider, KeyButton, LineIcon, SiteFrame } from './site/Chrome.web';
-import { PlanCards } from './site/Plans.web';
+import { PlanCards, planName } from './site/Plans.web';
 import { plans } from '../data/plans';
 import { consoleSandboxUrl } from '../data/site';
 import catalog from '../../developer/src/data/catalog-samples.json';
 import { astrologyPanchangExample, astrologyPositionsExample } from '../data/api-reference';
 import { CopyButton, JsonCode, MANTRA_ID, SourceCode, snippets, type Lang } from './site/Code.web';
+import { intlLocale, useI18n, type I18n } from '../i18n';
+import { Rich } from '../i18n/Rich';
 
 // Real records: the mantra is a production snapshot (developer/scripts/export-site-sample.mjs)
 // and the astrology responses are engine output for 2026-11-10T12:00:00+05:30.
@@ -35,16 +37,14 @@ type DemoKey = 'mantra' | 'audio' | 'positions' | 'panchang';
 const DATETIME = '2026-11-10T12:00:00+05:30';
 const demos: Record<
   DemoKey,
-  { label: string; method: 'GET' | 'POST'; path: string; body?: object; response: object }
+  { method: 'GET' | 'POST'; path: string; body?: object; response: object }
 > = {
   mantra: {
-    label: 'Mantra with verses',
     method: 'GET',
     path: `/v1/mantras/${MANTRA_ID}`,
     response: { data: mantra, requestId: 'request-id' },
   },
   audio: {
-    label: 'Recording link',
     method: 'GET',
     path: `/v1/mantras/${MANTRA_ID}/audio?format=json`,
     response: {
@@ -58,20 +58,27 @@ const demos: Record<
     },
   },
   positions: {
-    label: 'Planetary positions',
     method: 'POST',
     path: '/v1/astrology/calculate',
     body: { operation: 'positions', datetime: DATETIME },
     response: astrologyPositionsExample,
   },
   panchang: {
-    label: 'Instant Panchang',
     method: 'POST',
     path: '/v1/astrology/calculate',
     body: { operation: 'panchang', datetime: DATETIME },
     response: astrologyPanchangExample,
   },
 };
+
+/** A price in US dollars, in the visitor's number format. */
+export function usd({ lang }: I18n, amount: number) {
+  return new Intl.NumberFormat(intlLocale(lang), {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+  }).format(amount);
+}
 
 function curlFor(key: DemoKey) {
   const d = demos[key];
@@ -104,73 +111,47 @@ const Icon = {
 };
 
 const features = [
-  {
-    icon: Icon.script,
-    title: 'Devanagari, as sourced',
-    copy: 'Sanskrit in Unicode Devanagari with its line breaks intact, ready for any font stack.',
-  },
-  {
-    icon: Icon.translit,
-    title: 'IAST transliteration',
-    copy: 'Every verse carries full diacritics, so ahaṃ stays ahaṃ for readers who don’t read the script.',
-  },
-  {
-    icon: Icon.words,
-    title: 'Structured verses',
-    copy: 'Verse numbers and original text let your app build reading and recitation views.',
-  },
-  {
-    icon: Icon.audio,
-    title: 'Linked recordings',
-    copy: 'Request a 15-minute signed link to the recording for any mantra that has one.',
-  },
-  {
-    icon: Icon.astro,
-    title: 'Vedic astrology engine',
-    copy: 'D1 and D9 charts, Vimshottari Dasha, Panchang, Guna Milan and planetary positions. On every plan.',
-  },
-  {
-    icon: Icon.key,
-    title: 'Sandbox to production',
-    copy: 'A free sandbox key with 500 calls a month on sample records. Live keys unlock the full catalog.',
-  },
+  { icon: Icon.script, key: 'devanagari' },
+  { icon: Icon.translit, key: 'iast' },
+  { icon: Icon.words, key: 'verses' },
+  { icon: Icon.audio, key: 'recordings' },
+  { icon: Icon.astro, key: 'astrology' },
+  { icon: Icon.key, key: 'sandbox' },
 ];
 
-const faqs: [string, ReactNode][] = [
-  [
-    'What content is available today?',
-    'Mantras with Sanskrit, transliteration and source references; recordings linked to those mantras; scripture books by collection, chapter and verse; and astrology calculations.',
-  ],
-  [
-    'How does the free sandbox work?',
-    'Every account gets a sandbox key with 500 calls a month, a sample of mantras and books, and access to available astrology calculations. Paid plans add a live key for the full available catalog.',
-  ],
-  [
-    'Is astrology included?',
-    <>
-      Yes, on every plan. Each calculation counts as one normal request. The default sidereal offset
-      is approximate, with a custom ayanamsa option.{' '}
-      <Link href="/astrology-api">Read about the astrology API</Link>.
-    </>,
-  ],
-  [
-    'Can I use the content commercially?',
-    <>
-      Paid plans unlock the full available catalog. Before publishing, review the{' '}
-      <Link href="/license">content license status</Link> for the text and recordings you plan to
-      use. The Free plan is for testing.
-    </>,
-  ],
-  [
-    'How is audio metered?',
-    `Audio allowances measure data delivered each month, not storage. ${plans
+// The sample moment every astrology demo uses, in the visitor's date format.
+const moment = ({ date }: I18n) =>
+  `${date(DATETIME, { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' })} IST`;
+
+function faqs(i18n: I18n): [string, ReactNode][] {
+  const { t, lang } = i18n;
+  const audio = new Intl.ListFormat(lang, { type: 'conjunction' }).format(
+    plans
       .filter((p) => p.price)
-      .map((p) => `${p.name} includes ${p.audio}`)
-      .join(', ')}.`,
-  ],
-];
+      .map((p) => t('home.faq.audioPlan', { plan: planName(i18n, p.name), audio: p.audio })),
+  );
+  return [
+    [t('home.faq.contentQ'), t('home.faq.contentA')],
+    [t('home.faq.sandboxQ'), t('home.faq.sandboxA', { count: 500, calls: i18n.number(500) })],
+    [
+      t('home.faq.astrologyQ'),
+      <Rich
+        key="a"
+        text={t('home.faq.astrologyA')}
+        tags={{ link: <Link href="/astrology-api" /> }}
+      />,
+    ],
+    [
+      t('home.faq.commercialQ'),
+      <Rich key="c" text={t('home.faq.commercialA')} tags={{ link: <Link href="/license" /> }} />,
+    ],
+    [t('home.faq.audioQ'), t('home.faq.audioA', { plans: audio })],
+  ];
+}
 
 export default function Marketing() {
+  const i18n = useI18n();
+  const { t } = i18n;
   const [demo, setDemo] = useState<DemoKey>('mantra');
   const [script, setScript] = useState<'both' | 'deva' | 'iast'>('both');
   const [lang, setLang] = useState<Lang>('curl');
@@ -191,31 +172,33 @@ export default function Marketing() {
         <div className="mh-wrap mh-hero-grid">
           <div className="mh-hero-copy">
             <Link href="/astrology-api" className="mh-pill">
-              <span className="mh-pill-tag">Included</span>
-              Astrology on every plan
+              <span className="mh-pill-tag">{t('home.hero.pillTag')}</span>
+              {t('home.hero.pill')}
               <Arrow />
             </Link>
             <h1>
-              Hindu content API
-              <br />
-              <span className="mh-h1-accent">for developers.</span>
+              <Rich
+                text={t('home.hero.heading')}
+                tags={{ br: <br />, accent: <span className="mh-h1-accent" /> }}
+              />
             </h1>
-            <p className="mh-lede">
-              One REST API for Sanskrit mantras, scripture books and chapters, linked recordings,
-              and astrology calculations.
-            </p>
+            <p className="mh-lede">{t('home.hero.lede')}</p>
             <div className="mh-actions">
               <KeyButton href={consoleSandboxUrl({ preset: 'quickstart' })}>
-                Try the sandbox
+                {t('home.hero.trySandbox')}
               </KeyButton>
               <Link href="/docs#quickstart" className="mh-btn mh-btn-ghost">
-                Read the docs <Arrow />
+                {t('common.readDocs')} <Arrow />
               </Link>
             </div>
             <ul className="mh-hero-meta">
-              <li>500 free calls a month</li>
-              <li>No card needed</li>
-              <li>Live keys from ${plans.find((p) => p.price)?.price}/mo</li>
+              <li>{t('home.hero.freeCalls', { count: 500, calls: i18n.number(500) })}</li>
+              <li>{t('home.hero.noCard')}</li>
+              <li>
+                {t('home.hero.liveFrom', {
+                  price: usd(i18n, plans.find((p) => p.price)?.price ?? 0),
+                })}
+              </li>
             </ul>
           </div>
 
@@ -241,7 +224,7 @@ export default function Marketing() {
               </pre>
             </div>
             <figure className="mh-verse-float" lang="sa">
-              <figcaption>Rendered in your app</figcaption>
+              <figcaption>{t('home.hero.rendered')}</figcaption>
               <p className="mh-deva">{verse.sanskrit.split('\n')[0]}</p>
               <p className="mh-iast">{verse.transliteration.split('\n')[0]}</p>
             </figure>
@@ -268,42 +251,39 @@ export default function Marketing() {
       <section id="demo" className="mh-section">
         <div className="mh-wrap">
           <div className="mh-heading" data-reveal>
-            <p className="mh-eyebrow">Try it</p>
-            <h2>Pick an endpoint. See exactly what comes back.</h2>
-            <p>
-              Explore a production mantra record, an example signed link, and output from the
-              astrology engine.
-            </p>
+            <p className="mh-eyebrow">{t('home.demo.eyebrow')}</p>
+            <h2>{t('home.demo.title')}</h2>
+            <p>{t('home.demo.copy')}</p>
           </div>
 
           <div className="mh-demo" data-reveal>
             <div className="mh-demo-controls">
               <label className="mh-field">
-                <span>Endpoint</span>
+                <span>{t('home.demo.endpoint')}</span>
                 <select value={demo} onChange={(e) => setDemo(e.target.value as DemoKey)}>
                   {(Object.keys(demos) as DemoKey[]).map((k) => (
                     <option key={k} value={k}>
-                      {demos[k].label}
+                      {t(`home.demo.options.${k}`)}
                     </option>
                   ))}
                 </select>
               </label>
               {demo === 'mantra' ? (
                 <label className="mh-field">
-                  <span>Script</span>
+                  <span>{t('home.demo.script')}</span>
                   <select
                     value={script}
                     onChange={(e) => setScript(e.target.value as typeof script)}
                   >
-                    <option value="both">Devanagari + IAST</option>
-                    <option value="deva">Devanagari only</option>
-                    <option value="iast">IAST only</option>
+                    <option value="both">{t('home.demo.scriptBoth')}</option>
+                    <option value="deva">{t('home.demo.scriptDeva')}</option>
+                    <option value="iast">{t('home.demo.scriptIast')}</option>
                   </select>
                 </label>
               ) : demo === 'audio' ? null : (
                 <div className="mh-field">
-                  <span>Moment</span>
-                  <output>10 Nov 2026, 12:00 IST</output>
+                  <span>{t('home.demo.moment')}</span>
+                  <output>{moment(i18n)}</output>
                 </div>
               )}
               <code className="mh-demo-path">
@@ -322,7 +302,7 @@ export default function Marketing() {
                 <div className="mh-window-bar">
                   <span className="mh-window-title">response.json</span>
                   <span className="mh-status">200 OK</span>
-                  <CopyButton text={curlFor(demo)} label="Copy cURL" />
+                  <CopyButton text={curlFor(demo)} label={t('code.copyCurl')} />
                 </div>
                 <pre className="mh-pre mh-pre-wrap" tabIndex={0}>
                   <JsonCode value={active.response} />
@@ -339,24 +319,20 @@ export default function Marketing() {
           <figure className="mh-story" data-reveal>
             <Rosette className="mh-story-ring" />
             <div className="mh-story-main">
-              <p className="mh-eyebrow">Customer story</p>
+              <p className="mh-eyebrow">{t('home.story.eyebrow')}</p>
               <svg className="mh-story-mark" viewBox="0 0 48 36" aria-hidden="true">
                 <path d="M0 36V22C0 9.6 6.4 2.2 19 0l2 5.2C14 7 10.6 11 10.2 17H20v19H0zm28 0V22C28 9.6 34.4 2.2 47 0l1 5.2C42 7 38.6 11 38.2 17H48v19H28z" />
               </svg>
               <blockquote>
                 <p>
-                  Mantrilo powers the parts of Satyam our users turn to for{' '}
-                  <em>daily practice</em>. It helps them read and listen to Sanskrit mantras,
-                  explore the Bhagavad Gita chapter by chapter, check their local Panchang, and
-                  generate their Vedic birth chart. It’s been a great partner in bringing all of
-                  that into <em>one app</em>.
+                  <Rich text={t('home.story.quote')} tags={{ em: <em /> }} />
                 </p>
               </blockquote>
               <figcaption>
                 <img src="/customers/satyam.png" alt="" width={52} height={52} />
                 <span className="mh-story-who">
                   <b>Shrivas</b>
-                  <small>Head of Satyam</small>
+                  <small>{t('home.story.role')}</small>
                 </span>
                 <a
                   href="https://satyam.app"
@@ -364,25 +340,25 @@ export default function Marketing() {
                   rel="noopener"
                   className="mh-textlink mh-story-visit"
                 >
-                  Visit Satyam <Arrow />
+                  {t('home.story.visit')} <Arrow />
                 </a>
               </figcaption>
             </div>
-            <aside className="mh-story-side" aria-label="What Satyam builds with Mantrilo">
-              <p className="mh-story-label">Inside Satyam</p>
+            <aside className="mh-story-side" aria-label={t('home.story.sideLabel')}>
+              <p className="mh-story-label">{t('home.story.inside')}</p>
               <ul>
                 {[
-                  ['ॐ', 'Mantras with audio', '/v1/mantras/{id}/audio'],
-                  ['गी', 'Bhagavad Gita, by chapter', '/v1/books/{id}/chapters'],
-                  ['☾', 'Local Panchang', '/v1/astrology/calculate'],
-                  ['✦', 'Vedic birth chart', '/v1/astrology/calculate'],
-                ].map(([glyph, title, path]) => (
-                  <li key={title}>
+                  ['ॐ', 'mantras', '/v1/mantras/{id}/audio'],
+                  ['गी', 'gita', '/v1/books/{id}/chapters'],
+                  ['☾', 'panchang', '/v1/astrology/calculate'],
+                  ['✦', 'chart', '/v1/astrology/calculate'],
+                ].map(([glyph, key, path]) => (
+                  <li key={key}>
                     <span className="mh-story-glyph" aria-hidden="true">
                       {glyph}
                     </span>
                     <span>
-                      <b>{title}</b>
+                      <b>{t(`home.story.uses.${key}`)}</b>
                       <code>{path}</code>
                     </span>
                   </li>
@@ -397,24 +373,21 @@ export default function Marketing() {
       <section id="features" className="mh-section">
         <div className="mh-wrap">
           <div className="mh-heading" data-reveal>
-            <p className="mh-eyebrow">What’s in the response</p>
-            <h2>Built for reading, listening and reckoning time.</h2>
-            <p>
-              Content shaped the way people actually use it, with the care the source material
-              deserves.
-            </p>
+            <p className="mh-eyebrow">{t('home.features.eyebrow')}</p>
+            <h2>{t('home.features.title')}</h2>
+            <p>{t('home.features.copy')}</p>
           </div>
           <div className="mh-features">
             {features.map((f, i) => (
               <article
-                key={f.title}
+                key={f.key}
                 className="mh-card mh-feature"
                 data-reveal
                 style={{ transitionDelay: `${(i % 3) * 70}ms` }}
               >
                 <LineIcon>{f.icon}</LineIcon>
-                <h3>{f.title}</h3>
-                <p>{f.copy}</p>
+                <h3>{t(`home.features.items.${f.key}.title`)}</h3>
+                <p>{t(`home.features.items.${f.key}.copy`, { calls: i18n.number(500) })}</p>
               </article>
             ))}
           </div>
@@ -425,23 +398,20 @@ export default function Marketing() {
       <section id="code" className="mh-section mh-section-tint">
         <div className="mh-wrap mh-code-grid">
           <div className="mh-heading mh-heading-left" data-reveal>
-            <p className="mh-eyebrow">Integrate in minutes</p>
-            <h2>A familiar interface, in the language you already use.</h2>
-            <p>
-              Plain HTTPS and JSON. Keep your key on the server, call the API, and render the verse
-              however your design calls for.
-            </p>
+            <p className="mh-eyebrow">{t('home.code.eyebrow')}</p>
+            <h2>{t('home.code.title')}</h2>
+            <p>{t('home.code.copy')}</p>
             <ul className="mh-checks">
-              <li>Bearer-token auth with sandbox and live keys</li>
-              <li>Cursor pagination and deity filters</li>
-              <li>Stable error codes and a requestId on every response</li>
+              <li>{t('home.code.auth')}</li>
+              <li>{t('home.code.pagination')}</li>
+              <li>{t('home.code.errors')}</li>
             </ul>
             <Link href="/docs" className="mh-textlink">
-              Read the API reference <Arrow />
+              {t('home.code.reference')} <Arrow />
             </Link>
           </div>
           <div className="mh-window mh-code" data-reveal>
-            <div className="mh-tabs" role="tablist" aria-label="Code example language">
+            <div className="mh-tabs" role="tablist" aria-label={t('code.tabsLabel')}>
               {snippets.map((s) => (
                 <button
                   key={s.lang}
@@ -487,11 +457,11 @@ export default function Marketing() {
         <div className="mh-wrap">
           <div className="mh-heading" data-reveal>
             <p id="build" className="mh-eyebrow">
-              What you can build
+              {t('home.uses.eyebrow')}
             </p>
-            <h2>Build with the Mantrilo API</h2>
+            <h2>{t('home.uses.title')}</h2>
             <Link href="/library" className="mh-back">
-              Browse the Library <Arrow />
+              {t('home.uses.browse')} <Arrow />
             </Link>
           </div>
           <div className="mh-uses">
@@ -500,12 +470,10 @@ export default function Marketing() {
                 <span className="mh-deva">{verse.sanskrit.split('\n')[1]}</span>
                 <small>{verse.transliteration.split('\n')[1]}</small>
               </div>
-              <h3>Verse of the day</h3>
-              <p>
-                Display original Sanskrit and transliteration in a daily widget or reading view.
-              </p>
+              <h3>{t('home.uses.verse.title')}</h3>
+              <p>{t('home.uses.verse.copy')}</p>
               <Link href="/docs/guides/search-mantras" className="mh-back">
-                Build a mantra library <Arrow />
+                {t('home.uses.verse.link')} <Arrow />
               </Link>
             </article>
             <article className="mh-card mh-use" data-reveal style={{ transitionDelay: '70ms' }}>
@@ -514,28 +482,28 @@ export default function Marketing() {
                   <i key={i} style={{ height: `${22 + Math.abs(Math.sin(i * 0.7)) * 60}%` }} />
                 ))}
               </div>
-              <h3>Chanting & listening</h3>
-              <p>Play an available recording beside its mantra using a temporary link.</p>
+              <h3>{t('home.uses.audio.title')}</h3>
+              <p>{t('home.uses.audio.copy')}</p>
               <Link href="/docs/guides/sacred-audio" className="mh-back">
-                Add audio playback <Arrow />
+                {t('home.uses.audio.link')} <Arrow />
               </Link>
             </article>
             <article className="mh-card mh-use" data-reveal style={{ transitionDelay: '140ms' }}>
               <div className="mh-use-art mh-use-panchang" aria-hidden="true">
                 <span>
-                  <small>Tithi</small>Shukla 1
+                  <small>{t('astro.tithi')}</small>Shukla 1
                 </span>
                 <span>
-                  <small>Nakshatra</small>Anuradha
+                  <small>{t('astro.nakshatra')}</small>Anuradha
                 </span>
                 <span>
-                  <small>Karana</small>Bava
+                  <small>{t('astro.karana')}</small>Bava
                 </span>
               </div>
-              <h3>Panchang calendars</h3>
-              <p>Show sunrise, tithi, nakshatra and transitions for a local calendar day.</p>
+              <h3>{t('home.uses.panchang.title')}</h3>
+              <p>{t('home.uses.panchang.copy')}</p>
               <Link href="/astrology-api/daily-panchang" className="mh-back">
-                See the Panchang API <Arrow />
+                {t('home.uses.panchang.link')} <Arrow />
               </Link>
             </article>
             <article className="mh-card mh-use" data-reveal style={{ transitionDelay: '210ms' }}>
@@ -545,10 +513,10 @@ export default function Marketing() {
                   <path d="M6 6l108 108M114 6L6 114M60 6L6 60l54 54 54-54z" />
                 </svg>
               </div>
-              <h3>Scripture and epic readers</h3>
-              <p>Display Sanskrit verses from the Upanishads or English retellings of the Ramayana and Mahabharata.</p>
+              <h3>{t('home.uses.books.title')}</h3>
+              <p>{t('home.uses.books.copy')}</p>
               <Link href="/docs#epic-retellings" className="mh-back">
-                Explore the epic retellings <Arrow />
+                {t('home.uses.books.link')} <Arrow />
               </Link>
             </article>
           </div>
@@ -561,21 +529,19 @@ export default function Marketing() {
       <section id="pricing" className="mh-section">
         <div className="mh-wrap">
           <div className="mh-heading" data-reveal>
-            <p className="mh-eyebrow">Pricing</p>
-            <h2>Start free. Pay as your product grows.</h2>
-            <p>
-              Monthly billing. Every allowance resets monthly. Astrology included on every plan.
-            </p>
+            <p className="mh-eyebrow">{t('home.pricing.eyebrow')}</p>
+            <h2>{t('home.pricing.title')}</h2>
+            <p>{t('home.pricing.copy')}</p>
           </div>
           <PlanCards reveal />
           <p className="mh-plans-note">
-            A customer product is an app or website covered by your plan.{' '}
+            {t('plans.customerProduct')}{' '}
             <Link href="/pricing" className="mh-textlink">
-              Compare plans in detail <Arrow />
+              {t('home.pricing.compare')} <Arrow />
             </Link>
             {' · '}
             <Link href={{ pathname: '/pricing', params: { market: 'IN' } }} className="mh-textlink">
-              View India pricing
+              {t('home.pricing.india')}
             </Link>
           </p>
         </div>
@@ -585,14 +551,14 @@ export default function Marketing() {
       <section id="faq" className="mh-section mh-section-tint">
         <div className="mh-wrap mh-faq">
           <div className="mh-heading mh-heading-left" data-reveal>
-            <p className="mh-eyebrow">Questions</p>
-            <h2>Good to know.</h2>
+            <p className="mh-eyebrow">{t('home.faq.eyebrow')}</p>
+            <h2>{t('home.faq.title')}</h2>
             <p>
-              Something else? <Link href="/contact">Get in touch</Link>.
+              <Rich text={t('home.faq.contact')} tags={{ link: <Link href="/contact" /> }} />
             </p>
           </div>
           <div className="mh-faq-list" data-reveal>
-            {faqs.map(([q, a]) => (
+            {faqs(i18n).map(([q, a]) => (
               <details key={q}>
                 <summary>
                   {q}
@@ -621,12 +587,12 @@ export default function Marketing() {
             <p className="mh-cta-deva" lang="sa" aria-hidden="true">
               शुभारम्भः
             </p>
-            <h2>Begin with a free sandbox key.</h2>
-            <p>500 calls a month on sample records. Upgrade when you’re ready to go live.</p>
+            <h2>{t('home.cta.title')}</h2>
+            <p>{t('home.cta.copy', { calls: i18n.number(500) })}</p>
             <div className="mh-actions">
               <KeyButton className="mh-btn mh-btn-ink" />
               <Link href="/docs" className="mh-btn mh-btn-glass">
-                Read the docs <Arrow />
+                {t('common.readDocs')} <Arrow />
               </Link>
             </div>
           </div>
@@ -637,6 +603,8 @@ export default function Marketing() {
 }
 
 function DemoRender({ demo, script }: { demo: DemoKey; script: 'both' | 'deva' | 'iast' }) {
+  const i18n = useI18n();
+  const { t, number } = i18n;
   if (demo === 'mantra') {
     return (
       <div className="mh-render-mantra">
@@ -666,8 +634,8 @@ function DemoRender({ demo, script }: { demo: DemoKey; script: 'both' | 'deva' |
     return (
       <div className="mh-render-audio">
         <div className="mh-render-meta">
-          <span>Signed link</span>
-          <span>Expires in 15 min</span>
+          <span>{t('home.render.signedLink')}</span>
+          <span>{t('home.render.expires', { minutes: number(15) })}</span>
         </div>
         <h3>{mantra.title}</h3>
         <div className="mh-use-wave mh-render-wave" aria-hidden="true">
@@ -680,21 +648,20 @@ function DemoRender({ demo, script }: { demo: DemoKey; script: 'both' | 'deva' |
         </div>
         <dl className="mh-facts">
           <div>
-            <dt>Size</dt>
-            <dd>{Math.round(catalog.recording.bytes / 1024)} KB</dd>
+            <dt>{t('home.render.size')}</dt>
+            <dd>{number(Math.round(catalog.recording.bytes / 1024))} KB</dd>
           </div>
           <div>
-            <dt>Format</dt>
+            <dt>{t('home.render.format')}</dt>
             <dd>audio/x-m4a</dd>
           </div>
           <div>
-            <dt>Metered</dt>
-            <dd>File bytes per link</dd>
+            <dt>{t('home.render.metered')}</dt>
+            <dd>{t('home.render.meteredValue')}</dd>
           </div>
         </dl>
         <p className="mh-render-note">
-          Omit <code>?format=json</code> to get a 302 redirect straight to the file. The signed URL
-          is shortened here.
+          <Rich text={t('home.render.audioNote')} tags={{ code: <code /> }} />
         </p>
       </div>
     );
@@ -704,37 +671,52 @@ function DemoRender({ demo, script }: { demo: DemoKey; script: 'both' | 'deva' |
     return (
       <div className="mh-render-astro">
         <div className="mh-render-meta">
-          <span>Sidereal · Lahiri (approx.)</span>
-          <span>10 Nov 2026, 12:00 IST</span>
+          <span>{t('home.render.sidereal')}</span>
+          <span>{moment(i18n)}</span>
         </div>
         <h3>{moon.body}</h3>
         <p className="mh-big-num">
-          {moon.siderealLongitudeDegrees.toFixed(2)}
+          {number(moon.siderealLongitudeDegrees, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
           <span>°</span>
         </p>
         <dl className="mh-facts">
           <div>
-            <dt>Rashi</dt>
+            <dt>{t('astro.rashi')}</dt>
             <dd>
-              {moon.rashi.name} {moon.rashi.degreesWithin.toFixed(2)}°
+              {moon.rashi.name}{' '}
+              {number(moon.rashi.degreesWithin, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+              °
             </dd>
           </div>
           <div>
-            <dt>Nakshatra</dt>
+            <dt>{t('astro.nakshatra')}</dt>
             <dd>
-              {moon.nakshatra.name}, pada {moon.nakshatra.pada}
+              {t('home.render.pada', {
+                name: moon.nakshatra.name,
+                pada: number(moon.nakshatra.pada),
+              })}
             </dd>
           </div>
           <div>
-            <dt>Motion</dt>
+            <dt>{t('home.render.motion')}</dt>
             <dd>
-              {moon.motion.degreesPerDay.toFixed(2)}°/day{moon.motion.retrograde ? ' · R' : ''}
+              {t('home.render.perDay', {
+                degrees: number(moon.motion.degreesPerDay, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }),
+              })}
+              {moon.motion.retrograde ? ' · R' : ''}
             </dd>
           </div>
         </dl>
-        <p className="mh-render-note">
-          The full response covers the Sun through Saturn. The Moon is shown here.
-        </p>
+        <p className="mh-render-note">{t('home.render.planetsNote')}</p>
       </div>
     );
   }
@@ -742,18 +724,18 @@ function DemoRender({ demo, script }: { demo: DemoKey; script: 'both' | 'deva' |
   return (
     <div className="mh-render-astro">
       <div className="mh-render-meta">
-        <span>At the requested instant</span>
-        <span>10 Nov 2026, 12:00 IST</span>
+        <span>{t('home.render.instant')}</span>
+        <span>{moment(i18n)}</span>
       </div>
-      <h3>Panchang</h3>
+      <h3>{t('astro.panchang')}</h3>
       <div className="mh-panchang">
         {[
-          ['Tithi', `${p.tithi.paksha} ${p.tithi.numberWithinPaksha}`],
-          ['Nakshatra', `${p.nakshatra.name} · ${p.nakshatra.pada}`],
-          ['Yoga', `No. ${p.yoga.number}`],
-          ['Karana', p.karana.name],
-          ['Sun', p.sunRashi.name],
-          ['Moon', p.moonRashi.name],
+          [t('astro.tithi'), `${p.tithi.paksha} ${p.tithi.numberWithinPaksha}`],
+          [t('astro.nakshatra'), `${p.nakshatra.name} · ${p.nakshatra.pada}`],
+          [t('astro.yoga'), t('home.render.number', { number: number(p.yoga.number) })],
+          [t('astro.karana'), p.karana.name],
+          [t('astro.sun'), p.sunRashi.name],
+          [t('astro.moon'), p.moonRashi.name],
         ].map(([k, v]) => (
           <div key={k}>
             <small>{k}</small>

@@ -10,6 +10,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 import sys
 from urllib.parse import urlsplit
+import re
 import xml.etree.ElementTree as ET
 
 root = Path(sys.argv[1] if len(sys.argv) > 1 else 'dist')
@@ -22,6 +23,17 @@ for slug, guide in guides.items():
         'description': guide['description'],
         'indexable': True,
     }
+
+# Languages with their own /<code>/ copy of each page (src/i18n/locales.ts). English has none.
+locales = re.findall(r"code: '([a-z]{2})'", Path('src/i18n/locales.ts').read_text())
+assert locales[0] == 'en' and len(locales) == len(set(locales)), ('locales', locales)
+prefixed = [code for code in locales if code != 'en']
+def split_locale(route):
+    first = route.split('/')[1] if route != '/' else ''
+    if first in prefixed:
+        rest = route[len(first) + 1:]
+        return first, rest or '/'
+    return 'en', route
 
 class Page(HTMLParser):
     def __init__(self, source):
@@ -82,17 +94,32 @@ for route in exported:
     filename = 'index.html' if route == '/' else route.lstrip('/') + '.html'
     page = Page((root / filename).read_text())
     pages[route] = page
-    expected = manifest.get(route)
+    lang, english = split_locale(route)
+    # A translated page's title and description come from its locale file, so they are checked
+    # like a generated page's; its English original must exist.
+    if lang != 'en':
+        assert english in exported, (route, 'translated page without an English original')
+    expected = manifest.get(route) if lang == 'en' else None
     if not expected:
         expected = {
             'title': page.title,
             'description': page.meta.get('description', ''),
             'indexable': page.meta.get('robots') == 'index,follow',
         }
-        assert expected['title'].endswith(' | Mantrilo'), (route, 'title', expected['title'])
+        # A translated page keeps the suffix its English original has (/docs has none).
+        suffixed = manifest.get(english, {}).get('title', ' | Mantrilo').endswith(' | Mantrilo')
+        assert expected['title'].endswith(' | Mantrilo') == suffixed or (lang == 'en' and suffixed), (route, 'title', expected['title'])
         assert len(expected['description']) >= 50, (route, 'description too short')
-    assert page.language == 'en', (route, 'language', page.language)
-    assert not page.alternates, (route, page.alternates)
+    assert page.language == lang, (route, 'language', page.language)
+    translated = all(english == '/' and f'/{code}' in exported or f'/{code}{english}' in exported for code in prefixed)
+    if origin and translated:
+        expected_alternates = sorted(
+            [(code, origin + (english if code == 'en' else f'/{code}' + ('' if english == '/' else english))) for code in locales]
+            + [('x-default', origin + english)]
+        )
+        assert sorted(page.alternates) == expected_alternates, (route, 'hreflang', page.alternates)
+    else:
+        assert not page.alternates, (route, page.alternates)
     assert page.title == expected['title'], (route, 'title', page.title)
     # /blog-shell is the empty layout the blog server fills in; each blog page brings its own h1.
     if route == '/blog-shell':
@@ -113,11 +140,15 @@ for route in exported:
         assert (root / 'mantrilo-social.png').is_file(), 'Missing social image file'
         assert len(page.jsonld) == 1, (route, 'structured data absent')
         graph = page.jsonld[0]['@graph']
-        assert graph[0]['@type'] == ('Organization' if route == '/' else 'BreadcrumbList')
+        assert graph[0]['@type'] == ('Organization' if english == '/' else 'BreadcrumbList'), (route, 'structured data')
         assert 'AggregateRating' not in json.dumps(graph)
     else:
         assert not page.jsonld, (route, 'unconfigured origin must not emit invented structured URLs')
-assert len({p.title for p in pages.values()}) == len(pages), 'Duplicate titles'
+# Titles and descriptions are unique within each language.
+for code in locales:
+    group = [p for r, p in pages.items() if split_locale(r)[0] == code]
+    assert len({p.title for p in group}) == len(group), (code, 'Duplicate titles')
+    assert len({p.meta['description'] for p in group}) == len(group), (code, 'Duplicate descriptions')
 for route, page in pages.items():
     for href in page.links:
         url = urlsplit(href)
@@ -139,7 +170,6 @@ assert not (root / '[page].html').exists(), 'Catch-all export remains'
 assert not (root / '_sitemap.html').exists(), 'Internal route exposed'
 urls = ET.parse(root / 'sitemap.xml').getroot()
 locations = [node.text for node in urls.iter('{http://www.sitemaps.org/schemas/sitemap/0.9}loc')]
-assert len({p.meta['description'] for p in pages.values()}) == len(pages), 'Duplicate descriptions'
 expected_urls = sorted(origin + route for route, page in pages.items() if page.meta['robots'] == 'index,follow') if origin else []
 assert locations == expected_urls, ('sitemap', sorted(set(locations) ^ set(expected_urls)))
 robots = (root / 'robots.txt').read_text()

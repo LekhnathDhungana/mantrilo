@@ -169,7 +169,7 @@
   position: absolute;
   z-index: -1;
   top: -220px;
-  right: -260px;
+  inset-inline-end: -260px;
   width: 980px;
   height: 820px;
   pointer-events: none;
@@ -278,7 +278,8 @@ a.mx-chip:hover {
   width: fit-content;
   max-width: 100%;
   margin-top: 24px;
-  padding: 6px 6px 6px 8px;
+  padding-block: 6px 6px;
+  padding-inline: 8px 6px;
   border-radius: 14px;
   border: 1px solid var(--code-line);
   background: var(--code-bg);
@@ -341,7 +342,8 @@ a.mx-chip:hover {
   position: relative;
   display: flex;
   justify-content: center;
-  padding: 34px 22px 12px 0;
+  padding-block: 34px 12px;
+  padding-inline: 0 22px;
 }
 .mx-stack {
   position: relative;
@@ -386,8 +388,8 @@ a.mx-chip:hover {
 }
 .mx-scan {
   position: absolute;
-  left: 0;
-  right: 0;
+  inset-inline-start: 0;
+  inset-inline-end: 0;
   height: 80px;
   background: linear-gradient(180deg, transparent, var(--mx-glow), transparent);
   animation: mx-scan 5.5s cubic-bezier(0.45, 0, 0.55, 1) infinite;
@@ -411,7 +413,7 @@ a.mx-chip:hover {
   color: var(--ink-2);
 }
 .mx-spec-head span:last-child {
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 .mx-ok {
   color: var(--mx-ok);
@@ -449,27 +451,27 @@ a.mx-chip:hover {
   animation: mx-tick 2.4s ease-in-out infinite;
 }
 .mx-tick:nth-child(1) {
-  left: 0;
+  inset-inline-start: 0;
   top: 0;
-  border-left-width: 1px;
+  border-inline-start-width: 1px;
   border-top-width: 1px;
 }
 .mx-tick:nth-child(2) {
-  right: 0;
+  inset-inline-end: 0;
   top: 0;
-  border-right-width: 1px;
+  border-inline-end-width: 1px;
   border-top-width: 1px;
 }
 .mx-tick:nth-child(3) {
-  left: 0;
+  inset-inline-start: 0;
   bottom: 0;
-  border-left-width: 1px;
+  border-inline-start-width: 1px;
   border-bottom-width: 1px;
 }
 .mx-tick:nth-child(4) {
-  right: 0;
+  inset-inline-end: 0;
   bottom: 0;
-  border-right-width: 1px;
+  border-inline-end-width: 1px;
   border-bottom-width: 1px;
 }
 .mh .mx-specimen-sa {
@@ -664,7 +666,7 @@ a.mx-chip:hover {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
 }
 .mx-file {
-  margin-left: auto;
+  margin-inline-start: auto;
   padding: 0 8px;
   font-family: var(--mono);
   font-size: 12px;
@@ -862,7 +864,7 @@ a.mx-chip:hover {
 }
 .mx-facts dd {
   min-width: 0;
-  text-align: right;
+  text-align: end;
   color: var(--ink);
 }
 .mh .mx-facts code {
@@ -898,7 +900,8 @@ a.mx-chip:hover {
    the button fills left to right with the track's progress. */
 .mh .mx-play {
   gap: 10px;
-  padding: 0 18px 0 6px;
+  padding-block: 0 0;
+  padding-inline: 6px 18px;
   color: var(--ink) !important;
   border-color: color-mix(in srgb, var(--saffron) 50%, var(--line-2));
   background:
@@ -941,7 +944,7 @@ a.mx-chip:hover {
   width: 14px;
   height: 14px;
   border: 2px solid currentColor;
-  border-right-color: transparent;
+  border-inline-end-color: transparent;
   border-radius: 999px;
   animation: mx-spin 0.7s linear infinite;
 }
@@ -1222,14 +1225,14 @@ a.mx-chip:hover {
   position: absolute;
 }
 .mx-vols > div:nth-child(1) {
-  left: 0;
+  inset-inline-start: 0;
   top: 118px;
   width: 160px;
   z-index: 1;
   animation: mx-tilt-l 8s ease-in-out infinite 0.6s;
 }
 .mx-vols > div:nth-child(2) {
-  right: 0;
+  inset-inline-end: 0;
   top: 130px;
   width: 160px;
   z-index: 1;
@@ -1254,7 +1257,7 @@ a.mx-chip:hover {
 }
 .mx-verse-chip {
   position: absolute;
-  right: 0;
+  inset-inline-end: 0;
   bottom: 0;
   z-index: 3;
   width: 310px;
@@ -1300,7 +1303,8 @@ a.mx-chip:hover {
   flex-direction: column;
   aspect-ratio: 0.72;
   overflow: hidden;
-  padding: 14px 14px 14px 22px;
+  padding-block: 14px 14px;
+  padding-inline: 22px 14px;
   border-radius: 10px;
   border: 1px solid var(--line-2);
   background-size: 14px 14px;
@@ -1313,7 +1317,7 @@ a.mx-chip:hover {
 .mx-vol::before {
   content: '';
   position: absolute;
-  left: 0;
+  inset-inline-start: 0;
   top: 0;
   bottom: 0;
   width: 6px;
@@ -1399,7 +1403,7 @@ a.mx-chip:hover {
   letter-spacing: -0.02em;
 }
 .mx-shelf h3 span {
-  margin-right: 10px;
+  margin-inline-end: 10px;
   font-family: var(--deva);
   font-size: 19px;
   font-weight: 400;
@@ -1575,7 +1579,7 @@ a.mx-chip:hover {
   content: '';
   position: absolute;
   top: 3px;
-  left: 3px;
+  inset-inline-start: 3px;
   width: 16px;
   height: 16px;
   border-radius: 999px;
@@ -1587,7 +1591,7 @@ a.mx-chip:hover {
   background: var(--saffron);
 }
 .mx-switch[aria-checked='true'] i::after {
-  left: 17px;
+  inset-inline-start: 17px;
 }
 .mx-demo-body {
   min-height: 220px;
@@ -1709,7 +1713,7 @@ a.mx-chip:hover {
 }
 @media (max-width: 640px) {
   .mx-art {
-    padding-right: 18px;
+    padding-inline-end: 18px;
   }
   .mx-vols {
     height: 420px;
@@ -1720,7 +1724,7 @@ a.mx-chip:hover {
   }
   .mx-vols > div:nth-child(3) {
     width: 180px;
-    margin-left: -90px;
+    margin-inline-start: -90px;
   }
   .mx-cells {
     grid-template-columns: minmax(0, 1fr);
@@ -1851,7 +1855,7 @@ a.mx-chip:hover {
   border-radius: 14px;
   border: 1px solid var(--line-2);
   background-size: 14px 14px;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   transition:
     transform 0.45s var(--ease),
@@ -1895,7 +1899,7 @@ a.mx-chip:hover {
   white-space: nowrap;
 }
 .mx-tile-top b {
-  margin-left: auto;
+  margin-inline-start: auto;
   font-weight: 500;
   color: var(--accent-text);
 }
@@ -1934,7 +1938,7 @@ a.mx-chip:hover {
 }
 .mx-more > span,
 .mx-deity-links > span {
-  margin-right: 4px;
+  margin-inline-end: 4px;
   font-size: 13.5px;
   color: var(--ink-3);
 }
@@ -2018,7 +2022,8 @@ button.mx-chip:hover {
 }
 .mx-filters .mx-switch {
   height: 42px;
-  padding: 0 14px 0 8px;
+  padding-block: 0 0;
+  padding-inline: 8px 14px;
   border-radius: 999px;
   border: 1px solid var(--line-2);
   background: var(--surface);

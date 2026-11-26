@@ -4,6 +4,6 @@ export default function Page() {
   return <InfoPage page="privacy" />;
 }
 
-export function generateMetadata() {
-  return pageMetadata('/privacy');
+export function generateMetadata(_request?: unknown, params?: Record<string, string | string[]>) {
+  return pageMetadata('/privacy', undefined, params);
 }

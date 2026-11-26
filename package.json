@@ -8,6 +8,7 @@
     "expo-linking": "~58.0.17",
     "expo-router": "~58.0.32",
     "expo-status-bar": "~58.0.5",
+    "i18next": "^27.2.9",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-native": "0.88.1",
@@ -16,17 +17,19 @@
     "react-native-web": "^0.21.4"
   },
   "scripts": {
-    "start": "expo start",
+    "start": "node scripts/i18n-build.mjs && expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web",
+    "web": "node scripts/i18n-build.mjs && expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
-    "build": "expo export --platform web && node scripts/finalize-web.mjs",
+    "build": "node scripts/i18n-build.mjs && expo export --platform web && node scripts/finalize-web.mjs",
     "preview": "node scripts/preview.mjs",
     "check:seo": "python3 scripts/check-seo.py",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "i18n:build": "node scripts/i18n-build.mjs",
+    "i18n:check": "node scripts/i18n-check.mjs"
   },
   "private": true,
   "devDependencies": {

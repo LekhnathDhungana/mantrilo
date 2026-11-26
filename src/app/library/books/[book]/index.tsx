@@ -29,7 +29,7 @@ export async function generateMetadata(
 ) {
   const result = await data(String(params.book));
   const meta = result?.kind === 'overview' ? result.overview.meta : result?.page.meta;
-  return pageMetadata(`/library/books/${String(params.book)}`, meta);
+  return pageMetadata(`/library/books/${String(params.book)}`, meta, params);
 }
 
 export default function Page() {

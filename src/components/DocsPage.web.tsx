@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Link, Redirect, useLocalSearchParams } from 'expo-router';
+import { Redirect, useLocalSearchParams } from 'expo-router';
+import { Link } from '../i18n/Link.web';
 import { guideHref } from '../data/public-guides';
 import { useHydrated } from './site/useHydrated';
 import type { Guide } from '../../developer/src/data/integrations';
 import { Arrow, Callout, DataTable, KeyButton, SiteFrame } from './site/Chrome.web';
 import { GOALS, GuideView, findGuide, guideSandboxHref } from './site/Guides.web';
 import { CodePanel } from './site/Code.web';
+import { useI18n } from '../i18n';
+import { Rich } from '../i18n/Rich';
+import { guideText } from '../i18n/guides';
 import { plans } from '../data/plans';
+import { planName } from './site/Plans.web';
 import { consoleUrl, consoleSandboxUrl } from '../data/site';
 import { astrologyPositionsExample, errors, rateLimits } from '../data/api-reference';
 import { epicBooks } from '../../developer/src/data/epic-books';
@@ -28,26 +33,27 @@ import {
 // endpoint keeps its parameters, request and response together.
 // Contracts mirror developer/api/server.mjs, developer/api/content.mjs and developer/server/pustak.mjs.
 
-type Param = [name: string, where: string, rule: string];
+type Param = [name: string, where: string];
 type Endpoint = {
   id: string;
   method: 'GET' | 'POST';
   path: string;
-  summary: ReactNode;
   params: Param[];
   request: string;
   response: unknown;
   status?: string;
   key?: boolean;
-  notes?: ReactNode;
+  /** Whether docs.endpoints.<id>.notes exists. */
+  notes?: boolean;
 };
 
+// Each endpoint's summary, parameter rules and notes are under docs.endpoints.<id> in the locale
+// files; the inline markup (<code>, <link>) is rendered by DocText.
 const ENDPOINTS: Endpoint[] = [
   {
     id: 'api-info',
     method: 'GET',
     path: '/v1',
-    summary: 'The API name, version and resource list. Useful as a health check.',
     params: [],
     key: false,
     request: 'curl "$MANTRILO_API_URL/v1"',
@@ -62,11 +68,10 @@ const ENDPOINTS: Endpoint[] = [
     id: 'list-mantras',
     method: 'GET',
     path: '/v1/mantras',
-    summary: 'Mantras and shlokas, in a stable order. Each item is a summary without verses.',
     params: [
-      ['limit', 'query', 'Integer, 1–100. Default 20.'],
-      ['cursor', 'query', 'The nextCursor from the previous page.'],
-      ['deity', 'query', 'A deity id, such as shiva or annapurna. Exact match.'],
+      ['limit', 'query'],
+      ['cursor', 'query'],
+      ['deity', 'query'],
     ],
     request: curlGet('/v1/mantras?limit=1'),
     response: mantraListResponse,
@@ -75,88 +80,62 @@ const ENDPOINTS: Endpoint[] = [
     id: 'get-mantra',
     method: 'GET',
     path: '/v1/mantras/{id}',
-    summary:
-      'One mantra with its verses. Any text field can be null, so render only what is present.',
-    params: [['id', 'path', 'The mantra id from a list response.']],
+    params: [['id', 'path']],
     request: curlGet(`/v1/mantras/${MANTRA_ID}`),
     response: mantraResponse,
-    notes: (
-      <>
-        <code>description</code> is the mantra’s short public summary. It is <code>null</code> when
-        a record has none.
-      </>
-    ),
+    notes: true,
   },
   {
     id: 'mantra-audio',
     method: 'GET',
     path: '/v1/mantras/{id}/audio',
-    summary:
-      'The recording for a mantra whose audio field is not null. Without format=json the response is a 302 redirect to the file.',
     params: [
-      ['id', 'path', 'The mantra id.'],
-      ['format', 'query', 'json returns the signed link as JSON instead of redirecting.'],
+      ['id', 'path'],
+      ['format', 'query'],
     ],
     request: curlGet(`/v1/mantras/${MANTRA_ID}/audio?format=json`),
     response: audioResponse,
-    notes: 'Links last 15 minutes. Each link counts its file size toward your audio allowance.',
+    notes: true,
   },
   {
     id: 'list-books',
     method: 'GET',
     path: '/v1/books',
-    summary:
-      'Live books in catalog order. Filter by collection to call a set such as the Upanishads directly.',
     params: [
-      ['collection', 'query', `A collection id: ${collections.map((c) => c.id).join(', ')}.`],
-      ['limit', 'query', 'Integer, 1–100. Default 24.'],
-      ['cursor', 'query', 'The nextCursor from the previous page.'],
+      ['collection', 'query'],
+      ['limit', 'query'],
+      ['cursor', 'query'],
     ],
     request: collectionRequest('upanishads'),
     response: collectionResponse,
-    notes:
-      'Sandbox keys list Isha Upanishad and the Bhagavad Gita. Other collections may return no sandbox titles.',
+    notes: true,
   },
   {
     id: 'get-book',
     method: 'GET',
     path: '/v1/books/{id}',
-    summary: 'A book summary with its chapter index. Use the chapter numbers to request text.',
-    params: [['id', 'path', 'The book id from a list response.']],
+    params: [['id', 'path']],
     request: curlGet('/v1/books/ishaUpanishad'),
     response: bookResponse,
-    notes: (
-      <>
-        <code>preview</code> is <code>true</code> for sandbox keys, which see the opening chapter
-        only.
-      </>
-    ),
+    notes: true,
   },
   {
     id: 'get-chapter',
     method: 'GET',
     path: '/v1/books/{id}/chapters/{chapter}',
-    summary: 'A page of up to 30 verses or a complete chapter of a prose retelling.',
     params: [
-      ['id', 'path', 'The book id.'],
-      ['chapter', 'path', 'A chapter number from the book’s chapter index.'],
-      ['offset', 'query', 'For verses, pass nextOffset from the previous page. Omit for prose.'],
+      ['id', 'path'],
+      ['chapter', 'path'],
+      ['offset', 'query'],
     ],
     request: curlGet('/v1/books/ishaUpanishad/chapters/1'),
     response: chapterResponse,
-    notes: (
-      <>
-        Sandbox keys read the first three verses of the opening chapter of sample books.{' '}
-        <a href="#epic-retellings">Ramayana and Mahabharata</a> require a live key.
-      </>
-    ),
+    notes: true,
   },
   {
     id: 'astrology-catalog',
     method: 'GET',
     path: '/v1/astrology',
-    summary:
-      'The current operation catalog, with IDs, categories, and sample inputs where available.',
     params: [],
     key: false,
     request: 'curl "$MANTRILO_API_URL/v1/astrology"',
@@ -177,47 +156,63 @@ const ENDPOINTS: Endpoint[] = [
     id: 'astrology-calculate',
     method: 'POST',
     path: '/v1/astrology/calculate',
-    summary: (
-      <>
-        Run one operation. Send <code>operation</code> and that operation’s inputs as JSON. Each
-        operation’s inputs are on the <Link href="/astrology-api">Astrology page</Link>.
-      </>
-    ),
     params: [
-      ['operation', 'body', 'An operation id from GET /v1/astrology.'],
-      ['datetime', 'body', 'For positions and panchang: ISO 8601 with seconds and a UTC offset.'],
-      ['…', 'body', 'Other inputs depend on the operation.'],
+      ['operation', 'body'],
+      ['datetime', 'body'],
+      ['…', 'body'],
     ],
     request: curlPost('/v1/astrology/calculate', {
       operation: 'positions',
       datetime: '2026-11-10T12:00:00+05:30',
     }),
     response: astrologyPositionsExample,
-    notes: 'Failed calculations are not charged.',
+    notes: true,
   },
 ];
 
+// A docs sentence with inline markup: <code>…</code>, <link>…</link> (the Astrology page),
+// <epic>…</epic> (the epic retellings section) and other in-page anchors.
+function DocText({ text }: { text: string }) {
+  return (
+    <Rich
+      text={text}
+      tags={{
+        code: <code />,
+        link: <Link href="/astrology-api" />,
+        epic: <a href="#epic-retellings" />,
+        library: <Link href="/library" />,
+        pricing: <Link href="/pricing" />,
+        endpoints: <a href="#list-mantras" />,
+        goals: <a href="#guides" />,
+      }}
+    />
+  );
+}
+
+const paramKey = (name: string) => (name === '…' ? 'other' : name);
+
 const GROUPS: { title: string; links: [string, string][] }[] = [
   {
-    title: 'Get started',
+    title: 'docs.nav.getStarted',
     links: [
-      ['quickstart', 'Quickstart'],
-      ['guides', 'Guides by goal'],
-      ['authentication', 'Authentication'],
-      ['environments', 'Sandbox and live'],
+      ['quickstart', 'docs.nav.quickstart'],
+      ['guides', 'footer.guides'],
+      ['authentication', 'docs.nav.authentication'],
+      ['environments', 'docs.nav.environments'],
     ],
   },
   {
-    title: 'Concepts',
+    title: 'docs.nav.concepts',
     links: [
-      ['pagination', 'Pagination'],
-      ['epic-retellings', 'Ramayana and Mahabharata'],
-      ['errors', 'Errors'],
-      ['limits', 'Usage limits'],
+      ['pagination', 'docs.nav.pagination'],
+      ['epic-retellings', 'docs.nav.epics'],
+      ['errors', 'docs.nav.errors'],
+      ['limits', 'docs.nav.limits'],
     ],
   },
   {
-    title: 'Endpoints',
+    title: 'docs.nav.endpoints',
+    // Endpoint links are "GET /v1/mantras": HTTP verbs and paths are not translated.
     links: ENDPOINTS.map((e) => [e.id, `${e.method} ${e.path}`]),
   },
 ];
@@ -244,6 +239,9 @@ function useActiveSection(ids: string[]) {
 }
 
 function DocsNav({ guide }: { guide?: string }) {
+  const { t } = useI18n();
+  const label = (key: string) =>
+    key.startsWith('docs.') || key.startsWith('footer.') ? t(key) : key;
   const [query, setQuery] = useState('');
   const input = useRef<HTMLInputElement>(null);
   const ids = useMemo(() => GROUPS.flatMap((g) => g.links.map(([id]) => id)), []);
@@ -261,22 +259,22 @@ function DocsNav({ guide }: { guide?: string }) {
   const q = query.trim().toLowerCase();
   const groups = GROUPS.map((g) => ({
     ...g,
-    links: g.links.filter(([, label]) => !q || label.toLowerCase().includes(q)),
+    links: g.links.filter(([, key]) => !q || label(key).toLowerCase().includes(q)),
   })).filter((g) => g.links.length);
-  const goals = GOALS.filter((g) => !q || g.goal.toLowerCase().includes(q));
+  const goals = GOALS.filter((g) => !q || t(g.goalKey).toLowerCase().includes(q));
   return (
-    <nav className="mh-docs-nav" aria-label="Documentation">
+    <nav className="mh-docs-nav" aria-label={t('docs.nav.label')}>
       <label className="mh-search">
         <svg viewBox="0 0 16 16" aria-hidden="true">
           <circle cx="7" cy="7" r="4.5" />
           <path d="M10.5 10.5L14 14" />
         </svg>
-        <span className="mh-sr">Search the docs</span>
+        <span className="mh-sr">{t('docs.nav.searchLabel')}</span>
         <input
           ref={input}
           className="mh-input"
           type="search"
-          placeholder="Search docs"
+          placeholder={t('docs.nav.search')}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={(event) => {
@@ -290,7 +288,7 @@ function DocsNav({ guide }: { guide?: string }) {
       </label>
       {goals.length > 0 && (
         <div className="mh-docs-group">
-          <p>Guides</p>
+          <p>{t('docs.nav.guides')}</p>
           <ul>
             {goals.map((g) => (
               <li key={g.id}>
@@ -299,7 +297,7 @@ function DocsNav({ guide }: { guide?: string }) {
                   href={guideHref(g.id)}
                   aria-current={guide === g.id ? 'page' : undefined}
                 >
-                  {g.goal}
+                  {t(g.goalKey)}
                 </Link>
               </li>
             ))}
@@ -308,17 +306,17 @@ function DocsNav({ guide }: { guide?: string }) {
       )}
       {groups.map((group) => (
         <div key={group.title} className="mh-docs-group">
-          <p>{group.title}</p>
+          <p>{t(group.title)}</p>
           <ul>
-            {group.links.map(([id, label]) =>
+            {group.links.map(([id, key]) =>
               guide ? (
                 <li key={id}>
-                  <Link href={`/docs#${id}`}>{label}</Link>
+                  <Link href={`/docs#${id}`}>{label(key)}</Link>
                 </li>
               ) : (
                 <li key={id}>
                   <a href={`#${id}`} aria-current={active === id ? 'location' : undefined}>
-                    {label}
+                    {label(key)}
                   </a>
                 </li>
               ),
@@ -327,7 +325,7 @@ function DocsNav({ guide }: { guide?: string }) {
         </div>
       ))}
       {!groups.length && !goals.length && (
-        <p className="mh-docs-none">No sections match “{query}”.</p>
+        <p className="mh-docs-none">{t('docs.nav.none', { query })}</p>
       )}
     </nav>
   );
@@ -345,6 +343,8 @@ function Section({ id, title, children }: { id: string; title: string; children:
 }
 
 function EndpointSection({ endpoint }: { endpoint: Endpoint }) {
+  const { t } = useI18n();
+  const key = `docs.endpoints.${endpoint.id}`;
   return (
     <section id={endpoint.id} className="mh-docs-section mh-endpoint">
       <div className="mh-endpoint-copy">
@@ -356,43 +356,62 @@ function EndpointSection({ endpoint }: { endpoint: Endpoint }) {
             <code>{endpoint.path}</code>
           </a>
         </h3>
-        <p>{endpoint.summary}</p>
-        {endpoint.key === false && <span className="mh-chip mh-chip-ok">No key needed</span>}
+        <p>
+          <DocText text={t(`${key}.summary`)} />
+        </p>
+        {endpoint.key === false && <span className="mh-chip mh-chip-ok">{t('docs.noKey')}</span>}
         {endpoint.params.length > 0 ? (
           <dl className="mh-params">
-            {endpoint.params.map(([name, where, rule]) => (
+            {endpoint.params.map(([name, where]) => (
               <div key={name}>
                 <dt>
+                  {/* Parameter names and locations (query, path, body) are API terms. */}
                   <code>{name}</code> <span>{where}</span>
                 </dt>
-                <dd>{rule}</dd>
+                <dd>
+                  <DocText
+                    text={t(`${key}.params.${paramKey(name)}`, {
+                      collections: collections.map((c) => c.id).join(', '),
+                    })}
+                  />
+                </dd>
               </div>
             ))}
           </dl>
         ) : (
-          <p className="mh-muted">No parameters.</p>
+          <p className="mh-muted">{t('docs.noParams')}</p>
         )}
-        {endpoint.notes && <p className="mh-muted">{endpoint.notes}</p>}
+        {endpoint.notes && (
+          <p className="mh-muted">
+            <DocText text={t(`${key}.notes`)} />
+          </p>
+        )}
       </div>
       <div className="mh-endpoint-code">
-        <CodePanel title="Request" method={endpoint.method} code={endpoint.request} />
+        <CodePanel title={t('code.request')} method={endpoint.method} code={endpoint.request} />
         {endpoint.method === 'GET' && (
           <a className="mh-back" href={`${consoleUrl}/docs?tab=try`}>
-            Open the sandbox request tester <Arrow />
+            {t('docs.tester')} <Arrow />
           </a>
         )}
         {endpoint.method === 'POST' && endpoint.id === 'astrology-calculate' && (
           <a className="mh-back" href={`${consoleUrl}/docs?tab=astrology&operation=positions`}>
-            Try planetary positions in the sandbox <Arrow />
+            {t('docs.tryPositions')} <Arrow />
           </a>
         )}
-        <CodePanel title="Response" status={endpoint.status ?? '200 OK'} json={endpoint.response} />
+        <CodePanel
+          title={t('code.response')}
+          status={endpoint.status ?? '200 OK'}
+          json={endpoint.response}
+        />
       </div>
     </section>
   );
 }
 
 export function GuideDocument({ guide, path }: { guide: Guide; path: string }) {
+  const { t } = useI18n();
+  const text = guideText(t, guide);
   const sandbox = guideSandboxHref(guide);
   return (
     <SiteFrame path={path}>
@@ -401,12 +420,13 @@ export function GuideDocument({ guide, path }: { guide: Guide; path: string }) {
         <article className="mh-docs-main" key={guide.id}>
           <header className="mh-docs-head">
             <p className="mh-eyebrow">
-              <Link href="/docs#guides">Guides</Link> · {guide.area}
-              {guide.limited && ' · Limited'}
+              <Link href="/docs#guides">{t('docs.nav.guides')}</Link> ·{' '}
+              {t(`docs.areas.${guide.area}`)}
+              {guide.limited && ` · ${t('docs.limited')}`}
             </p>
-            <h1>{guide.name}</h1>
-            <p className="mh-page-lede">{guide.summary}</p>
-            {sandbox && <KeyButton href={sandbox}>Try this request in the sandbox</KeyButton>}
+            <h1>{text.name}</h1>
+            <p className="mh-page-lede">{text.summary}</p>
+            {sandbox && <KeyButton href={sandbox}>{t('guide.trySandbox')}</KeyButton>}
           </header>
           <GuideView guide={guide} />
         </article>
@@ -435,6 +455,8 @@ export default function DocsPage() {
 }
 
 function Reference() {
+  const i18n = useI18n();
+  const { t, number } = i18n;
   const quickstart = curlGet('/v1/mantras?limit=1');
   // Arriving from a guide via a sidebar link (/docs#errors), jump to that section once the
   // navigation has settled; the router otherwise keeps the guide's scroll position.
@@ -448,50 +470,54 @@ function Reference() {
   return (
     <article className="mh-docs-main">
       <header className="mh-docs-head">
-        <p className="mh-eyebrow">Docs</p>
-        <h1>Make your first Mantrilo API request</h1>
-        <p className="mh-page-lede">
-          One REST API for mantras, sacred audio, scripture books and astrology. Start from a guide
-          for what you’re building, or look up any endpoint. Examples show the response format. Some
-          use excerpts or placeholders.
-        </p>
+        <p className="mh-eyebrow">{t('nav.docs')}</p>
+        <h1>{t('docs.title')}</h1>
+        <p className="mh-page-lede">{t('docs.lede')}</p>
       </header>
 
-      <Section id="quickstart" title="Quickstart">
+      <Section id="quickstart" title={t('docs.nav.quickstart')}>
         <div className="mh-docs-split">
           <ol className="mh-steps">
             <li>
-              <b>Get a key.</b> Every account starts with a sandbox key.{' '}
+              <Rich text={t('docs.quick.key')} tags={{ b: <b /> }} />{' '}
               <KeyButton
                 href={consoleSandboxUrl({ preset: 'quickstart' })}
                 className="mh-inline-link"
               >
-                Open the sandbox quickstart
+                {t('docs.quick.open')}
               </KeyButton>
             </li>
             <li>
-              <b>Keep it on your server.</b> Set <code>MANTRILO_API_KEY</code> and{' '}
-              <code>MANTRILO_API_URL</code> in your backend’s environment.
+              <Rich
+                text={t('docs.quick.server')}
+                tags={{
+                  b: <b />,
+                  key: <code>MANTRILO_API_KEY</code>,
+                  url: <code>MANTRILO_API_URL</code>,
+                }}
+              />
             </li>
             <li>
-              <b>Make a request.</b> List one mantra, then follow{' '}
-              <a href="#list-mantras">the endpoint reference</a> or a{' '}
-              <a href="#guides">guide for your goal</a>.
+              <Rich
+                text={t('docs.quick.request')}
+                tags={{
+                  b: <b />,
+                  endpoints: <a href="#list-mantras" />,
+                  goals: <a href="#guides" />,
+                }}
+              />
             </li>
           </ol>
           <CodePanel
-            title="Your first request"
+            title={t('docs.quick.first')}
             method="GET"
             code={quickstart.replace('$MANTRILO_API_URL', 'https://api.mantrilo.com')}
           />
         </div>
       </Section>
 
-      <Section id="guides" title="Start from your goal">
-        <p>
-          Each guide starts with a request you can run, then shows the server code, pagination and
-          quota.
-        </p>
+      <Section id="guides" title={t('docs.goals.title')}>
+        <p>{t('docs.goals.copy')}</p>
         <div className="mh-docs-goals">
           {GOALS.map((g) => (
             <Link
@@ -500,87 +526,86 @@ function Reference() {
               href={guideHref(g.id)}
               className="mh-card mh-card-pad mh-card-link"
             >
-              <h3>{g.goal}</h3>
-              <p>{findGuide(g.id)?.summary}</p>
+              <h3>{t(g.goalKey)}</h3>
+              <p>
+                {(() => {
+                  const found = findGuide(g.id);
+                  return found ? guideText(t, found).summary : null;
+                })()}
+              </p>
               <span>
-                Open guide <Arrow />
+                {t('docs.goals.open')} <Arrow />
               </span>
             </Link>
           ))}
         </div>
         <p className="mh-muted">
-          Astrology has a guide for every capability.{' '}
-          <Link href="/astrology-api">Browse astrology capabilities</Link>
+          {t('docs.goals.astrology')}{' '}
+          <Link href="/astrology-api">{t('docs.goals.browseAstrology')}</Link>
         </p>
       </Section>
 
-      <Section id="authentication" title="Authentication">
+      <Section id="authentication" title={t('docs.nav.authentication')}>
         <p>
-          Send your key on every request as <code>Authorization: Bearer YOUR_KEY</code>. The API
-          blocks browser cross-origin calls, so call it from your server and pass only the content
-          to your app. Never put a key in a web bundle, mobile app or repository. If a key leaks,
-          regenerate it in the console; the old key stops working within a minute.
+          <Rich
+            text={t('docs.auth')}
+            tags={{ header: <code>Authorization: Bearer YOUR_KEY</code> }}
+          />
         </p>
       </Section>
 
-      <Section id="environments" title="Sandbox and live">
+      <Section id="environments" title={t('docs.nav.environments')}>
         <DataTable
-          label="Key environments"
-          head={['Environment', 'Key prefix', 'What it reads']}
+          label={t('docs.env.label')}
+          head={[t('docs.env.environment'), t('docs.env.prefix'), t('docs.env.reads')]}
           codeFirst={false}
           rows={[
             [
               <span key="s" className="mh-chip mh-chip-accent">
-                Sandbox
+                {t('plans.sandbox')}
               </span>,
               <code key="p">mtr_sbx_</code>,
-              'Sample mantras, the sample books’ opening verses, and available astrology operations. Every account has one.',
+              t('docs.env.sandbox'),
             ],
             [
               <span key="l" className="mh-chip mh-chip-ok">
-                Live
+                {t('docs.env.live')}
               </span>,
               <code key="p">mtr_live_</code>,
-              'The full available catalog. Issued with a paid plan.',
+              t('docs.env.liveReads'),
             ],
           ]}
         />
         <p className="mh-muted">
-          Sandbox and live keep separate usage totals. A sandbox request for an item outside the
-          sample returns <code>403 sandbox_sample_only</code>.
+          <DocText text={t('docs.env.note')} />
         </p>
       </Section>
 
-      <Section id="pagination" title="Pagination">
+      <Section id="pagination" title={t('docs.nav.pagination')}>
         <div className="mh-docs-split">
           <div>
             <p>
-              List endpoints return <code>nextCursor</code>. Pass it back as <code>cursor</code> to
-              read the next page. It is <code>null</code> on the last page. Set the page size with{' '}
-              <code>limit</code> (1–100).
+              <DocText text={t('docs.pagination.cursor')} />
             </p>
             <p>
-              Chapter pages return <code>nextOffset</code>. Pass it back as <code>offset</code> to
-              read more verses of the same chapter.
+              <DocText text={t('docs.pagination.offset')} />
             </p>
           </div>
           <CodePanel
-            title="Continue when nextCursor is present"
+            title={t('docs.pagination.example')}
             method="GET"
             code={collectionRequest('upanishads', '&cursor={nextCursor}')}
           />
         </div>
       </Section>
 
-      <Section id="errors" title="Errors">
+      <Section id="errors" title={t('docs.nav.errors')}>
         <div className="mh-docs-split">
           <p>
-            Every error has the same shape. The <code>code</code> is stable; the{' '}
-            <code>message</code> explains what to fix. Only successful responses count toward your
-            plan.
+            <DocText text={t('docs.errors.copy')} />
           </p>
           <CodePanel
-            title="Error"
+            title={t('docs.errors.example')}
             status="401"
             json={{
               error: { code: 'invalid_api_key', message: 'Send a valid API key.' },
@@ -588,68 +613,76 @@ function Reference() {
             }}
           />
         </div>
-        <DataTable label="API errors" head={['Status', 'Code', 'What to do']} rows={errors} />
+        <DataTable
+          label={t('docs.errors.label')}
+          head={[t('docs.errors.status'), t('docs.errors.code'), t('docs.errors.fix')]}
+          rows={errors.map(([status, codes]) => [
+            status,
+            codes,
+            t(`docs.errors.rows.${codes.split(',')[0]}`),
+          ])}
+        />
       </Section>
 
-      <Section id="limits" title="Usage limits">
-        <p>
-          Allowances apply to your whole workspace, not to each key, and reset monthly in UTC. Each
-          successful content response or astrology calculation is one request. Each audio link also
-          counts the file’s size.
-        </p>
+      <Section id="limits" title={t('docs.nav.limits')}>
+        <p>{t('docs.limits.copy')}</p>
         <DataTable
-          label="Plan limits"
-          head={['Plan', 'Requests a month', 'Audio', 'Rate', 'Burst']}
+          label={t('docs.limits.label')}
+          head={[
+            t('docs.limits.plan'),
+            t('docs.limits.requests'),
+            t('docs.limits.audio'),
+            t('docs.limits.rate'),
+            t('docs.limits.burst'),
+          ]}
           codeFirst={false}
           rows={plans.map((plan) => {
             const rate = rateLimits.find(([name]) => name === plan.name);
-            return [plan.name, plan.requests, plan.audio, rate?.[1] ?? '—', rate?.[2] ?? '—'];
+            const n = (value: string) => number(Number(value.replace(/\D/g, '')));
+            return [
+              planName(i18n, plan.name),
+              n(plan.requests),
+              plan.price ? plan.audio : t('plans.sampleAudioOnly'),
+              rate ? t('plans.perSecond', { rate: n(rate[1]) }) : '—',
+              rate ? n(rate[2]) : '—',
+            ];
           })}
         />
         <p className="mh-muted">
-          Responses include <code>X-RateLimit-Limit</code>, <code>X-RateLimit-Remaining</code>,{' '}
-          <code>X-Quota-Requests-Remaining</code> and <code>X-Request-Id</code>. A{' '}
-          <code>rate_limited</code> response adds <code>Retry-After</code>. Sandbox keys always use
-          the Free rate. If your workspace has no monthly request cap,{' '}
-          <code>X-Quota-Requests-Remaining</code> is <code>unlimited</code>.{' '}
-          <Link href="/pricing">Compare plans</Link>
+          <DocText text={t('docs.limits.headers')} />{' '}
+          <Link href="/pricing">{t('pricing.compare')}</Link>
         </p>
       </Section>
 
-      <Section id="epic-retellings" title="Ramayana and Mahabharata">
-        <p>
-          Use a live key to read these English prose retellings. Open a book for its chapter
-          index, then use a chapter number to load the full chapter in one request.
-        </p>
+      <Section id="epic-retellings" title={t('docs.nav.epics')}>
+        <p>{t('docs.epics.copy')}</p>
         {epicBooks.map(({ id, title, chapters }) => (
           <div key={id} id={`epic-${id}`}>
             <h3>{title}</h3>
-            <p>{chapters} chapters</p>
+            <p>{t('docs.epics.chapters', { count: chapters, n: number(chapters) })}</p>
             <CodePanel
-              title={title + ' book and first chapter'}
-              code={[curlGet('/v1/books/' + id), curlGet('/v1/books/' + id + '/chapters/1')].join('\n\n')}
+              title={t('docs.epics.example', { title })}
+              code={[curlGet('/v1/books/' + id), curlGet('/v1/books/' + id + '/chapters/1')].join(
+                '\n\n',
+              )}
             />
           </div>
         ))}
         <p>
-          Books return <code>{'format: "prose"'}</code> and <code>{'language: "en"'}</code>. For a chapter,
-          display <code>data.source</code> and iterate over <code>data.sections</code>. Render each
-          section’s <code>title</code> and <code>paragraphs</code> in order. Prose chapters return
-          an empty <code>verses</code> array and <code>nextOffset: null</code>.
+          <DocText text={t('docs.epics.format')} />
         </p>
-        <Link href="/docs/guides/book-reader">Book reader integration guide</Link>
+        <Link href="/docs/guides/book-reader">{t('docs.epics.guide')}</Link>
       </Section>
 
       <section className="mh-docs-ref" aria-labelledby="endpoint-reference">
-        <h2 id="endpoint-reference">Endpoint reference</h2>
+        <h2 id="endpoint-reference">{t('guide.reference')}</h2>
         {ENDPOINTS.map((endpoint) => (
           <EndpointSection key={endpoint.id} endpoint={endpoint} />
         ))}
       </section>
 
       <Callout>
-        Want to see what each content type returns first? Browse the{' '}
-        <Link href="/library">Library</Link>.
+        <DocText text={t('docs.libraryCallout')} />
       </Callout>
     </article>
   );

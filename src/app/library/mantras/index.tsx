@@ -13,14 +13,19 @@ async function data() {
     description: `Browse nearly ${hub.catalog.roughly.records} Sanskrit mantras and stotras by deity, about ${hub.catalog.roughly.recordings} with recordings. Each page shows the text, the API request and the exact JSON response.`,
     label: 'Mantras',
     indexable: true,
+    // Fills the {{records}} and {{recordings}} in meta./library/mantras for other languages.
+    vars: { records: hub.catalog.roughly.records, recordings: hub.catalog.roughly.recordings },
   };
   return { kind: 'hub' as const, hub, meta, path: '/library/mantras' };
 }
 
 export const loader = createStaticLoader(() => data());
 
-export async function generateMetadata() {
-  return pageMetadata('/library/mantras', (await data()).meta);
+export async function generateMetadata(
+  _request?: unknown,
+  params?: Record<string, string | string[]>,
+) {
+  return pageMetadata('/library/mantras', (await data()).meta, params);
 }
 
 export default function Page() {

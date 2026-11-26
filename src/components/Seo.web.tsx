@@ -8,7 +8,8 @@ import {
   themeColor,
 } from '../data/site';
 import { plans } from '../data/plans';
-import type { PageMeta } from '../data/metadata';
+import { localizedMeta, type PageMeta } from '../data/metadata';
+import { localeInfo, localizePath, locales, hasLocalizedUrl, useI18n } from '../i18n';
 
 export default function Seo({
   path,
@@ -19,15 +20,20 @@ export default function Seo({
   meta?: PageMeta;
   notFound?: boolean;
 }) {
+  const { lang, t } = useI18n();
   const known = meta ?? seoPages[path];
-  const page = known || {
-    title: 'Page Not Found | Mantrilo',
-    description:
-      'This Mantrilo page could not be found. Explore the content API overview, product pages, or API documentation.',
-    label: 'Page not found',
-    indexable: false,
-  };
-  const canonical = siteOrigin && !notFound && known ? `${siteOrigin}${path}` : null;
+  const page = known
+    ? { ...known, ...localizedMeta(path, known, lang) }
+    : {
+        title: t('meta.notFound.title'),
+        description: t('meta.notFound.description'),
+        label: t('meta.notFound.label'),
+        indexable: false,
+      };
+  const canonical =
+    siteOrigin && !notFound && known ? `${siteOrigin}${localizePath(path, lang)}` : null;
+  const alternates = canonical && hasLocalizedUrl(path);
+  const imageAlt = t('meta.socialImageAlt') || socialImageAlt;
   const robots = indexingEnabled && page.indexable && !notFound ? 'index,follow' : 'noindex,follow';
   // generateMetadata supplies the initial HTML. Synchronize that same metadata
   // on client navigation without appending a second set of Head tags.
@@ -54,15 +60,15 @@ export default function Seo({
     meta('property', 'og:description', page.description);
     meta('property', 'og:type', 'website');
     meta('property', 'og:site_name', 'Mantrilo');
-    meta('property', 'og:locale', 'en_US');
+    meta('property', 'og:locale', localeInfo(lang).og);
     meta('property', 'og:url', canonical);
     meta('property', 'og:image', socialImage ?? null);
-    meta('property', 'og:image:alt', socialImage ? socialImageAlt : null);
+    meta('property', 'og:image:alt', socialImage ? imageAlt : null);
     meta('property', 'og:image:width', socialImage ? '1200' : null);
     meta('property', 'og:image:height', socialImage ? '630' : null);
     meta('name', 'twitter:card', socialImage ? 'summary_large_image' : 'summary');
     meta('name', 'twitter:image', socialImage ?? null);
-    meta('name', 'twitter:image:alt', socialImage ? socialImageAlt : null);
+    meta('name', 'twitter:image:alt', socialImage ? imageAlt : null);
     meta('name', 'twitter:title', page.title);
     meta('name', 'twitter:description', page.description);
     const links = Array.from(
@@ -75,7 +81,24 @@ export default function Seo({
       if (!link.parentNode) document.head.appendChild(link);
     }
     links.forEach((link) => link.remove());
-  }, [canonical, page.title, page.description, robots]);
+    // hreflang alternates: every language's address for a page with localized URLs.
+    document.head
+      .querySelectorAll('link[rel="alternate"][hreflang]')
+      .forEach((link) => link.remove());
+    if (alternates && siteOrigin) {
+      const targets: [string, string][] = [
+        ...locales.map((l): [string, string] => [l.code, siteOrigin + localizePath(path, l.code)]),
+        ['x-default', siteOrigin + path],
+      ];
+      for (const [hreflang, href] of targets) {
+        const link = document.createElement('link');
+        link.rel = 'alternate';
+        link.hreflang = hreflang;
+        link.href = href;
+        document.head.appendChild(link);
+      }
+    }
+  }, [canonical, alternates, path, lang, imageAlt, page.title, page.description, robots]);
 
   if (!siteOrigin || !canonical) return null;
   const organization = { '@id': `${siteOrigin}/#organization` };
@@ -92,7 +115,7 @@ export default function Seo({
         name: 'Mantrilo',
         url: canonical,
         publisher: organization,
-        inLanguage: 'en',
+        inLanguage: lang,
       },
       {
         '@type': 'SoftwareApplication',
@@ -113,13 +136,14 @@ export default function Seo({
       },
     );
   } else {
-    const trail = [{ name: 'Home', item: `${siteOrigin}/` }];
-    if (isGuide) trail.push({ name: 'API documentation', item: `${siteOrigin}/docs` });
+    const at = (target: string) => `${siteOrigin}${localizePath(target, lang)}`;
+    const trail = [{ name: t('chrome.crumbHome'), item: at('/') }];
+    if (isGuide) trail.push({ name: t('notFound.docs'), item: at('/docs') });
     if (path.startsWith('/library/'))
-      trail.push({ name: 'Library', item: `${siteOrigin}/library` });
-    if (isCapability) trail.push({ name: 'Astrology API', item: `${siteOrigin}/astrology-api` });
-    if (meta?.parent)
-      trail.push({ name: meta.parent.label, item: `${siteOrigin}${meta.parent.path}` });
+      trail.push({ name: t('meta./library.label'), item: at('/library') });
+    if (isCapability)
+      trail.push({ name: t('meta./astrology-api.label'), item: at('/astrology-api') });
+    if (meta?.parent) trail.push({ name: meta.parent.label, item: at(meta.parent.path) });
     trail.push({ name: page.label, item: canonical });
     graph.push({
       '@type': 'BreadcrumbList',
@@ -138,7 +162,7 @@ export default function Seo({
         path === '/docs' ? 'Mantrilo API documentation' : page.title.replace(/ \| Mantrilo$/, ''),
       url: canonical,
       mainEntityOfPage: canonical,
-      inLanguage: 'en',
+      inLanguage: lang,
       publisher: organization,
       about: api,
     });

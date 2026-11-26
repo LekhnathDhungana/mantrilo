@@ -1,4 +1,5 @@
-import { Link, useLoaderData } from 'expo-router';
+import { useLoaderData } from 'expo-router';
+import { Link } from '../i18n/Link.web';
 import type { loader } from '../app/library/index';
 import { Arrow, PageHero, SiteFrame } from './site/Chrome.web';
 import { CodePanel } from './site/Code.web';
@@ -6,19 +7,21 @@ import { CatalogBrowser } from './site/Catalog.web';
 import { collectionRequest } from '../data/examples';
 import { libraryItems } from '../data/library';
 import { epicBooks } from '../../developer/src/data/epic-books';
+import { useI18n } from '../i18n';
+import { Rich } from '../i18n/Rich';
 
 function UpanishadsFeature() {
+  const { t } = useI18n();
   return (
     <div className="mh-feature-card">
       <div>
-        <p className="mh-eyebrow">Collections</p>
-        <h3>The Upanishads, callable directly</h3>
+        <p className="mh-eyebrow">{t('libraryPage.upanishads.eyebrow')}</p>
+        <h3>{t('libraryPage.upanishads.title')}</h3>
         <p>
-          Filter the book catalog by collection and page through it with <code>limit</code> and{' '}
-          <code>cursor</code>. Every book links to its chapters and verses.
+          <Rich text={t('libraryPage.upanishads.copy')} tags={{ code: <code /> }} />
         </p>
         <Link push className="mh-btn mh-btn-ghost" href="/library/books/upanishads">
-          Open the collection <Arrow />
+          {t('libraryPage.upanishads.open')} <Arrow />
         </Link>
       </div>
       <CodePanel title="/v1/books" method="GET" code={collectionRequest('upanishads')} />
@@ -26,26 +29,23 @@ function UpanishadsFeature() {
   );
 }
 
-const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
-
 export default function LibraryPage() {
   const { books, mantras } = useLoaderData<typeof loader>();
+  const { t, number } = useI18n();
+  const records = number(mantras.catalog.roughly.records);
+  const recordings = number(mantras.catalog.roughly.recordings);
   return (
     <SiteFrame path="/library">
       <PageHero
-        crumb="Library"
-        eyebrow="Content library"
-        title="Explore Mantrilo’s Content Library"
-        lede={`Nearly ${mantras.catalog.roughly.records} mantras and stotras, ${books.length} Sanskrit books verse by verse, and the English epics. Every page shows the API request behind it.`}
+        crumb={t('meta./library.label')}
+        eyebrow={t('footer.library')}
+        title={t('libraryPage.title')}
+        lede={t('libraryPage.lede', { records, books: number(books.length) })}
       />
       <section className="mh-section-sm" id="mantras" aria-labelledby="mantras-heading">
         <div className="mh-wrap">
-          <h2 id="mantras-heading">Mantras & stotras</h2>
-          <p>
-            Nearly {mantras.catalog.roughly.records} hymns in Devanagari and transliteration, about{' '}
-            {mantras.catalog.roughly.recordings} with recordings. Each page has the text, the request
-            and the exact JSON response.
-          </p>
+          <h2 id="mantras-heading">{t('libraryPage.mantras.title')}</h2>
+          <p>{t('libraryPage.mantras.copy', { records, recordings })}</p>
           <div className="mh-cards-3">
             {mantras.featured.map((mantra) => (
               <Link
@@ -55,42 +55,46 @@ export default function LibraryPage() {
               >
                 <h3>{mantra.title}</h3>
                 <p>
-                  {mantra.deity} · {plural(mantra.verseCount, 'verse')}
-                  {mantra.hasAudio ? ' · Recording' : ''}
+                  {mantra.deity} ·{' '}
+                  {t('common.verses', { count: mantra.verseCount, n: number(mantra.verseCount) })}
+                  {mantra.hasAudio ? ` · ${t('library.types.Recording')}` : ''}
                 </p>
               </Link>
             ))}
           </div>
-          <h3>By deity</h3>
-          <nav className="mh-chips" aria-label="Mantras by deity">
+          <h3>{t('libraryPage.mantras.byDeity')}</h3>
+          <nav className="mh-chips" aria-label={t('libraryPage.mantras.byDeityLabel')}>
             {mantras.deities.map((deity) => (
               <Link key={deity.id} href={deity.path} className="mh-chip">
-                {deity.name} · {deity.count}
+                {deity.name} · {number(deity.count)}
               </Link>
             ))}
           </nav>
           <p>
             <Link className="mh-btn mh-btn-ghost" href="/library/mantras">
-              All mantras <Arrow />
+              {t('libraryPage.mantras.all')} <Arrow />
             </Link>
           </p>
           <p>
-            <Link href="/mantra-api">Mantra API</Link> ·{' '}
-            <Link href="/sacred-audio-api">Sacred Audio API</Link> ·{' '}
-            <Link href="/docs/guides/search-mantras">Build a searchable library</Link>
+            <Link href="/mantra-api">{t('meta./mantra-api.label')}</Link> ·{' '}
+            <Link href="/sacred-audio-api">{t('meta./sacred-audio-api.label')}</Link> ·{' '}
+            <Link href="/docs/guides/search-mantras">{t('libraryPage.mantras.build')}</Link>
           </p>
         </div>
       </section>
       <section className="mh-section-sm" id="books" aria-labelledby="books-heading">
         <div className="mh-wrap">
-          <h2 id="books-heading">Books</h2>
+          <h2 id="books-heading">{t('nav.books')}</h2>
           <div className="mh-cards-2">
             {epicBooks.map(({ id, title, chapters }) => (
               <Link key={id} href={`/docs#epic-${id}`} className="mh-card mh-card-pad mh-card-link">
                 <h3>{title}</h3>
-                <p>{chapters} chapters · English prose retelling</p>
+                <p>
+                  {t('docs.epics.chapters', { count: chapters, n: number(chapters) })} ·{' '}
+                  {t('libraryPage.books.retelling')}
+                </p>
                 <span>
-                  Read with a live API key <Arrow />
+                  {t('libraryPage.books.liveKey')} <Arrow />
                 </span>
               </Link>
             ))}
@@ -99,24 +103,25 @@ export default function LibraryPage() {
                 <h3>{book.title}</h3>
                 <p>
                   {book.chapters > 1
-                    ? `${plural(book.chapters, book.chapterTerm.toLowerCase())} · `
+                    ? `${t(`books.terms.${book.chapterTerm}`, { count: book.chapters, n: number(book.chapters) })} · `
                     : ''}
-                  {book.verseCount} verses · Sanskrit and English ·{' '}
-                  {book.sandbox ? 'Sandbox sample' : 'Live catalog'}
+                  {t('common.verses', { count: book.verseCount, n: number(book.verseCount) })} ·{' '}
+                  {t('libraryPage.books.languages')} ·{' '}
+                  {book.sandbox ? t('libraryPage.books.sandbox') : t('libraryPage.books.live')}
                 </p>
               </Link>
             ))}
           </div>
           <p>
-            <Link href="/library/books/upanishads">Browse the Upanishads</Link> ·{' '}
-            <Link href="/books-api">Books API</Link> ·{' '}
-            <Link href="/docs/guides/book-reader">Build a book reader</Link>
+            <Link href="/library/books/upanishads">{t('libraryPage.books.upanishads')}</Link> ·{' '}
+            <Link href="/books-api">{t('meta./books-api.label')}</Link> ·{' '}
+            <Link href="/docs/guides/book-reader">{t('meta./docs/guides/book-reader.label')}</Link>
           </p>
         </div>
       </section>
       <section className="mh-section-sm" aria-labelledby="catalog-heading">
         <div className="mh-wrap">
-          <h2 id="catalog-heading">Browse the API catalog</h2>
+          <h2 id="catalog-heading">{t('libraryPage.catalog')}</h2>
           <CatalogBrowser
             pathname="/library"
             items={libraryItems}

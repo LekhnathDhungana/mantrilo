@@ -1,4 +1,5 @@
-import { Link, useLoaderData } from 'expo-router';
+import { useLoaderData } from 'expo-router';
+import { Link } from '../i18n/Link.web';
 import type { loader } from '../app/library/books/[book]/index';
 import type { BookSummary, TextPage, Verse } from '../data/book-pages';
 import { curlGet } from '../data/examples';
@@ -6,11 +7,21 @@ import { consoleSandboxUrl } from '../data/site';
 import NotFound from './NotFound';
 import { Callout, DataTable, KeyButton, PageHero, SiteFrame } from './site/Chrome.web';
 import { CodePanel } from './site/Code.web';
+import { useI18n, type I18n } from '../i18n';
+import { Rich } from '../i18n/Rich';
 
 // Book overview and chapter pages under /library/books. Both routes' loaders return the same
 // shape, so one component serves them.
 
-const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
+// Book, chapter and verse text is content and stays as published; the words around it follow
+// the visitor's language (the chapter term itself, e.g. Valli, is a Sanskrit name).
+const verses = ({ t, number }: I18n, count: number) =>
+  t('common.verses', { count, n: number(count) });
+const parts = ({ t, number }: I18n, term: string, count: number) =>
+  t(`books.terms.${term}`, { count, n: number(count) }) ||
+  `${number(count)} ${term.toLowerCase()}s`;
+const term = (t: I18n['t'], name: string) => t(`books.term.${name}`) || name;
+const termPlural = (t: I18n['t'], name: string) => t(`books.termPlural.${name}`) || `${name}s`;
 
 function bookResponse(book: BookSummary) {
   return {
@@ -57,61 +68,66 @@ function BookApi({ book, page }: { book: BookSummary; page?: TextPage }) {
   const chapter = page?.chapter.number ?? book.chapters[0].number;
   const offset = page?.part ? (page.part.index - 1) * 100 : 0;
   const chapterPath = `${bookPath}/chapters/${chapter}${offset ? `?offset=${offset}` : ''}`;
+  const { t } = useI18n();
+  const code = { code: <code /> };
   return (
     <div className="mh-stack mh-prose">
-      <h2>Load {page && book.chapters.length > 1 ? 'this chapter' : 'this book'} with the API</h2>
+      <h2>
+        {page && book.chapters.length > 1
+          ? t('bookPage.api.chapterTitle')
+          : t('bookPage.api.bookTitle')}
+      </h2>
       {!page && (
         <>
           <p>
-            The book record lists every chapter with its number and verse count. Use the id{' '}
-            <code>{book.apiId}</code>.
+            <Rich text={t('bookPage.api.bookCopy', { id: book.apiId })} tags={code} />
           </p>
           <CodePanel title={bookPath} method="GET" code={curlGet(bookPath)} />
-          <CodePanel title="Illustrative response" status="200 OK" json={bookResponse(book)} />
+          <CodePanel
+            title={t('bookPage.api.illustrative')}
+            status="200 OK"
+            json={bookResponse(book)}
+          />
         </>
       )}
       <p>
-        A chapter request returns up to 30 verses. Pass <code>nextOffset</code> back as{' '}
-        <code>offset</code> to read the rest
-        {page?.part ? '; this page starts at the offset shown' : ''}.
+        <Rich
+          text={page?.part ? t('bookPage.api.pagingOffset') : t('bookPage.api.paging')}
+          tags={code}
+        />
       </p>
       <CodePanel title={chapterPath} method="GET" code={curlGet(chapterPath)} />
       {page && (
         <CodePanel
-          title="Illustrative response"
+          title={t('bookPage.api.illustrative')}
           status="200 OK"
           json={chapterResponse(page, offset)}
         />
       )}
       <p>
-        Each verse has <code>sanskrit</code> and <code>transliteration</code>.{' '}
-        <code>translation</code> is <code>null</code>: the English on this page is Mantrilo’s own
-        rendering and is not part of the API response.
+        <Rich text={t('bookPage.api.fields')} tags={code} />
       </p>
       <p>
-        <Link href="/docs#get-book">Book endpoint</Link> ·{' '}
-        <Link href="/docs#get-chapter">Chapter endpoint</Link> ·{' '}
-        <Link href={`/docs/guides/${book.guide}`}>Integration guide</Link>
+        <Link href="/docs#get-book">{t('bookPage.api.bookEndpoint')}</Link> ·{' '}
+        <Link href="/docs#get-chapter">{t('bookPage.api.chapterEndpoint')}</Link> ·{' '}
+        <Link href={`/docs/guides/${book.guide}`}>{t('upanishads.guide')}</Link>
       </p>
       <div>
         <KeyButton href={consoleSandboxUrl({ preset: book.guide })}>
-          {book.sandbox ? 'Try this book in the sandbox' : 'Try the Books API'}
+          {book.sandbox ? t('bookPage.api.trySandbox') : t('bookPage.api.tryApi')}
         </KeyButton>
       </div>
-      {!book.sandbox && (
-        <p className="mh-muted">
-          Sandbox keys return sample books only; a live key reads the full {book.title}.
-        </p>
-      )}
+      {!book.sandbox && <p className="mh-muted">{t('bookPage.api.live', { title: book.title })}</p>}
     </div>
   );
 }
 
 function VerseBlock({ verse }: { verse: Verse }) {
+  const { t } = useI18n();
   return (
     <article className="mh-verse" id={`v-${verse.key.replace(/[^\w.-]/g, '-')}`}>
       {verse.heading && <h3>{verse.heading}</h3>}
-      <p className="mh-verse-key">{verse.key === '0' ? 'Invocation' : verse.key}</p>
+      <p className="mh-verse-key">{verse.key === '0' ? t('bookPage.invocation') : verse.key}</p>
       {verse.sanskrit && (
         <p className="mh-preview-verse mh-verse-deva" lang="sa-Deva">
           {verse.sanskrit}
@@ -128,40 +144,62 @@ function VerseBlock({ verse }: { verse: Verse }) {
 }
 
 function TextSource({ book }: { book: BookSummary }) {
+  const { t } = useI18n();
   return (
     <p className="mh-muted">
-      Sanskrit and transliteration from the{' '}
-      {book.reference ? <a href={book.reference}>source text</a> : 'source text'}. English rendering
-      by Mantrilo. The API returns its catalog edition of the Sanskrit and transliteration, so
-      spelling and line breaks can differ from this page.
+      <Rich
+        text={t('bookPage.source')}
+        tags={{
+          source: (inner) => (book.reference ? <a href={book.reference}>{inner}</a> : inner),
+        }}
+      />
     </p>
   );
 }
 
 function Pager({ page }: { page: TextPage }) {
+  const { t } = useI18n();
   if (!page.previous && !page.next) return null;
   return (
-    <nav className="mh-pager" aria-label={`${page.book.title} pages`}>
-      {page.previous ? <Link href={page.previous.path}>← {page.previous.label}</Link> : <span />}
-      {page.next && <Link href={page.next.path}>{page.next.label} →</Link>}
+    <nav className="mh-pager" aria-label={t('bookPage.pages', { title: page.book.title })}>
+      {page.previous ? (
+        <Link href={page.previous.path}>
+          <span className="mh-flip" aria-hidden="true">
+            ←
+          </span>{' '}
+          {page.previous.label}
+        </Link>
+      ) : (
+        <span />
+      )}
+      {page.next && (
+        <Link href={page.next.path}>
+          {page.next.label}{' '}
+          <span className="mh-flip" aria-hidden="true">
+            →
+          </span>
+        </Link>
+      )}
     </nav>
   );
 }
 
 function ChapterIndex({ book, current }: { book: BookSummary; current?: string }) {
+  const { t, number } = useI18n();
+  const name = term(t, book.chapterTerm);
   return (
     <DataTable
-      label={`${book.title} chapters`}
+      label={t('bookPage.chapters', { title: book.title })}
       codeFirst={false}
-      head={[book.chapterTerm, 'Name', 'Verses']}
+      head={[name, t('bookPage.name'), t('bookPage.verses')]}
       rows={book.chapters.map((chapter) => [
         current === chapter.path ? (
-          String(chapter.number)
+          number(chapter.number)
         ) : (
-          <Link href={chapter.path}>{`${book.chapterTerm} ${chapter.number}`}</Link>
+          <Link href={chapter.path}>{`${name} ${number(chapter.number)}`}</Link>
         ),
         chapter.name,
-        String(chapter.verseCount),
+        number(chapter.verseCount),
       ])}
     />
   );
@@ -176,15 +214,20 @@ function Overview({
   path: string;
   meta: TextPage['meta'];
 }) {
+  const i18n = useI18n();
+  const { t, number } = i18n;
   return (
     <SiteFrame path={path} meta={meta}>
       <PageHero
-        eyebrow="Library · Books"
+        eyebrow={t('upanishads.eyebrow')}
         title={book.title}
         lede={book.intro}
         actions={
           <Link href={book.chapters[0].path} className="mh-btn mh-btn-ghost">
-            Read {book.chapterTerm.toLowerCase()} {book.chapters[0].number}
+            {t('bookPage.readFirst', {
+              term: term(t, book.chapterTerm),
+              n: number(book.chapters[0].number),
+            })}
           </Link>
         }
         aside={<BookStats book={book} />}
@@ -196,17 +239,13 @@ function Overview({
               {book.author} · {book.aliases}
             </p>
             <h2>
-              {plural(book.chapters.length, book.chapterTerm.toLowerCase())}, {book.verseCount}{' '}
-              verses
+              {parts(i18n, book.chapterTerm, book.chapters.length)}, {verses(i18n, book.verseCount)}
             </h2>
             <ChapterIndex book={book} />
-            <p>
-              Every {book.chapterTerm.toLowerCase()} page shows the Sanskrit in Devanagari, its
-              transliteration and an English rendering, verse by verse.
-            </p>
+            <p>{t('bookPage.every', { term: term(t, book.chapterTerm) })}</p>
             <TextSource book={book} />
             <p>
-              <Link href="/library#books">All books in the Library</Link>
+              <Link href="/library#books">{t('bookPage.allBooks')}</Link>
             </p>
           </div>
           <BookApi book={book} />
@@ -217,26 +256,29 @@ function Overview({
 }
 
 function BookStats({ book }: { book: BookSummary }) {
+  const { t, number } = useI18n();
   return (
     <dl className="mh-stat-grid">
       <div>
-        <dt>{book.chapters.length === 1 ? 'Verses' : `${book.chapterTerm}s`}</dt>
-        <dd>{book.chapters.length === 1 ? book.verseCount : book.chapters.length}</dd>
+        <dt>
+          {book.chapters.length === 1 ? t('bookPage.verses') : termPlural(t, book.chapterTerm)}
+        </dt>
+        <dd>{number(book.chapters.length === 1 ? book.verseCount : book.chapters.length)}</dd>
       </div>
       {book.chapters.length > 1 && (
         <div>
-          <dt>Verses</dt>
-          <dd>{book.verseCount}</dd>
+          <dt>{t('bookPage.verses')}</dt>
+          <dd>{number(book.verseCount)}</dd>
         </div>
       )}
       <div>
-        <dt>Book id</dt>
+        <dt>{t('bookPage.bookId')}</dt>
         <dd>
           <code>{book.apiId}</code>
         </dd>
       </div>
       <div>
-        <dt>Collection</dt>
+        <dt>{t('bookPage.collection')}</dt>
         <dd>
           <code>{book.collection}</code>
         </dd>
@@ -247,28 +289,34 @@ function BookStats({ book }: { book: BookSummary }) {
 
 function Text({ page }: { page: TextPage }) {
   const { book, chapter, part } = page;
+  const i18n = useI18n();
+  const { t, number } = i18n;
   const single = book.chapters.length === 1;
   const first = single && (!part || part.index === 1);
+  const range = part && { first: part.first, last: part.last };
   const heading = single
     ? part && part.index > 1
-      ? `${book.title}, verses ${part.first}–${part.last}`
+      ? t('bookPage.versesOf', { title: book.title, ...range })
       : book.title
-    : `${book.chapterTerm} ${chapter.number}${chapter.name.startsWith(book.chapterTerm) ? '' : `: ${chapter.name}`}`;
-  const english = page.verses.filter((verse) => verse.english).length;
+    : `${term(t, book.chapterTerm)} ${number(chapter.number)}${chapter.name.startsWith(book.chapterTerm) ? '' : `: ${chapter.name}`}`;
+  const missing = page.verses.length - page.verses.filter((verse) => verse.english).length;
   return (
     <SiteFrame path={page.path} meta={page.meta}>
       <PageHero
-        eyebrow={single ? 'Library · Books' : `Library · ${book.title}`}
+        eyebrow={single ? t('upanishads.eyebrow') : `${t('meta./library.label')} · ${book.title}`}
         title={heading}
         lede={
           first
             ? book.intro
-            : `${plural(page.verses.length, 'verse')}${part ? ` (${part.first} to ${part.last})` : ''} in Sanskrit, with transliteration and English.`
+            : t(part ? 'bookPage.ledeRange' : 'bookPage.lede', {
+                verses: verses(i18n, page.verses.length),
+                ...range,
+              })
         }
         actions={
           single ? undefined : (
             <Link href={book.path} className="mh-btn mh-btn-ghost">
-              {book.title} chapter index
+              {t('bookPage.index', { title: book.title })}
             </Link>
           )
         }
@@ -283,7 +331,7 @@ function Text({ page }: { page: TextPage }) {
               </p>
             )}
             {part && (
-              <nav className="mh-chips" aria-label="Parts of this text">
+              <nav className="mh-chips" aria-label={t('bookPage.parts')}>
                 {page.parts.map((entry) =>
                   entry.path === page.path ? (
                     <span key={entry.path} className="mh-chip" aria-current="page">
@@ -297,11 +345,9 @@ function Text({ page }: { page: TextPage }) {
                 )}
               </nav>
             )}
-            {english < page.verses.length && (
+            {missing > 0 && (
               <Callout tone="info">
-                {plural(page.verses.length - english, 'verse')} on this page{' '}
-                {page.verses.length - english === 1 ? 'does' : 'do'} not have an English rendering
-                yet.
+                {t('bookPage.missingEnglish', { count: missing, n: number(missing) })}
               </Callout>
             )}
             <div className="mh-verses">
@@ -313,7 +359,7 @@ function Text({ page }: { page: TextPage }) {
             <TextSource book={book} />
             {!single && (
               <>
-                <h2>All {book.chapterTerm.toLowerCase()}s</h2>
+                <h2>{t('bookPage.all', { terms: termPlural(t, book.chapterTerm) })}</h2>
                 <ChapterIndex book={book} current={chapter.path} />
               </>
             )}

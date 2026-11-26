@@ -4,6 +4,6 @@ export default function Page() {
   return <ProductPage slug="mantra-api" />;
 }
 
-export function generateMetadata() {
-  return pageMetadata('/mantra-api');
+export function generateMetadata(_request?: unknown, params?: Record<string, string | string[]>) {
+  return pageMetadata('/mantra-api', undefined, params);
 }

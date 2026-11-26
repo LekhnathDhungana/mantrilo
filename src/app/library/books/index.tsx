@@ -21,8 +21,8 @@ export const loader = createStaticLoader(async () => {
   };
 });
 
-export function generateMetadata() {
-  return pageMetadata('/library/books');
+export function generateMetadata(_request?: unknown, params?: Record<string, string | string[]>) {
+  return pageMetadata('/library/books', undefined, params);
 }
 
 export default function Page() {

@@ -8,6 +8,6 @@ export const loader = createStaticLoader(async () => ({
   books: (await import('../../data/book-pages')).bookList(),
 }));
 
-export function generateMetadata() {
-  return pageMetadata('/library');
+export function generateMetadata(_request?: unknown, params?: Record<string, string | string[]>) {
+  return pageMetadata('/library', undefined, params);
 }

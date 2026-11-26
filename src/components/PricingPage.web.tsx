@@ -1,36 +1,51 @@
 import { useState } from 'react';
-import { Link, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { Link } from '../i18n/Link.web';
 import { Arrow, Callout, CtaBand, PageHero, SiteFrame } from './site/Chrome.web';
-import { PlanAction, PlanCards, comparisonRows, planPrice } from './site/Plans.web';
+import { PlanAction, PlanCards, comparisonRows, planName, planPrice } from './site/Plans.web';
 import { plans } from '../data/plans';
 import { useHydrated } from './site/useHydrated';
+import { useI18n } from '../i18n';
+import { Rich } from '../i18n/Rich';
 
 export default function PricingPage() {
   const [marketChoice, setIndia] = useState<boolean | null>(null);
   const { market } = useLocalSearchParams<{ market?: string }>();
   const hydrated = useHydrated();
   const india = marketChoice ?? (hydrated && market === 'IN');
+  const i18n = useI18n();
+  const { t } = i18n;
   return (
     <SiteFrame path="/pricing">
       <PageHero
-        crumb="Pricing"
-        eyebrow="Pricing"
-        title="Mantrilo API plans and limits"
-        lede="Every account starts with a sandbox key. Subscribe for a live key, the full catalog and higher limits. Allowances reset monthly in UTC."
+        crumb={t('pricing.crumb')}
+        eyebrow={t('pricing.crumb')}
+        title={t('pricing.title')}
+        lede={t('pricing.lede')}
       />
       <section className="mh-section-sm">
         <div className="mh-wrap">
-          <h2 className="mh-sr">Plans</h2>
-          <div role="group" aria-label="Pricing market" className="mh-actions">
-            <button type="button" className={india ? 'mh-btn mh-btn-outline' : 'mh-btn mh-btn-primary'} aria-pressed={!india} onClick={() => setIndia(false)}>
-              Global · USD
+          <h2 className="mh-sr">{t('pricing.plans')}</h2>
+          <div role="group" aria-label={t('pricing.market')} className="mh-actions">
+            <button
+              type="button"
+              className={india ? 'mh-btn mh-btn-outline' : 'mh-btn mh-btn-primary'}
+              aria-pressed={!india}
+              onClick={() => setIndia(false)}
+            >
+              {t('pricing.global')}
             </button>
-            <button type="button" className={india ? 'mh-btn mh-btn-primary' : 'mh-btn mh-btn-outline'} aria-pressed={india} onClick={() => setIndia(true)}>
-              India · INR
+            <button
+              type="button"
+              className={india ? 'mh-btn mh-btn-primary' : 'mh-btn mh-btn-outline'}
+              aria-pressed={india}
+              onClick={() => setIndia(true)}
+            >
+              {t('pricing.india')}
             </button>
           </div>
           <p className="mh-muted" aria-live="polite">
-            {india ? 'India pricing is available for workspaces with a verified India billing address.' : 'Global prices are billed monthly in USD.'}
+            {india ? t('pricing.indiaNote') : t('pricing.globalNote')}
           </p>
           <PlanCards india={india} />
         </div>
@@ -38,20 +53,20 @@ export default function PricingPage() {
       <section className="mh-section-sm">
         <div className="mh-wrap">
           <div className="mh-heading mh-heading-left">
-            <h2>Compare plans</h2>
-            <p>Each row matches the limits the API and billing enforce.</p>
+            <h2>{t('pricing.compare')}</h2>
+            <p>{t('pricing.compareCopy')}</p>
           </div>
           <div
             className="mh-table mh-compare"
             tabIndex={0}
             role="region"
-            aria-label="Plan comparison"
+            aria-label={t('pricing.comparison')}
           >
             <table>
               <thead>
                 <tr>
                   <th scope="col">
-                    <span className="mh-sr">Feature</span>
+                    <span className="mh-sr">{t('pricing.feature')}</span>
                   </th>
                   {plans.map((p) => (
                     <th
@@ -59,14 +74,20 @@ export default function PricingPage() {
                       key={p.name}
                       className={p.name === 'Growth' ? 'is-featured' : undefined}
                     >
-                      {p.name}
-                      <span>{india && p.name === 'Business' ? planPrice(p, india) : p.price ? `${planPrice(p, india)}/mo` : 'Free'}</span>
+                      {planName(i18n, p.name)}
+                      <span>
+                        {india && p.name === 'Business'
+                          ? planPrice(i18n, p, india)
+                          : p.price
+                            ? t('pricing.perMonth', { price: planPrice(i18n, p, india) })
+                            : t('pricing.free')}
+                      </span>
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {comparisonRows.map(([label, ...values]) => (
+                {comparisonRows(i18n).map(([label, ...values]) => (
                   <tr key={label}>
                     <th scope="row">{label}</th>
                     {values.map((v, i) => (
@@ -81,7 +102,7 @@ export default function PricingPage() {
                 ))}
                 <tr>
                   <th scope="row">
-                    <span className="mh-sr">Next step</span>
+                    <span className="mh-sr">{t('pricing.nextStep')}</span>
                   </th>
                   {plans.map((p) => (
                     <td key={p.name} className={p.name === 'Growth' ? 'is-featured' : undefined}>
@@ -93,66 +114,67 @@ export default function PricingPage() {
             </table>
           </div>
           <Callout>
-            A customer product is an app or website covered by your plan. Each issued audio link
-            counts the recording’s file size toward the audio allowance. Each successful astrology
-            calculation counts as one request. Commercial use is subject to the{' '}
-            <Link href="/license">content license</Link>.
+            <Rich text={t('pricing.callout')} tags={{ link: <Link href="/license" /> }} />
           </Callout>
         </div>
       </section>
       <section className="mh-section-sm">
         <div className="mh-wrap mh-cards-3">
           <Link href="/library" className="mh-card mh-card-pad mh-card-link">
-            <h3>What each plan reads</h3>
-            <p>Browse mantras, recordings, book collections and astrology in the Library.</p>
+            <h3>{t('pricing.cards.reads.title')}</h3>
+            <p>{t('pricing.cards.reads.copy')}</p>
             <span>
-              Open the Library <Arrow />
+              {t('pricing.cards.reads.link')} <Arrow />
             </span>
           </Link>
           <Link href="/docs#limits" className="mh-card mh-card-pad mh-card-link">
-            <h3>How usage is counted</h3>
-            <p>Rate limits, quota headers and what happens when an allowance runs out.</p>
+            <h3>{t('pricing.cards.usage.title')}</h3>
+            <p>{t('pricing.cards.usage.copy')}</p>
             <span>
-              Usage limits <Arrow />
+              {t('pricing.cards.usage.link')} <Arrow />
             </span>
           </Link>
           <Link href="/docs#guides" className="mh-card mh-card-pad mh-card-link">
-            <h3>Scope the integration</h3>
-            <p>Guides by goal, each with a working request and its quota behavior.</p>
+            <h3>{t('pricing.cards.scope.title')}</h3>
+            <p>{t('pricing.cards.scope.copy')}</p>
             <span>
-              Guides by goal <Arrow />
+              {t('footer.guides')} <Arrow />
             </span>
           </Link>
         </div>
       </section>
       <section className="mh-section-sm">
         <div className="mh-wrap mh-prose">
-          <h2>What can I try on the Free plan?</h2>
+          <h2>{t('pricing.free.title')}</h2>
           <p>
-            The Free plan includes a sandbox key, sample catalog access, and {plans[0].requests}{' '}
-            requests per month. You do not need a payment card to start.
+            {t('pricing.free.copy', {
+              requests: i18n.number(Number(plans[0].requests.replace(/\D/g, ''))),
+            })}
           </p>
           <ul>
-            <li>Five sample mantras and the recordings available for those samples.</li>
+            <li>{t('pricing.free.mantras')}</li>
             <li>
-              The opening chapter and first three stored rows of the{' '}
-              <Link href="/library/books/bhagavad-gita">Bhagavad Gita</Link> and{' '}
-              <Link href="/library/books/isha-upanishad">Isha Upanishad</Link>.
+              <Rich
+                text={t('pricing.free.books')}
+                tags={{
+                  gita: <Link href="/library/books/bhagavad-gita" />,
+                  isha: <Link href="/library/books/isha-upanishad" />,
+                }}
+              />
             </li>
             <li>
-              Astrology calculations marked available in the{' '}
-              <Link href="/astrology-api">operation catalog</Link>.
+              <Rich
+                text={t('pricing.free.astrology')}
+                tags={{ link: <Link href="/astrology-api" /> }}
+              />
             </li>
           </ul>
           <p>
-            <Link href="/docs#environments">Compare sandbox and live access</Link>
+            <Link href="/docs#environments">{t('pricing.free.compare')}</Link>
           </p>
         </div>
       </section>
-      <CtaBand
-        title="Start with the sandbox."
-        copy="No card needed. Upgrade when you are ready for the full catalog."
-      />
+      <CtaBand title={t('pricing.cta.title')} copy={t('pricing.cta.copy')} />
     </SiteFrame>
   );
 }

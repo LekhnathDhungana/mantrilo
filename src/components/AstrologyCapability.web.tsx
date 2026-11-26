@@ -1,101 +1,108 @@
-import { Link, useLoaderData } from 'expo-router';
+import { useLoaderData } from 'expo-router';
+import { Link } from '../i18n/Link.web';
 import type { loader } from '../app/astrology-api/[capability]';
 import NotFound from './NotFound';
 import { Callout, KeyButton, PageHero, SiteFrame } from './site/Chrome.web';
 import { CodePanel } from './site/Code.web';
+import { itemText } from './site/Catalog.web';
+import { useI18n } from '../i18n';
+import { Rich } from '../i18n/Rich';
 
 export default function AstrologyCapability() {
   const data = useLoaderData<typeof loader>();
+  const { t } = useI18n();
   if (!data) return <NotFound />;
-  const { page, heading, item, related } = data;
+  const { page, item, related } = data;
+  const text = itemText(t, item);
+  const label = (path: string, name: string) =>
+    t(`meta.${path}.label`) || t('meta.astrologyCapability.label', { name });
+  const heading = label(page.path, page.name);
   const daily = page.operation === 'daily-panchang';
   const instant = page.operation === 'panchang';
   return (
     <SiteFrame path={page.path}>
       <PageHero
-        eyebrow={`Astrology API · ${item.facet}`}
+        eyebrow={`${t('meta./astrology-api.label')} · ${text.facet}`}
         title={heading}
-        lede={item.summary}
+        lede={text.summary}
         actions={
-          item.sandbox ? <KeyButton href={item.sandbox}>Try this calculation</KeyButton> : undefined
+          item.sandbox ? <KeyButton href={item.sandbox}>{t('astroCap.try')}</KeyButton> : undefined
         }
       />
       <section className="mh-section-sm">
         <div className="mh-wrap mh-split">
           <div className="mh-prose">
-            {item.limited && (
-              <Callout tone="warn">
-                This capability is marked limited. It may be unavailable for some requests, and it
-                is not in the sandbox. The console shows its current availability.
-              </Callout>
-            )}
-            <h2>Make a calculation</h2>
+            {item.limited && <Callout tone="warn">{t('astroCap.limited')}</Callout>}
+            <h2>{t('astroCap.make')}</h2>
             <p>
-              Send <code>{`"operation": "${page.operation}"`}</code> to{' '}
-              <code>
-                {item.method} {item.path}
-              </code>{' '}
-              from your server with your API key.
+              <Rich
+                text={t('astroCap.send')}
+                tags={{
+                  operation: <code>{`"operation": "${page.operation}"`}</code>,
+                  endpoint: (
+                    <code>
+                      {item.method} {item.path}
+                    </code>
+                  ),
+                }}
+              />
             </p>
-            <p>{item.inputs}</p>
-            <h2>Build with the result</h2>
-            <p>{item.render}</p>
-            <p>{item.usage}</p>
+            <p>{text.inputs}</p>
+            <h2>{t('astroCap.build')}</h2>
+            <p>{text.render}</p>
+            <p>{text.usage}</p>
             {instant && (
               <p>
-                This calculation describes one instant. For a local calendar day and sunrise-based
-                timings, see the{' '}
-                <Link href="/astrology-api/daily-panchang">Daily Panchang API</Link>. Its location
-                and time zone determine the local day.
+                <Rich
+                  text={t('astroCap.instant')}
+                  tags={{ link: <Link href="/astrology-api/daily-panchang" /> }}
+                />
               </p>
             )}
             {daily && (
               <>
-                <h2>Local dates and transition times</h2>
+                <h2>{t('astroCap.dailyTitle')}</h2>
+                <p>{t('astroCap.daily1')}</p>
                 <p>
-                  Send a local calendar date, coordinates and an IANA zone such as Asia/Kolkata. The
-                  adapter accepts years 1900–2100. Availability depends on the date and location.
-                  Transition timestamps include the UTC offset and can fall on the next local day.
-                </p>
-                <p>
-                  This example is for New Delhi on November 15, 2026. Sunrise and sunset are local
-                  times. Use the location’s time zone when displaying them. For a single timestamp,
-                  use the <Link href="/astrology-api/instant-panchang">Instant Panchang API</Link>.
+                  <Rich
+                    text={t('astroCap.daily2')}
+                    tags={{ link: <Link href="/astrology-api/instant-panchang" /> }}
+                  />
                 </p>
               </>
             )}
-            <h2>Reference</h2>
+            <h2>{t('astroCap.reference')}</h2>
             <p>
-              <Link href={item.docs}>Read the endpoint reference</Link> ·{' '}
-              <Link href={item.guide}>Integration guide</Link>
+              <Link href={item.docs}>{t('astroCap.readReference')}</Link> ·{' '}
+              <Link href={item.guide}>{t('upanishads.guide')}</Link>
               {item.sandbox && (
                 <>
                   {' '}
-                  · <a href={item.sandbox}>Try this calculation in the sandbox</a>
+                  · <a href={item.sandbox}>{t('astroCap.trySandbox')}</a>
                 </>
               )}
             </p>
             {related.length > 0 && (
               <>
-                <h2>
-                  Related {page.category === 'Core astrology' ? 'core' : page.category} capabilities
-                </h2>
+                <h2>{t('astroCap.related', { category: text.facet })}</h2>
                 <ul>
                   {related.map((entry) => (
                     <li key={entry.path}>
-                      <Link href={entry.path}>{entry.label}</Link>
+                      <Link href={entry.path}>
+                        {label(entry.path, entry.label.replace(/ API$/, ''))}
+                      </Link>
                     </li>
                   ))}
                 </ul>
               </>
             )}
             <p>
-              <Link href="/astrology-api">Browse all astrology capabilities</Link>
+              <Link href="/astrology-api">{t('astroCap.browseAll')}</Link>
             </p>
           </div>
           <div className="mh-stack">
             <CodePanel title={item.path} method={item.method} code={item.request} />
-            <CodePanel title={item.responseLabel} status="200 OK" json={item.response} />
+            <CodePanel title={text.responseLabel} status="200 OK" json={item.response} />
           </div>
         </div>
       </section>

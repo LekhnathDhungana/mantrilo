@@ -14,6 +14,11 @@ for (const entry of await readdir(root, { recursive: true, withFileTypes: true }
   if (path.relative(root, entry.parentPath).startsWith('_expo')) continue;
   await rename(path.join(entry.parentPath, entry.name), `${entry.parentPath}.html`);
 }
+// Expo also exports each page in a route group under the group's own name, such as
+// (i18n)/hi/docs.html next to hi/docs.html. The group copy is not a public address.
+for (const entry of await readdir(root, { withFileTypes: true }))
+  if (entry.isDirectory() && /^\(.+\)$/.test(entry.name))
+    await rm(path.join(root, entry.name), { recursive: true, force: true });
 const pages = {};
 for (const entry of await readdir(root, { recursive: true, withFileTypes: true })) {
   if (!entry.isFile() || !entry.name.endsWith('.html')) continue;

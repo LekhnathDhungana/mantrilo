@@ -1,21 +1,26 @@
-import { Link, useLoaderData } from 'expo-router';
+import { useLoaderData } from 'expo-router';
+import { Link } from '../i18n/Link.web';
 import type { loader } from '../app/calculators/[calculator]';
 import { calculatorPages } from '../data/calculator-pages';
 import NotFound from './NotFound';
 import SignCalculator from './SignCalculator.web';
 import { Arrow, CtaBand, PageHero, SiteFrame } from './site/Chrome.web';
+import { useI18n } from '../i18n';
+import { calculatorText } from '../i18n/calculators';
 
 export default function CalculatorPage() {
   const page = useLoaderData<typeof loader>();
+  const { t } = useI18n();
   if (!page) return <NotFound />;
+  const text = calculatorText(t, page);
   const others = calculatorPages.filter((entry) => entry.slug !== page.slug);
   return (
     <SiteFrame path={page.path}>
       <PageHero
-        eyebrow="Free calculator"
-        crumb={page.label}
-        title={page.heading}
-        lede={page.lede}
+        eyebrow={t('calculators.page.eyebrow')}
+        crumb={text.label}
+        title={text.heading}
+        lede={text.lede}
       />
       <section className="mh-section-sm mh-calc-section">
         <div className="mh-wrap">
@@ -25,13 +30,13 @@ export default function CalculatorPage() {
       <section className="mh-section-sm">
         <div className="mh-wrap mh-split">
           <div className="mh-prose">
-            <h2>{page.about.heading}</h2>
-            {page.about.paragraphs.map((text) => (
-              <p key={text}>{text}</p>
+            <h2>{text.about.heading}</h2>
+            {text.about.paragraphs.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
             ))}
-            <h2>Questions</h2>
+            <h2>{t('calculators.page.questions')}</h2>
             <div className="mh-faq-list">
-              {page.faqs.map(([question, answer]) => (
+              {text.faqs.map(([question, answer]) => (
                 <details key={question}>
                   <summary>
                     {question}
@@ -45,22 +50,19 @@ export default function CalculatorPage() {
             </div>
           </div>
           <aside className="mh-calc-more">
-            <p className="mh-footer-label">More calculators</p>
+            <p className="mh-footer-label">{t('calculators.page.more')}</p>
             {others.map((entry) => (
               <Link key={entry.slug} href={entry.path}>
-                {entry.label} <Arrow />
+                {t(`meta.${entry.path}.label`) || entry.label} <Arrow />
               </Link>
             ))}
             <Link href="/astrology-api">
-              Astrology API for developers <Arrow />
+              {t('astroPage.title')} <Arrow />
             </Link>
           </aside>
         </div>
       </section>
-      <CtaBand
-        title="Put this calculator in your app."
-        copy="The same Western and Vedic signs, plus Kundli charts, Panchang and matching, through one astrology API."
-      />
+      <CtaBand title={t('calculators.page.ctaTitle')} copy={t('calculators.page.ctaCopy')} />
     </SiteFrame>
   );
 }

@@ -54,6 +54,8 @@ export type Item = {
   sandbox: string | null;
   limited?: boolean;
   steps?: { label: string; request: string; response?: unknown }[];
+  /** The guide whose inputs, render and usage text this item shows (see src/i18n/guides.ts). */
+  guideId: string;
 };
 
 const content = (id: string) => contentGuides.find((guide) => guide.id === id)!;
@@ -77,6 +79,7 @@ function astrologyItem(guide: Guide): Item {
     usage: guide.usage,
     docs: '/docs#astrology-calculate',
     guide: guideHref(guide.id),
+    guideId: guide.id,
     sandbox: guide.limited ? null : consoleSandboxUrl({ operation: op }),
     limited: guide.limited,
   };
@@ -111,6 +114,7 @@ export const contentItems: Item[] = [
     usage: search.usage,
     docs: '/docs#list-mantras',
     guide: guideHref(search.id),
+    guideId: search.id,
     sandbox: consoleSandboxUrl({ preset: 'search-mantras' }),
   },
   {
@@ -130,6 +134,7 @@ export const contentItems: Item[] = [
     usage: featured.usage,
     docs: '/docs#get-mantra',
     guide: guideHref(featured.id),
+    guideId: featured.id,
     sandbox: consoleSandboxUrl({ preset: 'featured-mantra' }),
   },
   {
@@ -149,6 +154,7 @@ export const contentItems: Item[] = [
     usage: audio.usage,
     docs: '/docs#mantra-audio',
     guide: guideHref(audio.id),
+    guideId: audio.id,
     sandbox: consoleSandboxUrl({ preset: 'sacred-audio' }),
   },
   ...collections.map((collection): Item => ({
@@ -174,6 +180,7 @@ export const contentItems: Item[] = [
     usage: upanishads.usage,
     docs: '/docs#list-books',
     guide: guideHref(collection.id === 'upanishads' ? upanishads.id : reader.id),
+    guideId: upanishads.id,
     sandbox: collection.id === 'upanishads' ? consoleSandboxUrl({ preset: 'upanishads' }) : null,
     steps: [
       {

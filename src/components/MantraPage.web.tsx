@@ -1,4 +1,5 @@
-import { Link, useLoaderData } from 'expo-router';
+import { useLoaderData } from 'expo-router';
+import { Link } from '../i18n/Link.web';
 import type {
   DeityPage,
   MantraHub,
@@ -24,6 +25,8 @@ import {
   toDeva,
   type Snippet,
 } from './site/Shlokam.web';
+import { useI18n, type I18n } from '../i18n';
+import { Rich } from '../i18n/Rich';
 
 // The mantra library: one page per mantra (/library/mantras/{slug}), one per deity
 // (/library/mantras/deity/{deity}) and the hub (/library/mantras). Pages are API documentation
@@ -35,7 +38,10 @@ type Data =
   | { kind: 'deity'; page: DeityPage }
   | null;
 
-const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
+// Mantra titles, deity names, categories and verse text are API content and stay as returned.
+const verses = ({ t, number }: I18n, count: number) =>
+  t('common.verses', { count, n: number(count) });
+const code = { code: <code /> };
 
 const jsRequest = (id: string) => `const res = await fetch(
   \`\${process.env.MANTRILO_API_URL}/v1/mantras/${id}\`,
@@ -45,14 +51,15 @@ const { data } = await res.json();
 for (const verse of data.verses) console.log(verse.sanskrit, verse.transliteration);`;
 
 function MantraList({ mantras }: { mantras: MantraListing[] }) {
+  const i18n = useI18n();
   return (
     <ul className="mh-mantra-list">
       {mantras.map((mantra) => (
         <li key={mantra.slug}>
           <Link href={mantra.path}>{mantra.title}</Link>{' '}
           <span className="mh-muted">
-            {plural(mantra.verseCount, 'verse')}
-            {mantra.hasAudio ? ' · recording' : ''}
+            {verses(i18n, mantra.verseCount)}
+            {mantra.hasAudio ? ` · ${i18n.t('mantraPage.recordingLower')}` : ''}
           </span>
         </li>
       ))}
@@ -102,6 +109,8 @@ defer res.Body.Close()`,
 
 function MantraDetail({ page }: { page: Mantra }) {
   const { mantra } = page;
+  const i18n = useI18n();
+  const { t, number, lang } = i18n;
   const [view, setView] = useState<VerseView>('both');
   const [open, setOpen] = useState<number | null>(null);
   const path = `/v1/mantras/${mantra.id}`;
@@ -119,34 +128,57 @@ function MantraDetail({ page }: { page: Mantra }) {
     [
       'description',
       'string | null',
-      mantra.description ? 'Short summary (see the response)' : 'null',
+      mantra.description ? t('mantraPage.fields.description') : 'null',
     ],
     ['verseCount', 'number', String(verseCount)],
     ['audio', 'object | null', mantra.hasAudio ? `{ href: "${path}/audio" }` : 'null'],
-    ['verses[].number', 'number | null', 'Position in the hymn'],
-    ['verses[].sanskrit', 'string | null', 'Devanagari text'],
-    ['verses[].transliteration', 'string | null', 'Roman transliteration'],
-    ['verses[].translation', 'null', 'Translations are not distributed'],
+    ['verses[].number', 'number | null', t('mantraPage.fields.number')],
+    ['verses[].sanskrit', 'string | null', t('mantraPage.fields.sanskrit')],
+    ['verses[].transliteration', 'string | null', t('mantraPage.fields.transliteration')],
+    ['verses[].translation', 'null', t('mantraPage.fields.translation')],
   ];
   const views: [VerseView, string][] = [
-    ['both', 'Devanagari + IAST'],
-    ['sa', 'Devanagari'],
+    ['both', t('mantraPage.views.both')],
+    ['sa', t('mantraPage.views.sa')],
     ['tr', 'IAST'],
   ];
+  const deityNames = mantra.deities.map((entry) => entry.name);
+  // The English lede is written with the page data; other languages compose it from the same fields.
+  const lede =
+    lang === 'en'
+      ? page.lede
+      : [
+          t('mantraPage.ledeCollection', {
+            count: deityNames.length,
+            title: mantra.title,
+            deities: new Intl.ListFormat(lang, { type: 'conjunction' }).format(deityNames),
+          }),
+          mantra.alternateIds.length
+            ? t('mantraPage.ledeIds', { n: number(mantra.alternateIds.length + 1) })
+            : '',
+          t(mantra.hasAudio ? 'mantraPage.ledeReturnsAudio' : 'mantraPage.ledeReturns', {
+            path,
+            verses: verses(i18n, verseCount),
+          }),
+        ]
+          .filter(Boolean)
+          .join(' ');
   return (
     <SiteFrame path={page.path} meta={page.meta}>
       <section className="mx-hero">
         <Ribbon />
         <div className="mh-wrap mx-hero-grid">
           <div>
-            <nav className="mh-crumbs mx-rise" aria-label="Breadcrumb">
-              <Link href="/">Home</Link>
+            <nav className="mh-crumbs mx-rise" aria-label={t('chrome.breadcrumb')}>
+              <Link href="/">{t('chrome.crumbHome')}</Link>
               <span aria-hidden="true">/</span>
-              <Link href="/library">Library</Link>
+              <Link href="/library">{t('meta./library.label')}</Link>
               {deity && (
                 <>
                   <span aria-hidden="true">/</span>
-                  <Link href={deity.path}>{deity.name} mantras</Link>
+                  <Link href={deity.path}>
+                    {t('mantraPage.deityMantras', { name: deity.name })}
+                  </Link>
                 </>
               )}
               <span aria-hidden="true">/</span>
@@ -155,14 +187,14 @@ function MantraDetail({ page }: { page: Mantra }) {
             <div className="mx-chips mx-rise mx-d1">
               {mantra.deities.map((entry) => (
                 <Link key={entry.id} href={entry.path} className="mx-chip">
-                  {entry.name} <small>{entry.count}</small>
+                  {entry.name} <small>{number(entry.count)}</small>
                 </Link>
               ))}
               {mantra.category && <span className="mx-chip">{mantra.category}</span>}
               {mantra.hasAudio && (
                 <span className="mx-chip">
                   <span className="mx-pulse" aria-hidden="true" />
-                  Recording
+                  {t('mantraPage.recording')}
                 </span>
               )}
             </div>
@@ -174,40 +206,36 @@ function MantraDetail({ page }: { page: Mantra }) {
             )}
             <p className="mx-meta mx-rise mx-d3">
               {deity ? `${deity.name} · ` : ''}
-              {plural(verseCount, 'verse')}
-              {mantra.hasAudio ? ' · Streamable recording' : ''}
+              {verses(i18n, verseCount)}
+              {mantra.hasAudio ? ` · ${t('mantraPage.streamable')}` : ''}
             </p>
-            <p className="mx-lede mx-rise mx-d3">{page.lede}</p>
+            <p className="mx-lede mx-rise mx-d3">{lede}</p>
             <div className="mx-rise mx-d4">
               <EndpointPill path={path} />
             </div>
             <div className="mx-actions mx-rise mx-d5">
               {mantra.sandbox ? (
                 <KeyButton href={consoleSandboxUrl({ preset: 'featured-mantra' })}>
-                  Try this mantra in the sandbox
+                  {t('mantraPage.trySandbox')}
                 </KeyButton>
               ) : (
                 <KeyButton />
               )}
               <Link href="/docs#get-mantra" className="mh-btn mh-btn-ghost">
-                Read the docs
+                {t('common.readDocs')}
               </Link>
               {mantra.hasAudio && <PlayButton id={mantra.id} title={mantra.title} />}
             </div>
             <Checks
               className="mx-rise mx-d6"
-              items={[
-                '500 free calls a month',
-                'No card needed',
-                'Devanagari with transliteration',
-              ]}
+              items={[t('mantraPage.checkFree'), t('mantraPage.checkCard'), t('shelf.checkDeva')]}
             />
           </div>
           <div className="mx-art mx-rise mx-d3" aria-hidden="true">
             <div className="mx-stack">
               {verseCount > 1 && (
                 <div className="mx-sheet">
-                  <span>verses[1] · next</span>
+                  <span>verses[1] · {t('mantraPage.next')}</span>
                 </div>
               )}
               <div className="mx-spec mx-dots">
@@ -268,8 +296,8 @@ function MantraDetail({ page }: { page: Mantra }) {
               <details className="mx-about" data-reveal>
                 <summary>
                   <span>
-                    <b>About {mantra.title}</b>
-                    <small>From the description field</small>
+                    <b>{t('mantraPage.about', { title: mantra.title })}</b>
+                    <small>{t('mantraPage.aboutField')}</small>
                   </span>
                   <span className="mx-plus" aria-hidden="true">
                     <svg viewBox="0 0 24 24">
@@ -283,42 +311,54 @@ function MantraDetail({ page }: { page: Mantra }) {
 
             <div className="mx-panel" data-reveal>
               <div className="mx-panel-head">
-                <p className="mx-kicker">Request this mantra</p>
-                <h2 className="mx-h2">One call returns every verse.</h2>
-                <p className="mx-sub">
-                  Call the API from your server with your key. The id is stable, so you can store it
-                  and link to it.
-                </p>
+                <p className="mx-kicker">{t('mantraPage.request.kicker')}</p>
+                <h2 className="mx-h2">{t('mantraPage.request.title')}</h2>
+                <p className="mx-sub">{t('mantraPage.request.copy')}</p>
               </div>
-              <CodeTabs snippets={snippetsFor(mantra.id)} label="Request language" />
+              <CodeTabs snippets={snippetsFor(mantra.id)} label={t('mantraPage.requestLanguage')} />
             </div>
 
             {mantra.alternateIds.length > 0 && (
               <Callout tone="info">
-                The same hymn is also filed under {plural(mantra.alternateIds.length, 'other id')}:{' '}
-                {mantra.alternateIds.map((id, i) => (
-                  <span key={id}>
-                    {i > 0 && ', '}
-                    <code>{id}</code>
-                  </span>
-                ))}
-                . Each returns the same text under its own deity.
+                <Rich
+                  text={t('mantraPage.alternates', {
+                    count: mantra.alternateIds.length,
+                    n: number(mantra.alternateIds.length),
+                  })}
+                  tags={{
+                    ids: (
+                      <>
+                        {mantra.alternateIds.map((id, i) => (
+                          <span key={id}>
+                            {i > 0 && ', '}
+                            <code>{id}</code>
+                          </span>
+                        ))}
+                      </>
+                    ),
+                  }}
+                />
               </Callout>
             )}
 
             <div className="mx-reader-head" data-reveal>
               <div>
-                <h2 className="mx-h2">{mantra.title}, verse by verse</h2>
+                <h2 className="mx-h2">{t('mantraPage.verseByVerse', { title: mantra.title })}</h2>
                 <p className="mx-sub">
-                  {shown < verseCount
-                    ? `The first ${shown} of ${verseCount} verses`
-                    : shown === 1
-                      ? 'The verse'
-                      : `All ${shown} verses`}
-                  , exactly as <code>verses[]</code> returns {shown === 1 ? 'it' : 'them'}.
+                  <Rich
+                    text={
+                      shown < verseCount
+                        ? t('mantraPage.shownFirst', {
+                            n: number(shown),
+                            total: number(verseCount),
+                          })
+                        : t('mantraPage.shownAll', { count: shown, n: number(shown) })
+                    }
+                    tags={code}
+                  />
                 </p>
               </div>
-              <div className="mx-seg" role="group" aria-label="Script">
+              <div className="mx-seg" role="group" aria-label={t('mantraPage.script')}>
                 {views.map(([value, label]) => (
                   <button
                     key={value}
@@ -357,7 +397,7 @@ function MantraDetail({ page }: { page: Mantra }) {
                         aria-expanded={open === i}
                         onClick={() => setOpen(open === i ? null : i)}
                       >
-                        {open === i ? 'Hide JSON' : '{ } JSON'}
+                        {open === i ? t('mantraPage.hideJson') : '{ } JSON'}
                       </button>
                     </div>
                     {verse.title && !verse.title.startsWith(mantra.title) && <h3>{verse.title}</h3>}
@@ -385,62 +425,72 @@ function MantraDetail({ page }: { page: Mantra }) {
             {shown < verseCount && (
               <div className="mx-note" data-reveal>
                 <div>
-                  <b>{plural(verseCount - shown, 'more verse')} with a key</b>
+                  <b>
+                    {t('mantraPage.more', {
+                      count: verseCount - shown,
+                      n: number(verseCount - shown),
+                    })}
+                  </b>
                   <p>
-                    Your app gets all {verseCount} verses from <code>GET {path}</code>.
+                    <Rich
+                      text={t('mantraPage.moreCopy', { n: number(verseCount) })}
+                      tags={{ endpoint: <code>GET {path}</code> }}
+                    />
                   </p>
                 </div>
                 <KeyButton />
               </div>
             )}
             <p className="mx-links">
-              <Link href="/docs#get-mantra">Mantra endpoint reference</Link> ·{' '}
-              <Link href="/docs/guides/search-mantras">Build a searchable library</Link> ·{' '}
-              <Link href="/docs/guides/sacred-audio">Audio playback guide</Link>
+              <Link href="/docs#get-mantra">{t('mantraPage.endpointRef')}</Link> ·{' '}
+              <Link href="/docs/guides/search-mantras">
+                {t('meta./docs/guides/search-mantras.label')}
+              </Link>{' '}
+              · <Link href="/docs/guides/sacred-audio">{t('mantraPage.audioGuide')}</Link>
             </p>
           </div>
 
-          <aside className="mx-aside" aria-label="Mantra details">
+          <aside className="mx-aside" aria-label={t('mantraPage.details')}>
             <div className="mx-card" data-reveal>
-              <p className="mx-label">At a glance</p>
+              <p className="mx-label">{t('mantraPage.glance')}</p>
               <dl className="mx-facts">
                 <div>
-                  <dt>Mantra id</dt>
+                  <dt>{t('mantraPage.mantraId')}</dt>
                   <dd>
                     <code>{mantra.id}</code>
                   </dd>
                 </div>
                 {mantra.deity && (
                   <div>
-                    <dt>Deity</dt>
+                    <dt>{t('mantraPage.deity')}</dt>
                     <dd>{deity?.name ?? mantra.deity.id}</dd>
                   </div>
                 )}
                 {mantra.category && (
                   <div>
-                    <dt>Category</dt>
+                    <dt>{t('mantraPage.category')}</dt>
                     <dd>{mantra.category}</dd>
                   </div>
                 )}
                 {mantra.citedSource && (
                   <div>
-                    <dt>Source</dt>
+                    <dt>{t('mantraPage.source')}</dt>
                     <dd>{mantra.citedSource}</dd>
                   </div>
                 )}
                 <div>
-                  <dt>Verses</dt>
-                  <dd>{verseCount}</dd>
+                  <dt>{t('bookPage.verses')}</dt>
+                  <dd>{number(verseCount)}</dd>
                 </div>
                 <div>
-                  <dt>Recording</dt>
-                  <dd>{mantra.hasAudio ? 'Yes' : 'No'}</dd>
+                  <dt>{t('mantraPage.recording')}</dt>
+                  <dd>{mantra.hasAudio ? t('mantraPage.yes') : t('mantraPage.no')}</dd>
                 </div>
               </dl>
             </div>
 
             <div className="mx-card" data-reveal>
-              <p className="mx-label">Recording</p>
+              <p className="mx-label">{t('mantraPage.recording')}</p>
               {mantra.hasAudio ? (
                 <>
                   <div className="mx-wave" aria-hidden="true">
@@ -452,29 +502,26 @@ function MantraDetail({ page }: { page: Mantra }) {
                   <div className="mx-mono">
                     <b>GET</b> {audioPath}
                   </div>
-                  <p className="mx-small">
-                    Your server asks for a signed link and passes it to your player. Links expire
-                    after 15 minutes and count toward your plan’s monthly audio allowance.
-                  </p>
+                  <p className="mx-small">{t('mantraPage.audioCopy')}</p>
                 </>
               ) : (
                 <p className="mx-small">
-                  This mantra has no recording, so <code>audio</code> is <code>null</code>. Hide the
-                  player when it is.
+                  <Rich text={t('mantraPage.noAudio')} tags={code} />
                 </p>
               )}
             </div>
 
             <div className="mx-promo mx-dots" data-reveal>
               <span className="mx-field">MANTRILO_API_KEY</span>
-              <h2>Put {mantra.title} in your app</h2>
+              <h2>{t('mantraPage.promo.title', { title: mantra.title })}</h2>
               <p>
-                500 free calls a month with no card. Live keys from $49.99 a month include the full
-                catalog and astrology.
+                {t('mantraPage.promo.copy', {
+                  price: number(49.99, { style: 'currency', currency: 'USD' }),
+                })}
               </p>
               <KeyButton />
               <Link href="/pricing" className="mh-btn mh-btn-ghost">
-                See pricing
+                {t('mantraPage.promo.pricing')}
               </Link>
             </div>
           </aside>
@@ -484,13 +531,17 @@ function MantraDetail({ page }: { page: Mantra }) {
       <section className="mx-section">
         <div className="mh-wrap">
           <div data-reveal>
-            <p className="mx-kicker">Response</p>
-            <h2 className="mx-h2">The exact JSON your app receives.</h2>
+            <p className="mx-kicker">{t('calc.response')}</p>
+            <h2 className="mx-h2">{t('mantraPage.response.title')}</h2>
             <p className="mx-sub">
               {verseCount > page.shownVerses
-                ? `The first ${plural(page.shownVerses, 'verse')} of ${verseCount} are shown. `
+                ? `${t('mantraPage.response.first', {
+                    count: page.shownVerses,
+                    n: number(page.shownVerses),
+                    total: number(verseCount),
+                  })} `
                 : ''}
-              Every field is listed beside it.
+              {t('mantraPage.response.fields')}
             </p>
           </div>
           <div className="mx-response">
@@ -500,7 +551,7 @@ function MantraDetail({ page }: { page: Mantra }) {
                 <>
                   <CodePanel title={audioPath} method="GET" code={curlGet(audioPath)} />
                   <CodePanel
-                    title="Recording link · placeholder"
+                    title={t('mantraPage.response.link')}
                     status="200 OK"
                     json={audioResponse}
                   />
@@ -509,8 +560,12 @@ function MantraDetail({ page }: { page: Mantra }) {
             </div>
             <div data-reveal>
               <DataTable
-                label={`Fields returned for ${mantra.title}`}
-                head={['Field', 'Type', 'Value for this mantra']}
+                label={t('mantraPage.response.label', { title: mantra.title })}
+                head={[
+                  t('mantraPage.response.field'),
+                  t('mantraPage.response.type'),
+                  t('mantraPage.response.value'),
+                ]}
                 rows={fields}
               />
             </div>
@@ -523,13 +578,17 @@ function MantraDetail({ page }: { page: Mantra }) {
           <div className="mh-wrap">
             <div className="mx-head" data-reveal>
               <div>
-                <p className="mx-kicker">More from the {deity.name} collection</p>
+                <p className="mx-kicker">{t('mantraPage.related.kicker', { name: deity.name })}</p>
                 <h2 className="mx-h2">
-                  {plural(deity.count, `${deity.name} mantra`)}, same shape.
+                  {t('mantraPage.related.title', {
+                    count: deity.count,
+                    n: number(deity.count),
+                    name: deity.name,
+                  })}
                 </h2>
               </div>
               <Link href={deity.path} className="mh-textlink">
-                All {deity.name} mantras <Arrow />
+                {t('mantraPage.allDeity', { name: deity.name })} <Arrow />
               </Link>
             </div>
             <div className="mx-grid">
@@ -543,8 +602,10 @@ function MantraDetail({ page }: { page: Mantra }) {
                   )}
                   <h3>{other.title}</h3>
                   <div className="mx-tags">
-                    <span>{plural(other.verseCount, 'verse')}</span>
-                    {other.hasAudio && <span className="mx-tag-ok">audio ✓</span>}
+                    <span>{verses(i18n, other.verseCount)}</span>
+                    {other.hasAudio && (
+                      <span className="mx-tag-ok">{t('mantraPage.audioTag')} ✓</span>
+                    )}
                   </div>
                 </Link>
               ))}
@@ -553,11 +614,11 @@ function MantraDetail({ page }: { page: Mantra }) {
               {mantra.deities.map((entry, i) => (
                 <span key={entry.id}>
                   {i > 0 && ' · '}
-                  <Link href={entry.path}>All {entry.name} mantras</Link>
+                  <Link href={entry.path}>{t('mantraPage.allDeity', { name: entry.name })}</Link>
                 </span>
               ))}{' '}
-              · <Link href="/library/mantras">Mantra library</Link> ·{' '}
-              <Link href="/library/books">Books</Link>
+              · <Link href="/library/mantras">{t('mantraPage.library')}</Link> ·{' '}
+              <Link href="/library/books">{t('nav.books')}</Link>
             </p>
           </div>
         </section>
@@ -567,15 +628,13 @@ function MantraDetail({ page }: { page: Mantra }) {
         <div className="mh-wrap">
           <div className="mx-closing" data-reveal>
             <div>
-              <p className="mx-kicker">Start free</p>
-              <h2 className="mx-h2">Begin with a free sandbox key.</h2>
-              <p>
-                Every account starts with sample content, so you can build before you subscribe.
-              </p>
+              <p className="mx-kicker">{t('plans.startFree')}</p>
+              <h2 className="mx-h2">{t('mantraPage.closing.title')}</h2>
+              <p>{t('product.ctaCopy')}</p>
               <div className="mx-actions">
                 <KeyButton />
                 <Link href="/docs" className="mh-btn mh-btn-ghost">
-                  Read the docs
+                  {t('common.readDocs')}
                 </Link>
               </div>
             </div>
@@ -594,35 +653,45 @@ const WAVE = Array.from({ length: 30 }, (_, i) => ({
 
 function Deity({ page }: { page: DeityPage }) {
   const { deity } = page;
+  const { t, number } = useI18n();
   const listPath = `/v1/mantras?deity=${deity.id}&limit=2`;
   return (
     <SiteFrame path={page.path} meta={page.meta}>
       <PageHero
-        eyebrow="Mantra API · Library"
-        title={`${deity.name} mantras`}
-        lede={`${plural(page.mantras.length, 'mantra')} and stotras for ${deity.name}, each with its Sanskrit text, transliteration and API response.`}
+        eyebrow={`${t('meta./mantra-api.label')} · ${t('meta./library.label')}`}
+        title={t('mantraPage.deityMantras', { name: deity.name })}
+        lede={t('mantraPage.deityPage.lede', {
+          count: page.mantras.length,
+          n: number(page.mantras.length),
+          name: deity.name,
+        })}
         actions={<KeyButton />}
       />
       <section className="mh-section-sm">
         <div className="mh-wrap mh-split">
           <div className="mh-prose">
-            <h2>All {deity.name} mantras</h2>
+            <h2>{t('mantraPage.allDeity', { name: deity.name })}</h2>
             <MantraList mantras={page.mantras} />
             <p>
-              <Link href="/library/mantras">Mantras for every deity</Link>
+              <Link href="/library/mantras">{t('mantraPage.deityPage.every')}</Link>
             </p>
           </div>
           <div className="mh-prose mh-stack">
-            <h2>List them with the API</h2>
+            <h2>{t('mantraPage.deityPage.list')}</h2>
             <p>
-              Filter the list by deity id <code>{deity.id}</code>. Pages are ordered by id; pass{' '}
-              <code>nextCursor</code> back as <code>cursor</code> for the next page.
+              <Rich text={t('mantraPage.deityPage.filter', { id: deity.id })} tags={code} />
             </p>
             <CodePanel title={listPath} method="GET" code={curlGet(listPath)} />
-            <CodePanel title="Illustrative response excerpt" status="200 OK" json={page.response} />
+            <CodePanel
+              title={t('mantraPage.deityPage.excerpt')}
+              status="200 OK"
+              json={page.response}
+            />
             <p>
-              <Link href="/docs#list-mantras">List endpoint reference</Link> ·{' '}
-              <Link href="/docs/guides/search-mantras">Build a searchable library</Link>
+              <Link href="/docs#list-mantras">{t('mantraPage.listRef')}</Link> ·{' '}
+              <Link href="/docs/guides/search-mantras">
+                {t('meta./docs/guides/search-mantras.label')}
+              </Link>
             </p>
           </div>
         </div>
@@ -704,6 +773,8 @@ function Hub({ hub, meta, path }: { hub: MantraHub; meta: PageMeta; path: string
   const [deity, setDeity] = useState('');
   const [query, setQuery] = useState('');
   const [onlyAudio, setOnlyAudio] = useState(false);
+  const i18n = useI18n();
+  const { t, number } = i18n;
 
   const names = new Map(hub.deities.map((entry) => [entry.id, entry.name]));
   const tiles = hub.deities.slice(0, 12);
@@ -732,26 +803,27 @@ function Hub({ hub, meta, path }: { hub: MantraHub; meta: PageMeta; path: string
         <Ribbon />
         <div className="mh-wrap mx-hero-grid">
           <div>
-            <nav className="mh-crumbs mx-rise" aria-label="Breadcrumb">
-              <Link href="/">Home</Link>
+            <nav className="mh-crumbs mx-rise" aria-label={t('chrome.breadcrumb')}>
+              <Link href="/">{t('chrome.crumbHome')}</Link>
               <span aria-hidden="true">/</span>
-              <Link href="/library">Library</Link>
+              <Link href="/library">{t('meta./library.label')}</Link>
               <span aria-hidden="true">/</span>
-              <span aria-current="page">Mantras</span>
+              <span aria-current="page">{t('nav.mantras')}</span>
             </nav>
             <div className="mx-chips mx-rise mx-d1">
               <Link href="/mantra-api" className="mx-chip">
                 <span lang="sa-Deva" className="mh-deva">
                   मन्त्र
                 </span>
-                Mantra API
+                {t('meta./mantra-api.label')}
               </Link>
             </div>
-            <h1 className="mx-rise mx-d2">Every mantra, one request away.</h1>
+            <h1 className="mx-rise mx-d2">{t('mantraHub.title')}</h1>
             <p className="mx-lede mx-rise mx-d3">
-              Nearly {hub.catalog.roughly.records} mantras and stotras in Devanagari with
-              transliteration, about {hub.catalog.roughly.recordings} with recordings. Filter by deity,
-              then fetch any hymn by its stable id.
+              {t('mantraHub.lede', {
+                records: number(hub.catalog.roughly.records),
+                recordings: number(hub.catalog.roughly.recordings),
+              })}
             </p>
             <div className="mx-rise mx-d4">
               <EndpointPill path={LIST_PATH} />
@@ -759,21 +831,21 @@ function Hub({ hub, meta, path }: { hub: MantraHub; meta: PageMeta; path: string
             <div className="mx-actions mx-rise mx-d5">
               <KeyButton />
               <a href="#all" className="mh-btn mh-btn-ghost">
-                Browse the library
+                {t('mantraHub.browse')}
               </a>
             </div>
             <Stats
               items={[
-                [hub.catalog.records, 'mantras and stotras'],
-                [hub.catalog.recordings, 'with recordings'],
-                [hub.deities.length, 'deities'],
+                [hub.catalog.records, t('mantraHub.stats.records')],
+                [hub.catalog.recordings, t('mantraHub.stats.recordings')],
+                [hub.deities.length, t('mantraHub.stats.deities')],
               ]}
             />
           </div>
           <div className="mx-art mx-rise mx-d3" aria-hidden="true">
             <div className="mx-stack">
               <div className="mx-sheet">
-                <span>nextCursor · page 2</span>
+                <span>nextCursor · {t('mantraHub.page2')}</span>
               </div>
               <div className="mx-spec mx-dots">
                 <div className="mx-scan" />
@@ -793,7 +865,9 @@ function Hub({ hub, meta, path }: { hub: MantraHub; meta: PageMeta; path: string
                           <b>{mantra.title}</b>
                         </span>
                         <span className="mx-lrow-v">{mantra.verseCount}</span>
-                        {mantra.hasAudio && <span className="mx-lrow-audio">audio</span>}
+                        {mantra.hasAudio && (
+                          <span className="mx-lrow-audio">{t('mantraPage.audioTag')}</span>
+                        )}
                       </li>
                     ))}
                   </ol>
@@ -810,13 +884,12 @@ function Hub({ hub, meta, path }: { hub: MantraHub; meta: PageMeta; path: string
       <section className="mx-section" aria-labelledby="by-deity">
         <div className="mh-wrap">
           <div data-reveal>
-            <p className="mx-kicker">By deity</p>
+            <p className="mx-kicker">{t('mantraHub.byDeity.kicker')}</p>
             <h2 className="mx-h2" id="by-deity">
-              {hub.deities.length} deities. One filter.
+              {t('mantraHub.byDeity.title', { n: number(hub.deities.length) })}
             </h2>
             <p className="mx-sub">
-              Pick a deity to filter the list below, or pass the same id as <code>?deity=</code> in
-              your request.
+              <Rich text={t('mantraHub.byDeity.copy')} tags={code} />
             </p>
           </div>
           <div className="mx-tiles">
@@ -831,7 +904,7 @@ function Hub({ hub, meta, path }: { hub: MantraHub; meta: PageMeta; path: string
               >
                 <span className="mx-tile-top">
                   <code>?deity={entry.id}</code>
-                  <b>{entry.count}</b>
+                  <b>{number(entry.count)}</b>
                 </span>
                 {DEITY_SANSKRIT[entry.id] && (
                   <span className="mx-tile-sa" lang="sa-Deva">
@@ -848,7 +921,7 @@ function Hub({ hub, meta, path }: { hub: MantraHub; meta: PageMeta; path: string
             ))}
           </div>
           <div className="mx-more" data-reveal>
-            <span>More</span>
+            <span>{t('mantraHub.more')}</span>
             {more.map((entry) => (
               <button
                 key={entry.id}
@@ -857,15 +930,15 @@ function Hub({ hub, meta, path }: { hub: MantraHub; meta: PageMeta; path: string
                 aria-pressed={deity === entry.id}
                 onClick={() => pick(entry.id)}
               >
-                {entry.name} <small>{entry.count}</small>
+                {entry.name} <small>{number(entry.count)}</small>
               </button>
             ))}
           </div>
-          <nav className="mx-deity-links" aria-label="Mantra pages by deity" data-reveal>
-            <span>Open a deity’s page</span>
+          <nav className="mx-deity-links" aria-label={t('mantraHub.deityNav')} data-reveal>
+            <span>{t('mantraHub.openDeity')}</span>
             {hub.deities.map((entry) => (
               <Link key={entry.id} href={entry.path}>
-                {entry.name} mantras
+                {t('mantraPage.deityMantras', { name: entry.name })}
               </Link>
             ))}
           </nav>
@@ -876,8 +949,8 @@ function Hub({ hub, meta, path }: { hub: MantraHub; meta: PageMeta; path: string
         <div className="mh-wrap">
           <div className="mx-head" data-reveal>
             <div>
-              <p className="mx-kicker">Most requested</p>
-              <h2 className="mx-h2">Start with the ones people chant most.</h2>
+              <p className="mx-kicker">{t('mantraHub.featured.kicker')}</p>
+              <h2 className="mx-h2">{t('mantraHub.featured.title')}</h2>
             </div>
           </div>
           <div className="mx-grid mx-grid-wide">
@@ -891,8 +964,10 @@ function Hub({ hub, meta, path }: { hub: MantraHub; meta: PageMeta; path: string
                 )}
                 <h3>{mantra.title}</h3>
                 <div className="mx-tags">
-                  <span>{plural(mantra.verseCount, 'verse')}</span>
-                  {mantra.hasAudio && <span className="mx-tag-ok">audio ✓</span>}
+                  <span>{verses(i18n, mantra.verseCount)}</span>
+                  {mantra.hasAudio && (
+                    <span className="mx-tag-ok">{t('mantraPage.audioTag')} ✓</span>
+                  )}
                 </div>
               </Link>
             ))}
@@ -904,9 +979,11 @@ function Hub({ hub, meta, path }: { hub: MantraHub; meta: PageMeta; path: string
         <div className="mh-wrap">
           <div className="mx-head" data-reveal>
             <div>
-              <p className="mx-kicker">All mantras</p>
+              <p className="mx-kicker">{t('mantraHub.all.kicker')}</p>
               <h2 className="mx-h2">
-                {active ? `${active.name} mantras` : 'Find a mantra by name.'}
+                {active
+                  ? t('mantraPage.deityMantras', { name: active.name })
+                  : t('mantraHub.all.title')}
               </h2>
             </div>
             <div className="mx-filters">
@@ -915,11 +992,11 @@ function Hub({ hub, meta, path }: { hub: MantraHub; meta: PageMeta; path: string
                   <circle cx="11" cy="11" r="7" />
                   <path d="m20 20-3.5-3.5" />
                 </svg>
-                <span className="mh-sr">Search mantras by name</span>
+                <span className="mh-sr">{t('mantraHub.all.searchLabel')}</span>
                 <input
                   type="search"
                   value={query}
-                  placeholder="Search by name"
+                  placeholder={t('mantraHub.all.search')}
                   autoComplete="off"
                   onChange={(event) => setQuery(event.target.value)}
                 />
@@ -932,13 +1009,13 @@ function Hub({ hub, meta, path }: { hub: MantraHub; meta: PageMeta; path: string
                 onClick={() => setOnlyAudio(!onlyAudio)}
               >
                 <i aria-hidden="true" />
-                With recording
+                {t('mantraHub.all.withRecording')}
               </button>
               {active && (
                 <button
                   type="button"
                   className="mx-chip mx-chip-clear"
-                  aria-label={`Clear the ${active.name} filter`}
+                  aria-label={t('mantraHub.all.clear', { name: active.name })}
                   onClick={() => setDeity('')}
                 >
                   {active.name} <span aria-hidden="true">×</span>
@@ -948,13 +1025,18 @@ function Hub({ hub, meta, path }: { hub: MantraHub; meta: PageMeta; path: string
           </div>
           <div className="mx-table" data-reveal>
             <div className="mx-table-head" aria-hidden="true">
-              <span>Mantra</span>
-              <span>Deity</span>
-              <span>Verses</span>
-              <span>Audio</span>
+              <span>{t('mantraHub.all.mantra')}</span>
+              <span>{t('mantraPage.deity')}</span>
+              <span>{t('bookPage.verses')}</span>
+              <span>{t('mantraHub.all.audio')}</span>
               <span />
             </div>
-            <div className="mx-table-scroll" tabIndex={0} role="region" aria-label="Mantras">
+            <div
+              className="mx-table-scroll"
+              tabIndex={0}
+              role="region"
+              aria-label={t('nav.mantras')}
+            >
               <ul>
                 {hub.mantras.map((mantra) => (
                   <li key={mantra.slug} hidden={!matches(mantra)}>
@@ -966,9 +1048,9 @@ function Hub({ hub, meta, path }: { hub: MantraHub; meta: PageMeta; path: string
                       <span className="mx-row-deity">
                         {mantra.deities.map((id) => names.get(id) ?? id).join(', ')}
                       </span>
-                      <span className="mx-row-verses">{plural(mantra.verseCount, 'verse')}</span>
+                      <span className="mx-row-verses">{verses(i18n, mantra.verseCount)}</span>
                       <span className="mx-row-audio">
-                        {mantra.hasAudio && <span>audio</span>}
+                        {mantra.hasAudio && <span>{t('mantraPage.audioTag')}</span>}
                       </span>
                       <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="m9 6 6 6-6 6" />
@@ -977,17 +1059,15 @@ function Hub({ hub, meta, path }: { hub: MantraHub; meta: PageMeta; path: string
                   </li>
                 ))}
               </ul>
-              {shown === 0 && (
-                <p className="mx-empty">No mantras match. Try another name or clear the filters.</p>
-              )}
+              {shown === 0 && <p className="mx-empty">{t('mantraHub.all.empty')}</p>}
             </div>
             <div className="mx-table-foot">
               <span aria-live="polite">
-                Showing {shown} of {hub.total} hymns
+                {t('mantraHub.all.showing', { n: number(shown), total: number(hub.total) })}
                 {active ? ` · ${active.name}` : ''}
-                {onlyAudio ? ' · with a recording' : ''}
+                {onlyAudio ? ` · ${t('mantraHub.all.withARecording')}` : ''}
               </span>
-              <span>Sorted A to Z</span>
+              <span>{t('mantraHub.all.sorted')}</span>
             </div>
           </div>
         </div>
@@ -996,25 +1076,25 @@ function Hub({ hub, meta, path }: { hub: MantraHub; meta: PageMeta; path: string
       <section className="mx-section">
         <div className="mh-wrap mx-response mx-list-demo">
           <div data-reveal>
-            <p className="mx-kicker">List and filter</p>
-            <h2 className="mx-h2">Page through a deity’s mantras.</h2>
+            <p className="mx-kicker">{t('mantraHub.list.kicker')}</p>
+            <h2 className="mx-h2">{t('mantraHub.list.title')}</h2>
             <p className="mx-sub">
-              Each page holds up to 20 mantras with their ids, verse counts and whether a recording
-              exists. Pass <code>nextCursor</code> back as <code>cursor</code> until it comes back
-              null.
+              <Rich text={t('mantraHub.list.copy')} tags={code} />
             </p>
             <CodePanel
-              title={`${LIST_PATH} · first 2 of 20`}
+              title={`${LIST_PATH} · ${t('mantraHub.list.first', { n: number(2), total: number(20) })}`}
               status="200 OK"
               json={hub.response}
             />
           </div>
           <div data-reveal>
-            <CodeTabs snippets={listSnippets} label="Request language" />
+            <CodeTabs snippets={listSnippets} label={t('mantraPage.requestLanguage')} />
             <p className="mx-links">
-              <Link href="/docs#list-mantras">List endpoint reference</Link> ·{' '}
-              <Link href="/docs/guides/search-mantras">Build a searchable library</Link> ·{' '}
-              <Link href="/mantra-api">Mantra API</Link>
+              <Link href="/docs#list-mantras">{t('mantraPage.listRef')}</Link> ·{' '}
+              <Link href="/docs/guides/search-mantras">
+                {t('meta./docs/guides/search-mantras.label')}
+              </Link>{' '}
+              · <Link href="/mantra-api">{t('meta./mantra-api.label')}</Link>
             </p>
           </div>
         </div>
@@ -1024,16 +1104,13 @@ function Hub({ hub, meta, path }: { hub: MantraHub; meta: PageMeta; path: string
         <div className="mh-wrap">
           <div className="mx-closing" data-reveal>
             <div>
-              <p className="mx-kicker">Start free</p>
-              <h2 className="mx-h2">Fetch your first mantra in a minute.</h2>
-              <p>
-                Every account starts with a sandbox key and sample mantras, so you can build before
-                you subscribe.
-              </p>
+              <p className="mx-kicker">{t('plans.startFree')}</p>
+              <h2 className="mx-h2">{t('mantraHub.closing.title')}</h2>
+              <p>{t('mantraHub.closing.copy')}</p>
               <div className="mx-actions">
                 <KeyButton />
                 <Link href="/docs" className="mh-btn mh-btn-ghost">
-                  Read the docs
+                  {t('common.readDocs')}
                 </Link>
               </div>
             </div>

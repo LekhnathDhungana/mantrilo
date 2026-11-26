@@ -4,6 +4,6 @@ export default function Page() {
   return <InfoPage page="terms" />;
 }
 
-export function generateMetadata() {
-  return pageMetadata('/terms');
+export function generateMetadata(_request?: unknown, params?: Record<string, string | string[]>) {
+  return pageMetadata('/terms', undefined, params);
 }
