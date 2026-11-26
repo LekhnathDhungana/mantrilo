@@ -147,6 +147,8 @@ async function fixture(
     portalConfiguration = 'bpc_mantrilo',
     promotionIds,
     indiaPrices,
+    annualPrices,
+    indiaAnnualPrices,
   } = {},
 ) {
   const store = new MemoryStore(),
@@ -165,6 +167,8 @@ async function fixture(
         portalConfiguration,
         promotionIds,
         indiaPrices,
+        annualPrices,
+        indiaAnnualPrices,
       })
     : null;
   const server = createConsoleServer({
@@ -694,4 +698,129 @@ test('a verified price is not fetched again; a failing one is', async () => {
   assert.deepEqual(await billing.availablePlans(), ['Starter', 'Growth', 'Business']);
   await billing.requirePlanPrice('Starter');
   assert.equal(reads, 5);
+});
+
+// Yearly prices charge twelve months of annualPrice: $39.99, $119 and $319 a month.
+const annualPrices = { Starter: 'price_s_y', Growth: 'price_g_y', Business: 'price_b_y' };
+function yearlyPrices(stripe) {
+  for (const [id, unit_amount] of Object.entries({
+    price_s_y: 47988,
+    price_g_y: 142800,
+    price_b_y: 382800,
+  }))
+    stripe.priceOverrides[id] = { unit_amount, recurring: { interval: 'year', interval_count: 1 } };
+}
+
+test('annual checkout uses the yearly price and refuses promo codes and unknown intervals', async (t) => {
+  const f = await fixture(t, {
+    annualPrices,
+    promotionIds: { Starter: 'promo_s' },
+  });
+  yearlyPrices(f.stripe);
+  const { body } = await f.call('/api/billing');
+  assert.deepEqual(body.annualPurchasable, ['Starter', 'Growth', 'Business']);
+  const route = '/api/billing/checkout';
+  const result = await f.call(route, 'POST', { plan: 'Growth', interval: 'year' });
+  assert.equal(result.status, 200);
+  const [params] = f.stripe.calls.checkouts;
+  assert.deepEqual(params.line_items, [{ price: 'price_g_y', quantity: 1 }]);
+  assert.match(params.cancel_url, /interval=year/);
+  const promo = await f.call(route, 'POST', {
+    plan: 'Starter',
+    interval: 'year',
+    promotionCode: 'STARTER99',
+  });
+  assert.equal(promo.body.error.code, 'invalid_promotion_code');
+  const weekly = await f.call(route, 'POST', { plan: 'Starter', interval: 'week' });
+  assert.equal(weekly.body.error.code, 'invalid_interval');
+  assert.equal(f.stripe.calls.checkouts.length, 1);
+  // Monthly checkout is unchanged.
+  await f.call(route, 'POST', { plan: 'Starter' });
+  assert.equal(f.stripe.calls.checkouts[1].line_items[0].price, 'price_s');
+});
+
+test('annual checkout is unavailable until yearly prices are configured and correct', async (t) => {
+  const off = await fixture(t);
+  assert.deepEqual((await off.call('/api/billing')).body.annualPurchasable, []);
+  const missing = await off.call('/api/billing/checkout', 'POST', { plan: 'Growth', interval: 'year' });
+  assert.equal(missing.body.error.code, 'plan_unavailable');
+  assert.equal(off.stripe.calls.checkouts.length, 0);
+
+  const f = await fixture(t, { annualPrices });
+  yearlyPrices(f.stripe);
+  // A monthly price configured as annual, and a yearly price at the undiscounted amount.
+  f.stripe.priceOverrides.price_s_y = { unit_amount: 47988 };
+  f.stripe.priceOverrides.price_g_y = {
+    unit_amount: 178800,
+    recurring: { interval: 'year', interval_count: 1 },
+  };
+  assert.deepEqual((await f.call('/api/billing')).body.annualPurchasable, ['Business']);
+  for (const plan of ['Starter', 'Growth']) {
+    const result = await f.call('/api/billing/checkout', 'POST', { plan, interval: 'year' });
+    assert.equal(result.body.error.code, 'plan_unavailable');
+  }
+  assert.equal(f.stripe.calls.checkouts.length, 0);
+});
+
+test('an annual subscription grants its plan, reports its interval and changes plan within annual', async (t) => {
+  const f = await fixture(t, { annualPrices });
+  yearlyPrices(f.stripe);
+  const annual = subscription({
+    items: {
+      data: [{ id: 'si_1', price: { id: 'price_g_y', currency: 'usd', recurring: { interval: 'year' } } }],
+    },
+  });
+  await f.send(annual);
+  assert.equal((await f.workspace()).plan, 'Growth');
+  const { body } = await f.call('/api/billing');
+  assert.equal(body.interval, 'year');
+  assert.equal(body.monthlyTotal, 119);
+  f.stripe.live = [annual];
+  assert.equal((await f.call('/api/billing/portal', 'POST', { plan: 'Business' })).status, 200);
+  assert.deepEqual(f.stripe.calls.portal.at(-1).flow_data.subscription_update_confirm.items, [
+    { id: 'si_1', price: 'price_b_y', quantity: 1 },
+  ]);
+  const same = await f.call('/api/billing/portal', 'POST', { plan: 'Growth' });
+  assert.equal(same.body.error.code, 'already_on_plan');
+});
+
+test('India annual checkout uses the yearly INR price', async (t) => {
+  const f = await fixture(t, { indiaAnnualPrices: { Starter: 'price_in_s_y' } });
+  f.stripe.priceOverrides.price_in_s_y = {
+    currency: 'inr',
+    unit_amount: 1438800,
+    recurring: { interval: 'year', interval_count: 1 },
+  };
+  const create = f.stripe.checkout.sessions.create;
+  f.stripe.checkout.sessions.create = async (params) => ({
+    ...(await create(params)),
+    currency: 'inr',
+    amount_subtotal: 1438800,
+  });
+  await f.store.transact(workspaceId, (workspace) => {
+    workspace.indiaPricing = true;
+  });
+  assert.deepEqual((await f.call('/api/billing')).body.indiaAnnualPurchasable, ['Starter']);
+  const request = { plan: 'Starter', market: 'IN', interval: 'year' };
+  assert.equal((await f.call('/api/billing/checkout', 'POST', request)).status, 200);
+  assert.equal(f.stripe.calls.checkouts[0].line_items[0].price, 'price_in_s_y');
+});
+
+test('annual price ids are read from the environment when set', () => {
+  const billing = createBilling(
+    {
+      STRIPE_SECRET_KEY: 'sk_test_x',
+      STRIPE_PRICE_STARTER: 'a',
+      STRIPE_PRICE_GROWTH: 'b',
+      STRIPE_PRICE_BUSINESS: 'c',
+      STRIPE_PRICE_GROWTH_ANNUAL: ' b_y ',
+      STRIPE_IN_PRICE_STARTER_ANNUAL: 'in_a_y',
+    },
+    'http://x',
+  );
+  assert.deepEqual(billing.annualPrices, { Growth: 'b_y' });
+  assert.deepEqual(billing.indiaAnnualPrices, { Starter: 'in_a_y' });
+  assert.equal(billing.planFor('b_y'), 'Growth');
+  assert.equal(billing.intervalFor('b_y'), 'year');
+  assert.equal(billing.intervalFor('b'), 'month');
 });

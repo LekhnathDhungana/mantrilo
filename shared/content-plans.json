@@ -2,6 +2,7 @@
   {
     "name": "Free",
     "price": 0,
+    "annualPrice": 0,
     "requests": "500",
     "audio": "Sample audio only",
     "catalog": "Sample catalog for testing",
@@ -12,6 +13,7 @@
   {
     "name": "Starter",
     "price": 49.99,
+    "annualPrice": 39.99,
     "requests": "50,000",
     "audio": "10 GB",
     "catalog": "Full available catalog",
@@ -22,6 +24,7 @@
   {
     "name": "Growth",
     "price": 149,
+    "annualPrice": 119,
     "requests": "250,000",
     "audio": "50 GB",
     "catalog": "Full available catalog",
@@ -32,6 +35,7 @@
   {
     "name": "Business",
     "price": 399,
+    "annualPrice": 319,
     "requests": "1,000,000",
     "audio": "200 GB",
     "catalog": "Full available catalog",

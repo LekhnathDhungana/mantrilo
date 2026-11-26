@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import Stripe from 'stripe';
 import indiaAmounts from '../../shared/india-prices.json' with { type: 'json' };
+import indiaAnnualAmounts from '../../shared/india-annual-prices.json' with { type: 'json' };
 import {
   ApiError,
   FREE_PLAN,
@@ -43,7 +44,25 @@ const BRANDING = {
 const PRICE_CHECK_TTL_MS = 10 * 60 * 1000;
 const OUTREACH_CODE = 'STARTER99';
 const FIRST_MONTH_CENTS = 99;
-const priceKey = (plan, market) => (market === 'IN' ? `IN:${plan}` : plan);
+// Plans bill monthly or yearly. A yearly price charges twelve months of the plan's annual
+// per-month price (annualPrice in shared/content-plans.json, 20% below the monthly price).
+export const BILLING_INTERVALS = ['month', 'year'];
+const priceKey = (plan, market, interval = 'month') =>
+  `${market === 'IN' ? 'IN:' : ''}${interval === 'year' ? 'year:' : ''}${plan}`;
+const priceLabel = (plan, interval) => (interval === 'year' ? `${plan} (annual)` : plan);
+// What Stripe should charge per billing period, in the smallest currency unit.
+export function amountCents(plan, market, interval = 'month') {
+  const regional = market === 'IN';
+  const perMonth =
+    interval === 'year'
+      ? regional
+        ? indiaAnnualAmounts[plan]
+        : getPlan(plan).annualPrice
+      : regional
+        ? indiaAmounts[plan]
+        : getPlan(plan).price;
+  return Math.round(perMonth * 100) * (interval === 'year' ? 12 : 1);
+}
 
 export class StripeBilling {
   constructor({
@@ -51,6 +70,8 @@ export class StripeBilling {
     webhookSecret,
     prices,
     indiaPrices = {},
+    annualPrices = {},
+    indiaAnnualPrices = {},
     appOrigin,
     mode = 'live',
     portalConfiguration,
@@ -61,6 +82,8 @@ export class StripeBilling {
       webhookSecret,
       prices,
       indiaPrices,
+      annualPrices,
+      indiaAnnualPrices,
       appOrigin,
       mode,
       portalConfiguration,
@@ -69,14 +92,22 @@ export class StripeBilling {
     this.verifiedAt = new Map();
     this.brandFiles = {};
   }
+  // The configured Stripe price ids for a market and billing interval, by plan name.
+  priceTable(market, interval = 'month') {
+    if (market === 'IN') return interval === 'year' ? this.indiaAnnualPrices : this.indiaPrices;
+    return interval === 'year' ? this.annualPrices : this.prices;
+  }
   // Checks every price and fetches the logo once at startup, so the first checkout is quick.
   warm() {
-    Promise.all([this.verifyPrices(), this.verifyPrices(Object.keys(this.indiaPrices), 'IN')]).then(
-      (results) => {
-        const problems = results.flat();
-        if (problems.length) console.error(`Stripe price check: ${problems.join('; ')}`);
-      },
+    const checks = [undefined, 'IN'].flatMap((market) =>
+      BILLING_INTERVALS.map((interval) =>
+        this.verifyPrices(Object.keys(this.priceTable(market, interval)), market, interval),
+      ),
     );
+    Promise.all(checks).then((results) => {
+      const problems = results.flat();
+      if (problems.length) console.error(`Stripe price check: ${problems.join('; ')}`);
+    });
     for (const kind of Object.keys(BRAND_FILES)) this.brandFile(kind);
   }
   // Reuses the image already uploaded to Stripe; uploads it the first time. Resolves to the
@@ -108,31 +139,35 @@ export class StripeBilling {
       ...(icon ? { icon: { type: 'file', file: icon } } : {}),
     };
   }
-  // Each configured price must match its advertised amount, currency and monthly interval.
-  async verifyPrices(names = Object.keys(this.prices), market) {
+  // Each configured price must match its advertised amount, currency and billing interval.
+  async verifyPrices(names = Object.keys(this.prices), market, interval = 'month') {
     const regional = market === 'IN';
     const currency = regional ? 'inr' : 'usd';
     const symbol = regional ? '₹' : '$';
     const checks = names.map(async (name) => {
       const problems = [];
-      const id = (regional ? this.indiaPrices : this.prices)[name];
-      const expected = Math.round((regional ? indiaAmounts[name] : getPlan(name).price) * 100);
-      const cacheKey = priceKey(name, market);
+      const label = priceLabel(name, interval);
+      const id = this.priceTable(market, interval)[name];
+      const expected = amountCents(name, market, interval);
+      const cacheKey = priceKey(name, market, interval);
       try {
+        insist(id, 503, 'plan_unavailable', 'No price is configured.');
         const price = await this.stripe.prices.retrieve(id);
-        if (!price.active) problems.push(`${name}: price ${id} is archived`);
+        if (!price.active) problems.push(`${label}: price ${id} is archived`);
         if (price.livemode !== (this.mode === 'live'))
-          problems.push(`${name}: price ${id} is not a ${this.mode}-mode price`);
+          problems.push(`${label}: price ${id} is not a ${this.mode}-mode price`);
         if (price.currency !== currency)
-          problems.push(`${name}: billed in ${price.currency}, not ${currency}`);
-        if (price.recurring?.interval !== 'month' || price.recurring?.interval_count !== 1)
-          problems.push(`${name}: not a monthly subscription price`);
+          problems.push(`${label}: billed in ${price.currency}, not ${currency}`);
+        if (price.recurring?.interval !== interval || price.recurring?.interval_count !== 1)
+          problems.push(
+            `${label}: not a ${interval === 'year' ? 'yearly' : 'monthly'} subscription price`,
+          );
         if (price.unit_amount !== expected)
           problems.push(
-            `${name}: Stripe charges ${symbol}${(price.unit_amount / 100).toFixed(2)}, plans list ${symbol}${(expected / 100).toFixed(2)}`,
+            `${label}: Stripe charges ${symbol}${(price.unit_amount / 100).toFixed(2)}, plans list ${symbol}${(expected / 100).toFixed(2)}`,
           );
       } catch (error) {
-        problems.push(`${name}: price ${id} could not be read (${error.message})`);
+        problems.push(`${label}: price ${id} could not be read (${error.message})`);
       }
       if (problems.length) this.verifiedAt.delete(cacheKey);
       else this.verifiedAt.set(cacheKey, Date.now());
@@ -140,19 +175,19 @@ export class StripeBilling {
     });
     return (await Promise.all(checks)).flat();
   }
-  async availablePlans(market) {
-    const regional = market === 'IN';
-    const names = Object.keys(regional ? this.indiaPrices : this.prices);
+  async availablePlans(market, interval = 'month') {
+    const names = Object.keys(this.priceTable(market, interval));
+    const key = (name) => priceKey(name, market, interval);
     const stale = names.filter(
-      (name) => Date.now() - (this.verifiedAt.get(priceKey(name, market)) ?? 0) >= PRICE_CHECK_TTL_MS,
+      (name) => Date.now() - (this.verifiedAt.get(key(name)) ?? 0) >= PRICE_CHECK_TTL_MS,
     );
-    if (stale.length) await this.verifyPrices(stale, market);
-    return names.filter((name) => this.verifiedAt.has(priceKey(name, market)));
+    if (stale.length) await this.verifyPrices(stale, market, interval);
+    return names.filter((name) => this.verifiedAt.has(key(name)));
   }
-  async requirePlanPrice(plan, market) {
-    const checked = this.verifiedAt.get(priceKey(plan, market));
+  async requirePlanPrice(plan, market, interval = 'month') {
+    const checked = this.verifiedAt.get(priceKey(plan, market, interval));
     if (checked && Date.now() - checked < PRICE_CHECK_TTL_MS) return;
-    const problems = await this.verifyPrices([plan], market);
+    const problems = await this.verifyPrices([plan], market, interval);
     if (problems.length) {
       console.error(`Stripe price check: ${problems.join('; ')}`);
       throw new ApiError(
@@ -162,9 +197,25 @@ export class StripeBilling {
       );
     }
   }
+  // Every configured price, monthly and yearly, in both markets.
+  get allPriceTables() {
+    return [this.prices, this.indiaPrices, this.annualPrices, this.indiaAnnualPrices];
+  }
   planFor(priceId) {
     if (!priceId) return null;
-    return PAID_PLANS.find((plan) => this.prices[plan] === priceId || this.indiaPrices[plan] === priceId) ?? null;
+    return (
+      PAID_PLANS.find((plan) => this.allPriceTables.some((table) => table[plan] === priceId)) ??
+      null
+    );
+  }
+  // 'year' for a configured annual price, 'month' for a monthly one, null for anything else.
+  intervalFor(priceId) {
+    if (!priceId) return null;
+    if ([this.annualPrices, this.indiaAnnualPrices].some((t) => Object.values(t).includes(priceId)))
+      return 'year';
+    if ([this.prices, this.indiaPrices].some((t) => Object.values(t).includes(priceId)))
+      return 'month';
+    return null;
   }
   parseEvent(rawBody, signature) {
     try {
@@ -210,19 +261,27 @@ export class StripeBilling {
     );
     return this.promotionIds[plan];
   }
-  async checkoutUrl({ workspaceId, customerId, plan, promotionCode, market }) {
+  async checkoutUrl({ workspaceId, customerId, plan, promotionCode, market, interval = 'month' }) {
     const regional = market === 'IN';
+    // STARTER99 is a first-month offer, so it only applies to monthly billing.
+    insist(
+      interval === 'month' || promotionCode === undefined,
+      400,
+      'invalid_promotion_code',
+      'Promo codes apply to monthly billing only.',
+    );
     const promotion = this.outreachPromotion(plan, promotionCode);
-    const renewalCents = Math.round((regional ? indiaAmounts[plan] : getPlan(plan).price) * 100);
+    const renewalCents = amountCents(plan, market, interval);
     const [, branding_settings] = await Promise.all([
-      this.requirePlanPrice(plan, market),
+      this.requirePlanPrice(plan, market, interval),
       this.brandingSettings(),
     ]);
+    const back = `${regional ? '&market=IN' : ''}${interval === 'year' ? '&interval=year' : ''}`;
     const params = {
       mode: 'subscription',
       customer: customerId,
       client_reference_id: workspaceId,
-      line_items: [{ price: (regional ? this.indiaPrices : this.prices)[plan], quantity: 1 }],
+      line_items: [{ price: this.priceTable(market, interval)[plan], quantity: 1 }],
       ...(regional ? {
         billing_address_collection: 'required',
         customer_update: { address: 'auto' },
@@ -230,7 +289,7 @@ export class StripeBilling {
       } : {}),
       subscription_data: { metadata: { workspaceId } },
       success_url: `${this.appOrigin}/billing?checkout=success#plans`,
-      cancel_url: `${this.appOrigin}/billing?checkout=cancelled${regional ? '&market=IN' : ''}#plans`,
+      cancel_url: `${this.appOrigin}/billing?checkout=cancelled${back}#plans`,
       ...(promotion ? { discounts: [{ promotion_code: promotion }] } : {}),
     };
     insist(
@@ -373,10 +432,23 @@ export class StripeBilling {
       'subscription_change_unavailable',
       'This subscription needs to be changed through Manage subscription or support.',
     );
-    insist(!Object.values(this.indiaPrices).includes(item.price.id), 400, 'contact_billing', 'Contact billing support to change an INR subscription.');
-    const price = this.prices[plan];
+    insist(
+      ![this.indiaPrices, this.indiaAnnualPrices].some((t) => Object.values(t).includes(item.price.id)),
+      400,
+      'contact_billing',
+      'Contact billing support to change an INR subscription.',
+    );
+    // A plan change keeps the subscription's billing interval: annual stays annual.
+    const interval = this.intervalFor(item.price.id) ?? 'month';
+    const price = this.priceTable(undefined, interval)[plan];
+    insist(
+      price,
+      409,
+      'subscription_change_unavailable',
+      'This subscription needs to be changed through Manage subscription or support.',
+    );
     insist(item.price.id !== price, 409, 'already_on_plan', 'This is already your plan in Stripe.');
-    await this.requirePlanPrice(plan);
+    await this.requirePlanPrice(plan, undefined, interval);
     return this.portalUrl(customerId, {
       type: 'subscription_update_confirm',
       subscription_update_confirm: {
@@ -393,6 +465,16 @@ export class StripeBilling {
   }
 }
 
+// Reads the price ids that are set, e.g. STRIPE_IN_PRICE_STARTER or STRIPE_PRICE_GROWTH_ANNUAL.
+function optionalPrices(env, plans, prefix, suffix = '') {
+  return Object.fromEntries(
+    plans.flatMap((plan) => {
+      const id = env[`${prefix}${plan.toUpperCase()}${suffix}`]?.trim();
+      return id ? [[plan, id]] : [];
+    }),
+  );
+}
+
 // Returns null when billing is off, so the console shows that instead of failing to start.
 // The webhook secret is optional: without it, plans update through syncWorkspace only.
 export function createBilling(env, appOrigin) {
@@ -406,12 +488,10 @@ export function createBilling(env, appOrigin) {
     stripe: new Stripe(env.STRIPE_SECRET_KEY),
     webhookSecret: env.STRIPE_WEBHOOK_SECRET || null,
     prices: Object.fromEntries(PAID_PLANS.map((plan) => [plan, env[priceVariable(plan)]])),
-    indiaPrices: Object.fromEntries(
-      ['Starter', 'Growth'].flatMap((plan) => {
-        const id = env[`STRIPE_IN_PRICE_${plan.toUpperCase()}`]?.trim();
-        return id ? [[plan, id]] : [];
-      }),
-    ),
+    indiaPrices: optionalPrices(env, ['Starter', 'Growth'], 'STRIPE_IN_PRICE_'),
+    // Annual prices are optional: without them, annual checkout shows as unavailable.
+    annualPrices: optionalPrices(env, PAID_PLANS, 'STRIPE_PRICE_', '_ANNUAL'),
+    indiaAnnualPrices: optionalPrices(env, ['Starter', 'Growth'], 'STRIPE_IN_PRICE_', '_ANNUAL'),
     appOrigin,
     mode: stripeModeOf(env.STRIPE_SECRET_KEY),
     portalConfiguration: env.STRIPE_MANTRILO_PORTAL_CONFIGURATION?.trim(),
@@ -448,6 +528,7 @@ export function applySubscription(workspace, subscription, priceToPlan, mode = '
       cancelsAt: isoDate(subscription.cancel_at),
       livemode: mode === 'live',
       ...(item?.price.currency ? { currency: item.price.currency } : {}),
+      ...(item?.price.recurring?.interval ? { interval: item.price.recurring.interval } : {}),
     },
   });
   if (previous !== plan)

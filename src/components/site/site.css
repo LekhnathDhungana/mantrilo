@@ -1728,6 +1728,72 @@ body:has(.mh[data-theme='dark']) {
   font-size: 12px;
   font-weight: 600;
 }
+/* Billing period switch and market buttons above the plan cards. */
+.mh-pricing-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+}
+.mh-pricing-controls .mh-actions {
+  margin-top: 0;
+}
+.mh-period {
+  display: inline-flex;
+  padding: 4px;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  background: var(--surface);
+}
+.mh-period button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.2s var(--ease),
+    color 0.2s var(--ease);
+}
+.mh-period button:hover {
+  color: var(--ink);
+}
+.mh-period button[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--bg);
+}
+.mh-save {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--saffron-soft);
+  color: var(--accent-text);
+  font-size: 12px;
+  font-weight: 650;
+}
+.mh-period button[aria-pressed='true'] .mh-save {
+  background: var(--saffron);
+  color: var(--on-saffron);
+}
+@media (max-width: 520px) {
+  .mh-period {
+    width: 100%;
+  }
+  .mh-period button {
+    flex: 1;
+    justify-content: center;
+    padding: 0 10px;
+  }
+}
 .mh-price {
   margin-top: 18px !important;
   font-size: 40px;
@@ -1743,6 +1809,13 @@ body:has(.mh[data-theme='dark']) {
   font-weight: 500;
   letter-spacing: 0;
   color: var(--ink-3);
+}
+/* How a plan is billed, under its price: monthly, the annual total, or no card for Free. */
+.mh-plan-billed {
+  margin-top: 8px !important;
+  font-size: 13px;
+  color: var(--ink-3) !important;
+  font-variant-numeric: tabular-nums;
 }
 .mh-plan-sub {
   margin-top: 10px !important;

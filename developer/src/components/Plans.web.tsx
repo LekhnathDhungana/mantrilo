@@ -6,30 +6,54 @@ import { Badge, ErrorNotice, Loading, useLoad } from './ui.web';
 
 export const billingSupport = 'mailto:hello@mantrilo.com?subject=Mantrilo%20billing';
 
+type Interval = 'month' | 'year';
+type StripeRequest = { plan?: string; promotionCode?: string; market?: 'IN'; interval?: Interval };
+
+// Shows cents only when there are any: $1,428, $479.88, ₹14,388.
+function money(amount: number, currency: 'USD' | 'INR') {
+  return amount.toLocaleString(currency === 'INR' ? 'en-IN' : 'en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+    maximumFractionDigits: 2,
+  });
+}
+// Twelve months of an annual per-month price, computed in cents to avoid rounding drift.
+const yearly = (perMonth: number) => (Math.round(perMonth * 100) * 12) / 100;
+
 export function useBillingActions() {
   const billing = useLoad<{
     notice: string;
     purchasable: string[];
     indiaPurchasable?: string[];
+    annualPurchasable?: string[];
+    indiaAnnualPurchasable?: string[];
     portalAvailable: boolean;
     promotionPlans?: string[];
   }>('/api/billing');
   const [pending, setPending] = useState<string | null>(null);
   const [actionError, setActionError] = useState('');
   const purchasable = billing.data?.purchasable ?? [];
-  function stripeUrl(route: 'checkout' | 'portal', plan?: string, promotionCode?: string, market?: 'IN') {
+  function stripeUrl(route: 'checkout' | 'portal', { plan, promotionCode, market, interval }: StripeRequest) {
     return mutate<{ url: string }>(
       '/api/billing/' + route,
       'POST',
-      plan ? { plan, ...(promotionCode ? { promotionCode } : {}), ...(market ? { market } : {}) } : undefined,
+      plan
+        ? {
+            plan,
+            ...(promotionCode ? { promotionCode } : {}),
+            ...(market ? { market } : {}),
+            ...(interval === 'year' ? { interval } : {}),
+          }
+        : undefined,
     ).then((result) => result.url);
   }
 
-  async function openStripe(route: 'checkout' | 'portal', plan?: string, promotionCode?: string, market?: 'IN') {
-    setPending(plan ?? route);
+  async function openStripe(route: 'checkout' | 'portal', request: StripeRequest = {}) {
+    setPending(request.plan ?? route);
     setActionError('');
     try {
-      const url = await stripeUrl(route, plan, promotionCode, market);
+      const url = await stripeUrl(route, request);
       window.location.assign(url);
     } catch (error) {
       setActionError(error instanceof Error ? error.message : 'Could not open Stripe.');
@@ -55,17 +79,24 @@ export function Plans({
   actions,
   selectedPlan,
   preferredIndia = false,
+  preferredAnnual = false,
 }: {
   session: Session;
   selectedPlan?: string;
   preferredIndia?: boolean;
+  preferredAnnual?: boolean;
   actions: ReturnType<typeof useBillingActions>;
 }) {
-  const config = useLoad<{ plans: Plan[]; indiaPrices: Record<string, number | null> }>('/api/config');
+  const config = useLoad<{
+    plans: Plan[];
+    indiaPrices: Record<string, number | null>;
+    indiaAnnualPrices?: Record<string, number | null>;
+  }>('/api/config');
   const dialog = useRef<HTMLDialogElement>(null);
   const checkoutTitle = useId();
   const [checkoutPlan, setCheckoutPlan] = useState<Plan | null>(null);
   const [selectedIndia, setSelectedIndia] = useState<boolean | null>(null);
+  const [selectedAnnual, setSelectedAnnual] = useState<boolean | null>(null);
   useEffect(() => {
     if (checkoutPlan && !dialog.current?.open) dialog.current?.showModal();
   }, [checkoutPlan]);
@@ -85,7 +116,14 @@ export function Plans({
   const subscribed = status === 'active' || status === 'trialing' || status === 'past_due';
   const inrSubscription = subscribed && session.workspace.billing?.currency === 'inr';
   const india = subscribed ? inrSubscription : (selectedIndia ?? preferredIndia);
-  const regionalPurchasable = billing.data?.indiaPurchasable ?? [];
+  // A subscriber's plan changes keep their billing interval, so the choice only shows before one.
+  const annual = subscribed
+    ? session.workspace.billing?.interval === 'year'
+    : (selectedAnnual ?? preferredAnnual);
+  const interval: Interval = annual ? 'year' : 'month';
+  const regionalPurchasable =
+    (annual ? billing.data?.indiaAnnualPurchasable : billing.data?.indiaPurchasable) ?? [];
+  const globalPurchasable = annual ? (billing.data?.annualPurchasable ?? []) : purchasable;
   const contactIndia = (plan: string) => {
     const subject = encodeURIComponent(`Mantrilo ${plan} pricing in India`);
     const body = encodeURIComponent(`Workspace ID: ${session.workspace.id}\nPlan: ${plan}\nBilling country: India`);
@@ -100,14 +138,15 @@ export function Plans({
 
   function choosePlan(plan: Plan) {
     if (!subscribed && india) {
-      void openStripe('checkout', plan.name, undefined, 'IN');
+      void openStripe('checkout', { plan: plan.name, market: 'IN', interval });
     } else if (subscribed) {
-      void openStripe('portal', plan.name);
-    } else if (billing.data?.promotionPlans?.includes(plan.name)) {
+      void openStripe('portal', { plan: plan.name });
+    } else if (!annual && billing.data?.promotionPlans?.includes(plan.name)) {
+      // The first-month promo code applies to monthly billing only.
       clearError();
       setCheckoutPlan(plan);
     } else {
-      void openStripe('checkout', plan.name);
+      void openStripe('checkout', { plan: plan.name, interval });
     }
   }
 
@@ -137,7 +176,7 @@ export function Plans({
           Contact billing support
         </a>
       );
-    if (!connected || (plan.price > 0 && !(india ? regionalPurchasable : purchasable).includes(plan.name)))
+    if (!connected || (plan.price > 0 && !(india ? regionalPurchasable : globalPurchasable).includes(plan.name)))
       return (
         <button className="button outline" disabled>
           Billing unavailable
@@ -148,7 +187,7 @@ export function Plans({
         <button
           className="button subtle"
           disabled={pending}
-          onClick={() => openStripe('portal', plan.name)}
+          onClick={() => openStripe('portal', { plan: plan.name })}
         >
           Cancel in Stripe
         </button>
@@ -187,8 +226,24 @@ export function Plans({
           </button>
         </div>
       )}
+      {!subscribed && (
+        <div className="segmented compact" role="group" aria-label="Billing period">
+          <button type="button" aria-pressed={!annual} onClick={() => setSelectedAnnual(false)}>
+            Monthly
+          </button>
+          <button type="button" aria-pressed={annual} onClick={() => setSelectedAnnual(true)}>
+            Annual · save 20%
+          </button>
+        </div>
+      )}
       {india && !subscribed && (
         <p className="small muted">India pricing requires a verified India billing address.</p>
+      )}
+      {annual && (
+        <p className="small muted">
+          Annual plans are billed once a year. Prices are shown per month; request allowances still
+          reset monthly.
+        </p>
       )}
       {config.loading ? (
         <Loading />
@@ -196,8 +251,12 @@ export function Plans({
         <div className="plan-grid">
           {config.data?.plans.map((plan) => {
             const unlimited = plan.name === current.name && session.allowance.requests === null;
-            const regionalPrice = config.data?.indiaPrices?.[plan.name] ?? null;
+            const regionalPrice =
+              (annual ? config.data?.indiaAnnualPrices : config.data?.indiaPrices)?.[plan.name] ??
+              null;
             const quote = india && regionalPrice === null;
+            const perMonth = india ? (regionalPrice ?? 0) : annual ? plan.annualPrice : plan.price;
+            const currency = india ? 'INR' : 'USD';
             return (
               <article
                 className={`plan-card ${plan.name === current.name ? 'current' : ''}`}
@@ -212,9 +271,12 @@ export function Plans({
                   ) : null}
                 </h3>
                 <div className="plan-price">
-                  {quote ? 'Custom quote' : india ? `₹${regionalPrice?.toLocaleString('en-IN')}` : `$${plan.price}`}
+                  {quote ? 'Custom quote' : money(perMonth, currency)}
                   {!quote && <small>{plan.price ? '/ month' : 'Forever, no card needed'}</small>}
                 </div>
+                {annual && plan.price > 0 && !quote && (
+                  <p className="small muted">Billed {money(yearly(perMonth), currency)} a year</p>
+                )}
                 <ul>
                   <li>
                     {unlimited ? (
@@ -253,11 +315,10 @@ export function Plans({
               event.preventDefault();
               if (pending) return;
               const code = new FormData(event.currentTarget).get('promotionCode');
-              void openStripe(
-                'checkout',
-                checkoutPlan.name,
-                typeof code === 'string' ? code.trim() || undefined : undefined,
-              );
+              void openStripe('checkout', {
+                plan: checkoutPlan.name,
+                promotionCode: typeof code === 'string' ? code.trim() || undefined : undefined,
+              });
             }}
           >
             <h2 id={checkoutTitle}>Checkout for {checkoutPlan.name}</h2>

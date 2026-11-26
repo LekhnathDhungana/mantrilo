@@ -56,11 +56,12 @@ function PromoForm() {
 
 export default function Billing() {
   const { session, refresh } = useConsole();
-  const { checkout, stripe, plan, market } = useLocalSearchParams<{
+  const { checkout, stripe, plan, market, interval } = useLocalSearchParams<{
     checkout?: string;
     stripe?: string;
     plan?: string;
     market?: string;
+    interval?: string;
   }>();
   const actions = useBillingActions();
   const { connected, portalAvailable, pending, openStripe } = actions;
@@ -102,7 +103,7 @@ export default function Billing() {
       : record?.cancelsAt
         ? `Ends ${formatDate(record.cancelsAt)}`
         : subscribed && record?.currentPeriodEnd
-          ? `Renews ${formatDate(record.currentPeriodEnd)}`
+          ? `${record.interval === 'year' ? 'Billed annually · renews' : 'Renews'} ${formatDate(record.currentPeriodEnd)}`
           : current.price
             ? 'Subscription active'
             : 'No subscription · no card needed';
@@ -227,7 +228,13 @@ export default function Billing() {
           )}
         </span>
       </div>
-      <Plans session={session} actions={actions} selectedPlan={plan} preferredIndia={market === 'IN'} />
+      <Plans
+        session={session}
+        actions={actions}
+        selectedPlan={plan}
+        preferredIndia={market === 'IN'}
+        preferredAnnual={interval === 'year'}
+      />
     </>
   );
 }

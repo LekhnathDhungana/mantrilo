@@ -10,9 +10,12 @@ import { Rich } from '../i18n/Rich';
 
 export default function PricingPage() {
   const [marketChoice, setIndia] = useState<boolean | null>(null);
-  const { market } = useLocalSearchParams<{ market?: string }>();
+  const [periodChoice, setAnnual] = useState<boolean | null>(null);
+  const { market, interval } = useLocalSearchParams<{ market?: string; interval?: string }>();
   const hydrated = useHydrated();
   const india = marketChoice ?? (hydrated && market === 'IN');
+  // Monthly by default; ?interval=year opens on annual. Annual prices are still shown per month.
+  const annual = periodChoice ?? (hydrated && interval === 'year');
   const i18n = useI18n();
   const { t } = i18n;
   return (
@@ -26,28 +29,45 @@ export default function PricingPage() {
       <section className="mh-section-sm">
         <div className="mh-wrap">
           <h2 className="mh-sr">{t('pricing.plans')}</h2>
-          <div role="group" aria-label={t('pricing.market')} className="mh-actions">
-            <button
-              type="button"
-              className={india ? 'mh-btn mh-btn-outline' : 'mh-btn mh-btn-primary'}
-              aria-pressed={!india}
-              onClick={() => setIndia(false)}
-            >
-              {t('pricing.global')}
-            </button>
-            <button
-              type="button"
-              className={india ? 'mh-btn mh-btn-primary' : 'mh-btn mh-btn-outline'}
-              aria-pressed={india}
-              onClick={() => setIndia(true)}
-            >
-              {t('pricing.india')}
-            </button>
+          <div className="mh-pricing-controls">
+            <div role="group" aria-label={t('pricing.period')} className="mh-period">
+              <button type="button" aria-pressed={!annual} onClick={() => setAnnual(false)}>
+                {t('pricing.monthly')}
+              </button>
+              <button type="button" aria-pressed={annual} onClick={() => setAnnual(true)}>
+                {t('pricing.annual')}
+                <span className="mh-save">{t('pricing.save')}</span>
+              </button>
+            </div>
+            <div role="group" aria-label={t('pricing.market')} className="mh-actions">
+              <button
+                type="button"
+                className={india ? 'mh-btn mh-btn-outline' : 'mh-btn mh-btn-primary'}
+                aria-pressed={!india}
+                onClick={() => setIndia(false)}
+              >
+                {t('pricing.global')}
+              </button>
+              <button
+                type="button"
+                className={india ? 'mh-btn mh-btn-primary' : 'mh-btn mh-btn-outline'}
+                aria-pressed={india}
+                onClick={() => setIndia(true)}
+              >
+                {t('pricing.india')}
+              </button>
+            </div>
           </div>
           <p className="mh-muted" aria-live="polite">
-            {india ? t('pricing.indiaNote') : t('pricing.globalNote')}
+            {india
+              ? annual
+                ? `${t('pricing.indiaNote')} ${t('pricing.annualNote')}`
+                : t('pricing.indiaNote')
+              : annual
+                ? t('pricing.globalNoteAnnual')
+                : t('pricing.globalNote')}
           </p>
-          <PlanCards india={india} />
+          <PlanCards india={india} annual={annual} />
         </div>
       </section>
       <section className="mh-section-sm">
@@ -79,7 +99,7 @@ export default function PricingPage() {
                         {india && p.name === 'Business'
                           ? planPrice(i18n, p, india)
                           : p.price
-                            ? t('pricing.perMonth', { price: planPrice(i18n, p, india) })
+                            ? t('pricing.perMonth', { price: planPrice(i18n, p, india, annual) })
                             : t('pricing.free')}
                       </span>
                     </th>
@@ -106,7 +126,12 @@ export default function PricingPage() {
                   </th>
                   {plans.map((p) => (
                     <td key={p.name} className={p.name === 'Growth' ? 'is-featured' : undefined}>
-                      <PlanAction plan={p} featured={p.name === 'Growth'} india={india} />
+                      <PlanAction
+                        plan={p}
+                        featured={p.name === 'Growth'}
+                        india={india}
+                        annual={annual}
+                      />
                     </td>
                   ))}
                 </tr>

@@ -4,6 +4,7 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { promisify } from 'node:util';
 import indiaPrices from '../../shared/india-prices.json' with { type: 'json' };
+import indiaAnnualPrices from '../../shared/india-annual-prices.json' with { type: 'json' };
 import { brotliCompress, gzip, constants as zlib } from 'node:zlib';
 import {
   ApiError,
@@ -44,7 +45,13 @@ import { readBookListQuery, readPustakLibrary } from './pustak.mjs';
 import { createAstrologyService } from './astrology/service.mjs';
 import { handleArticleAdmin } from './blog.mjs';
 import { RATE_LIMITS, RateLimiter, UsageMeter, limitsFor } from '../api/usage.mjs';
-import { ENTITLED_STATUSES, PAID_PLANS, syncFromEvent, syncWorkspace } from './billing.mjs';
+import {
+  BILLING_INTERVALS,
+  ENTITLED_STATUSES,
+  PAID_PLANS,
+  syncFromEvent,
+  syncWorkspace,
+} from './billing.mjs';
 
 const compressBrotli = promisify(brotliCompress);
 const compressGzip = promisify(gzip);
@@ -519,6 +526,7 @@ export function createConsoleServer({
             plans,
             rateLimits: RATE_LIMITS,
             indiaPrices,
+            indiaAnnualPrices,
             accountingPolicy,
           });
         }
@@ -902,14 +910,20 @@ export function createConsoleServer({
           writeSession('', 0);
           return send(200, { ok: true });
         }
-        if (route === '/api/billing' && method === 'GET')
+        if (route === '/api/billing' && method === 'GET') {
+          const record = billingFor(workspace, billingMode);
+          const annual = record?.interval === 'year';
+          const inr = record?.currency === 'inr';
           return send(200, {
             plan,
-            monthlyTotal:
-              billingFor(workspace, billingMode)?.currency === 'inr'
-                ? indiaPrices[plan.name]
+            // Per month; an annual subscription is billed twelve of these at once.
+            monthlyTotal: inr
+              ? (annual ? indiaAnnualPrices : indiaPrices)[plan.name]
+              : annual
+                ? plan.annualPrice
                 : plan.price,
-            currency: billingFor(workspace, billingMode)?.currency ?? 'usd',
+            interval: record?.interval ?? 'month',
+            currency: record?.currency ?? 'usd',
             period: null,
             invoices: [],
             renewalAt: billingFor(workspace, billingMode)?.currentPeriodEnd ?? null,
@@ -919,17 +933,35 @@ export function createConsoleServer({
             portalAvailable: (await billing?.portalAvailable()) ?? false,
             promotionPlans: billing?.promotionPlans ?? [],
             purchasable: billing ? await billing.availablePlans() : [],
+            annualPurchasable: billing ? await billing.availablePlans(undefined, 'year') : [],
             indiaPurchasable:
               billing && workspace.indiaPricing === true ? await billing.availablePlans('IN') : [],
+            indiaAnnualPurchasable:
+              billing && workspace.indiaPricing === true
+                ? await billing.availablePlans('IN', 'year')
+                : [],
             notice: billing
               ? 'Payments are handled securely by Stripe.'
               : 'Subscription management is not configured. No checkout or entitlement upgrades are active.',
           });
+        }
         if (route === '/api/billing/checkout' && method === 'POST') {
           insist(billing, 503, 'billing_unconfigured', 'Billing is not configured.');
           insist(verified, 403, 'email_unverified', 'Verify your email before subscribing.');
-          const { plan, promotionCode, market } = (await body(request)) ?? {};
+          const { plan, promotionCode, market, interval = 'month' } = (await body(request)) ?? {};
           insist(PAID_PLANS.includes(plan), 400, 'invalid_plan', 'Choose a paid plan.');
+          insist(
+            BILLING_INTERVALS.includes(interval),
+            400,
+            'invalid_interval',
+            'Choose monthly or annual billing.',
+          );
+          insist(
+            interval === 'month' || promotionCode === undefined,
+            400,
+            'invalid_promotion_code',
+            'Promo codes apply to monthly billing only.',
+          );
           insist(
             market === undefined || market === 'IN',
             400,
@@ -958,7 +990,7 @@ export function createConsoleServer({
           }
           billing.outreachPromotion(plan, promotionCode);
           // Checked alongside the subscription lookup below; usually answered from cache.
-          const priceReady = billing.requirePlanPrice(plan, market);
+          const priceReady = billing.requirePlanPrice(plan, market, interval);
           priceReady.catch(() => {});
           let customerId = billingFor(workspace, billingMode)?.customerId;
           if (customerId)
@@ -988,6 +1020,7 @@ export function createConsoleServer({
               plan,
               promotionCode,
               market,
+              interval,
             }),
           });
         }

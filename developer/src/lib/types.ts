@@ -51,11 +51,15 @@ export type Workspace = {
     status?: string;
     currentPeriodEnd?: string | null;
     cancelsAt?: string | null;
+    // Stripe's billing interval for the subscription: 'month' or 'year'.
+    interval?: string;
   };
 };
 export type Plan = {
   name: string;
   price: number;
+  // The per-month price when billed annually (twelve of these are charged at once).
+  annualPrice: number;
   requests: string;
   audio: string;
   catalog: string;

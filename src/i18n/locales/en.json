@@ -299,7 +299,10 @@
     "sandbox": "Sandbox",
     "testingOnly": "Testing only",
     "sampleAudioOnly": "Sample audio only",
-    "perSecond": "{{rate}} per second"
+    "perSecond": "{{rate}} per second",
+    "billedMonthly": "Billed monthly",
+    "billedAnnually": "Billed {{total}} a year",
+    "noCard": "No card needed"
   },
   "home": {
     "hero": {
@@ -499,7 +502,13 @@
     "cta": {
       "title": "Start with the sandbox.",
       "copy": "No card needed. Upgrade when you are ready for the full catalog."
-    }
+    },
+    "period": "Billing period",
+    "monthly": "Monthly",
+    "annual": "Annual",
+    "save": "Save 20%",
+    "globalNoteAnnual": "Global prices are shown per month and billed once a year in USD.",
+    "annualNote": "Annual prices are shown per month and billed once a year."
   },
   "info": {
     "eyebrow": {

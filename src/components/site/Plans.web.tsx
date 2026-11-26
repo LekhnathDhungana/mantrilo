@@ -2,6 +2,7 @@ import { plans } from '../../data/plans';
 import { rateLimits } from '../../data/api-reference';
 import { consoleUrl, signUpUrl } from '../../data/site';
 import indiaPrices from '../../../shared/india-prices.json';
+import indiaAnnualPrices from '../../../shared/india-annual-prices.json';
 import { intlLocale, useI18n, type I18n } from '../../i18n';
 
 // Plan cards shared by the homepage and /pricing. Values come from shared/content-plans.json,
@@ -17,31 +18,52 @@ const requests = ({ number }: I18n, plan: Plan) => number(count(plan.requests));
 const products = ({ t, number }: I18n, plan: Plan) =>
   t('plans.customerProducts', { count: count(plan.products), n: number(count(plan.products)) });
 
-export function planPrice({ t, lang }: I18n, plan: Plan, india: boolean) {
-  if (!india)
-    return new Intl.NumberFormat(intlLocale(lang), {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: Number.isInteger(plan.price) ? 0 : 2,
-    }).format(plan.price);
-  const amount = indiaPrices[plan.name as keyof typeof indiaPrices];
+const money = ({ lang }: I18n, amount: number, currency: 'USD' | 'INR') =>
+  new Intl.NumberFormat(intlLocale(lang), {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+  }).format(amount);
+
+// The per-month amount for a plan. Annual plans are 20% off and also shown per month; twelve of
+// them are billed at once (planYearlyTotal). null means India's Business plan, priced by quote.
+function perMonth(plan: Plan, india: boolean, annual: boolean): number | null {
+  if (!india) return annual ? plan.annualPrice : plan.price;
+  const table = annual ? indiaAnnualPrices : indiaPrices;
+  return table[plan.name as keyof typeof table];
+}
+
+export function planPrice(i18n: I18n, plan: Plan, india: boolean, annual = false) {
+  const amount = perMonth(plan, india, annual);
+  return amount === null ? i18n.t('plans.customQuote') : money(i18n, amount, india ? 'INR' : 'USD');
+}
+
+// What an annual plan charges once a year, computed in cents so 12 × $39.99 is $479.88.
+function planYearlyTotal(i18n: I18n, plan: Plan, india: boolean) {
+  const amount = perMonth(plan, india, true);
   return amount === null
-    ? t('plans.customQuote')
-    : new Intl.NumberFormat(intlLocale(lang), {
-        style: 'currency',
-        currency: 'INR',
-        maximumFractionDigits: 0,
-      }).format(amount);
+    ? null
+    : money(i18n, (Math.round(amount * 100) * 12) / 100, india ? 'INR' : 'USD');
+}
+
+// The line under a plan's price that says how it is billed.
+function billedLine(i18n: I18n, plan: Plan, india: boolean, annual: boolean) {
+  if (!plan.price) return i18n.t('plans.noCard');
+  if (perMonth(plan, india, annual) === null) return '\u00a0';
+  if (!annual) return i18n.t('plans.billedMonthly');
+  return i18n.t('plans.billedAnnually', { total: planYearlyTotal(i18n, plan, india) });
 }
 
 export function PlanAction({
   plan,
   featured,
   india = false,
+  annual = false,
 }: {
   plan: Plan;
   featured?: boolean;
   india?: boolean;
+  annual?: boolean;
 }) {
   const i18n = useI18n();
   const { t } = i18n;
@@ -64,7 +86,7 @@ export function PlanAction({
       className={className}
       href={
         plan.price
-          ? `${consoleUrl}/billing?plan=${encodeURIComponent(plan.name)}${india ? '&market=IN' : ''}`
+          ? `${consoleUrl}/billing?plan=${encodeURIComponent(plan.name)}${india ? '&market=IN' : ''}${annual ? '&interval=year' : ''}`
           : signUpUrl
       }
     >
@@ -76,9 +98,11 @@ export function PlanAction({
 export function PlanCards({
   reveal = false,
   india = false,
+  annual = false,
 }: {
   reveal?: boolean;
   india?: boolean;
+  annual?: boolean;
 }) {
   const i18n = useI18n();
   const { t } = i18n;
@@ -99,10 +123,10 @@ export function PlanCards({
             </div>
             <p className="mh-price">
               {india && p.name === 'Business' ? (
-                planPrice(i18n, p, india)
+                planPrice(i18n, p, india, annual)
               ) : p.price ? (
                 <>
-                  {planPrice(i18n, p, india)}
+                  {planPrice(i18n, p, india, annual)}
                   <span>{t('plans.perMonth')}</span>
                 </>
               ) : (
@@ -112,10 +136,11 @@ export function PlanCards({
                 </>
               )}
             </p>
+            <p className="mh-plan-billed">{billedLine(i18n, p, india, annual)}</p>
             <p className="mh-plan-sub">
               {p.price ? t('plans.fullCatalog') : t('plans.sandboxForTesting')}
             </p>
-            <PlanAction plan={p} featured={featured} india={india} />
+            <PlanAction plan={p} featured={featured} india={india} annual={annual} />
             <ul>
               <li>
                 {t('plans.requestsPerMonthPrefix')}

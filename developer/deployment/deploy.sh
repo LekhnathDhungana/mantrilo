@@ -98,18 +98,19 @@ build "$CONSOLE_IMAGE" developer/deployment/Dockerfile
 
 ENV_VARS="FIREBASE_PROJECT_ID=$PROJECT,MANTRILO_APP_ORIGIN=$CONSOLE_ORIGIN,MANTRILO_API_URL=$API_URL"
 ENV_VARS+=",MANTRILO_API_SIGNER=$CONSOLE_SA"
-for name in FIREBASE_WEB_API_KEY FIREBASE_AUTH_DOMAIN FIREBASE_WEB_APP_ID MANTRILO_EMAIL_FROM STRIPE_MANTRILO_PORTAL_CONFIGURATION STRIPE_STARTER_PROMOTION_ID STRIPE_GROWTH_PROMOTION_ID STRIPE_BUSINESS_PROMOTION_ID; do
+for name in FIREBASE_WEB_API_KEY FIREBASE_AUTH_DOMAIN FIREBASE_WEB_APP_ID MANTRILO_EMAIL_FROM MANTRILO_GOOGLE_AUTH MANTRILO_APPLE_AUTH STRIPE_MANTRILO_PORTAL_CONFIGURATION STRIPE_STARTER_PROMOTION_ID STRIPE_GROWTH_PROMOTION_ID STRIPE_BUSINESS_PROMOTION_ID; do
   value="$(local_value "$name" || true)"
   [[ -z "$value" ]] || ENV_VARS+=",$name=$value"
 done
 # Production always bills in live mode. Local STRIPE_PRICE_* values are sandbox prices, so the
 # live ones are read from STRIPE_LIVE_PRICE_* instead.
 ENV_VARS+=",MANTRILO_BILLING_MODE=live"
-for plan in STARTER GROWTH BUSINESS; do
+# Annual prices (the _ANNUAL suffix) are optional; without them annual checkout is unavailable.
+for plan in STARTER GROWTH BUSINESS STARTER_ANNUAL GROWTH_ANNUAL BUSINESS_ANNUAL; do
   value="$(local_value "STRIPE_LIVE_PRICE_$plan" || true)"
   [[ -z "$value" ]] || ENV_VARS+=",STRIPE_PRICE_$plan=$value"
 done
-for plan in STARTER GROWTH; do
+for plan in STARTER GROWTH STARTER_ANNUAL GROWTH_ANNUAL; do
   value="$(local_value "STRIPE_LIVE_IN_PRICE_$plan" || true)"
   [[ -z "$value" ]] || ENV_VARS+=",STRIPE_IN_PRICE_$plan=$value"
 done
@@ -147,8 +148,14 @@ if gcp run services describe "$HOSTING_SERVICE" --region "$REGION" >/dev/null 2>
   HOSTING_IMAGE="$REGION-docker.pkg.dev/$PROJECT/$REPO/console:$TAG-hosting"
   HOSTING_TAG="release-$TAG"
   build "$HOSTING_IMAGE" developer/deployment/Dockerfile "$HOSTING_BASE_PATH"
+  # Sign-in buttons follow .env.local on both services, so the two consoles never disagree.
+  HOSTING_ENV=""
+  for name in MANTRILO_GOOGLE_AUTH MANTRILO_APPLE_AUTH; do
+    value="$(local_value "$name" || true)"
+    HOSTING_ENV+="${HOSTING_ENV:+,}$name=${value:-false}"
+  done
   gcp run deploy "$HOSTING_SERVICE" --image "$HOSTING_IMAGE" --region "$REGION" \
-    --no-traffic --tag "$HOSTING_TAG"
+    --no-traffic --tag "$HOSTING_TAG" --update-env-vars "$HOSTING_ENV"
   HOSTING_URL="$(gcp run services describe "$HOSTING_SERVICE" --region "$REGION" --format='value(status.url)')"
   CANDIDATE="${HOSTING_URL/https:\/\//https://$HOSTING_TAG---}"
   login="$(curl --fail --silent --show-error --max-time 30 "$CANDIDATE$HOSTING_BASE_PATH/login")"
