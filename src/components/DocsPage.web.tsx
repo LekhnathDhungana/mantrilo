@@ -386,6 +386,11 @@ function EndpointSection({ endpoint }: { endpoint: Endpoint }) {
             <DocText text={t(`${key}.notes`)} />
           </p>
         )}
+        {endpoint.id === 'astrology-calculate' && (
+          <p className="mh-muted" id="astrology-hindi">
+            <DocText text={t('astroHindi.docs')} />
+          </p>
+        )}
       </div>
       <div className="mh-endpoint-code">
         <CodePanel title={t('code.request')} method={endpoint.method} code={endpoint.request} />

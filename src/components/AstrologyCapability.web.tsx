@@ -8,6 +8,7 @@ import { itemText } from './site/Catalog.web';
 import { Checks, CodeTabs, EndpointPill, Ribbon } from './site/Shlokam.web';
 import { astrologyItems } from '../data/library';
 import { astrologySnippets, bodyOf } from '../data/astrology-snippets';
+import { hindiField } from '../data/astrology-hindi';
 import { useI18n } from '../i18n';
 import { Rich } from '../i18n/Rich';
 
@@ -32,7 +33,8 @@ function leaves(value: unknown, path = '', out: [string, string][] = []): [strin
     return out;
   }
   if (Array.isArray(value)) return value.length ? leaves(value[0], `${path}[0]`, out) : out;
-  for (const [key, child] of Object.entries(value)) leaves(child, path ? `${path}.${key}` : key, out);
+  for (const [key, child] of Object.entries(value))
+    leaves(child, path ? `${path}.${key}` : key, out);
   return out;
 }
 
@@ -53,6 +55,7 @@ export default function AstrologyCapability() {
     value,
   ]);
   const body = JSON.stringify(bodyOf(item.request), null, 2).split('\n');
+  const hindi = hindiField(page.operation);
 
   return (
     <SiteFrame path={page.path}>
@@ -98,7 +101,11 @@ export default function AstrologyCapability() {
             </div>
             <Checks
               className="mx-rise mx-d6"
-              items={[t('mantraPage.checkFree'), t('mantraPage.checkCard'), t('astroCap.checkFailed')]}
+              items={[
+                t('mantraPage.checkFree'),
+                t('mantraPage.checkCard'),
+                t('astroCap.checkFailed'),
+              ]}
             />
           </div>
           <div className="mx-art mx-rise mx-d3" aria-hidden="true">
@@ -163,6 +170,18 @@ export default function AstrologyCapability() {
                 </p>
                 <p className="mx-sub">{text.inputs}</p>
               </div>
+              {hindi && (
+                <Callout tone="info">
+                  <strong>{t('astroHindi.title')}.</strong>{' '}
+                  <Rich
+                    text={t('astroHindi.body', {
+                      field: hindi,
+                      localized: t(`astroHindi.ops.${page.operation}`),
+                    })}
+                    tags={{ code: <code /> }}
+                  />
+                </Callout>
+              )}
               <CodeTabs
                 snippets={astrologySnippets(item.request, item.path)}
                 label={t('mantraPage.requestLanguage')}
@@ -231,6 +250,10 @@ export default function AstrologyCapability() {
                       {item.method} {item.path}
                     </code>
                   </dd>
+                </div>
+                <div>
+                  <dt>{t('astroHindi.fact')}</dt>
+                  <dd>{hindi ? t('astroHindi.both') : t('astroHindi.english')}</dd>
                 </div>
                 <div>
                   <dt>{t('astroPage.all.sandboxCol')}</dt>

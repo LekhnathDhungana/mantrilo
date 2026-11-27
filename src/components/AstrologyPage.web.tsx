@@ -11,6 +11,7 @@ import { consoleSandboxUrl } from '../data/site';
 import { astrologyCategories, astrologyItems, type Item } from '../data/library';
 import { astrologyPages } from '../data/astrology-pages';
 import { astrologySnippets } from '../data/astrology-snippets';
+import { hindiField, hindiOperations } from '../data/astrology-hindi';
 import { useI18n } from '../i18n';
 import { Rich } from '../i18n/Rich';
 
@@ -213,7 +214,9 @@ export default function AstrologyPage() {
               const text = itemText(t, item);
               return (
                 <Link key={id} href={path} className="mx-mcard mx-dots" data-reveal>
-                  <span className="mx-field">&quot;operation&quot;: &quot;{operationOf(item)}&quot;</span>
+                  <span className="mx-field">
+                    &quot;operation&quot;: &quot;{operationOf(item)}&quot;
+                  </span>
                   <p className="mx-mcard-sa" lang="sa-Deva">
                     {sanskrit}
                   </p>
@@ -225,6 +228,34 @@ export default function AstrologyPage() {
                       <span className="mx-tag-ok">{t('astroPage.all.sandboxCol')} ✓</span>
                     )}
                   </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-section" id="hindi" style={{ scrollMarginTop: 84 }}>
+        <div className="mh-wrap">
+          <div className="mx-head" data-reveal>
+            <div>
+              <p className="mx-kicker">{t('astroHindi.kicker')}</p>
+              <h2 className="mx-h2">{t('astroHindi.hubTitle')}</h2>
+              <p className="mx-sub">{t('astroHindi.hubLede')}</p>
+            </div>
+          </div>
+          <div className="mx-grid mx-grid-astro">
+            {Object.keys(hindiOperations).map((operation) => {
+              const item = byId.get(`astrology-${operation}`);
+              const path = pathOf.get(`astrology-${operation}`);
+              if (!item || !path) return null;
+              return (
+                <Link key={operation} href={path} className="mx-mcard mx-dots" data-reveal>
+                  <span className="mx-field">{hindiField(operation)}</span>
+                  <h3>{itemText(t, item).title}</h3>
+                  <p className="mx-mcard-copy">
+                    {t('astroHindi.card', { localized: t(`astroHindi.ops.${operation}`) })}
+                  </p>
                 </Link>
               );
             })}

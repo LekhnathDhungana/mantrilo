@@ -1904,5 +1904,24 @@
       "title": "Fetch your first mantra in a minute.",
       "copy": "Every account starts with a sandbox key and sample mantras, so you can build before you subscribe."
     }
+  },
+  "astroHindi": {
+    "docs": "Hindi responses: five operations answer in Hindi when you add <code>\"lang\": \"hi\"</code> or <code>\"language\": \"hi\"</code> under <code>parameters</code>. These are Daily Rashifal, Daily Rashifal for all signs, the Western daily sign horoscope, Daily Muhurat lookup and Moon sign compatibility. Codes and scores stay the same in both languages. Every other operation answers in English. The list is on the <link>Astrology page</link>.",
+    "title": "Hindi responses",
+    "body": "Add <code>{{field}}</code> under <code>parameters</code> to get {{localized}} in Hindi. Codes, scores and calculated values stay the same as in English.",
+    "fact": "Languages",
+    "both": "English, Hindi",
+    "english": "English",
+    "kicker": "Hindi",
+    "hubTitle": "Answer your users in Hindi",
+    "hubLede": "These operations return their readings, names and labels in Hindi when you add one field under parameters. Codes and scores stay the same as in English. Other operations answer in English.",
+    "ops": {
+      "vedic-daily-sign": "the reading and the rashi name",
+      "vedic-daily-bulk": "all twelve readings and rashi names",
+      "western-daily-sign": "the reading and its score explanations",
+      "vedic-muhurat": "the answer, period names and display labels",
+      "vedic-compatibility": "the messages and the sign and nakshatra names"
+    },
+    "card": "Returns {{localized}} in Hindi."
   }
 }
