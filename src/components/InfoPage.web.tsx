@@ -157,10 +157,16 @@ function StaticPage({ page }: { page: string }) {
             </>
           ) : page === 'license' ? (
             <>
+              <h2>{t('info.license.licensedTitle')}</h2>
+              <p>{t('info.license.licensed')}</p>
+              <h2>{t('info.license.serviceTitle')}</h2>
+              <p>{t('info.license.service')}</p>
+              <h2>{t('info.license.purchaseTitle')}</h2>
+              <p>{t('info.license.purchase')}</p>
+              <h2>{t('info.license.limitsTitle')}</h2>
+              <p>{t('info.license.limits')}</p>
               <h2>{t('info.license.publicTitle')}</h2>
               <p>{t('info.license.public')}</p>
-              <h2>{t('info.license.modernTitle')}</h2>
-              <p>{t('info.license.modern')}</p>
               <h2>{t('info.license.questionsTitle')}</h2>
               <p>
                 <Rich

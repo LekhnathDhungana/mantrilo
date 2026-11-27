@@ -72,8 +72,8 @@
     "indexable": false
   },
   "/license": {
-    "title": "Content License Status | Mantrilo",
-    "description": "Review reuse guidance for public-domain Sanskrit, modern editions, English retellings, and source attribution in your app.",
+    "title": "Content License | Mantrilo",
+    "description": "Use Mantrilo’s mantras, recordings, books and astrology results in your product through the API on a paid plan, or purchase a content license.",
     "label": "Content license",
     "indexable": false
   },
@@ -91,7 +91,7 @@
   },
   "/about": {
     "title": "About Mantrilo: Hindu Content API for Developers",
-    "description": "Learn what Mantrilo provides, how catalog records represent text, translations and recordings, and how to verify source and usage rights.",
+    "description": "Learn what Mantrilo provides, how catalog records represent text, translations and recordings, and how the content is licensed for your product.",
     "label": "About Mantrilo",
     "indexable": true
   },

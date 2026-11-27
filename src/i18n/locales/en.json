@@ -108,8 +108,8 @@
       "label": "Terms"
     },
     "/license": {
-      "title": "Content License Status | Mantrilo",
-      "description": "Review reuse guidance for public-domain Sanskrit, modern editions, English retellings, and source attribution in your app.",
+      "title": "Content License | Mantrilo",
+      "description": "Use Mantrilo’s mantras, recordings, books and astrology results in your product through the API on a paid plan, or purchase a content license.",
       "label": "Content license"
     },
     "/astrology-api/planetary-positions": {
@@ -124,7 +124,7 @@
     },
     "/about": {
       "title": "About Mantrilo: Hindu Content API for Developers",
-      "description": "Learn what Mantrilo provides, how catalog records represent text, translations and recordings, and how to verify source and usage rights.",
+      "description": "Learn what Mantrilo provides, how catalog records represent text, translations and recordings, and how the content is licensed for your product.",
       "label": "About Mantrilo"
     },
     "/astrology-api/daily-panchang": {
@@ -429,7 +429,7 @@
       "astrologyQ": "Is astrology included?",
       "astrologyA": "Yes, on every plan. Each calculation counts as one normal request. The default sidereal offset is approximate, with a custom ayanamsa option. <link>Read about the astrology API</link>.",
       "commercialQ": "Can I use the content commercially?",
-      "commercialA": "Paid plans unlock the full available catalog. Before publishing, review the <link>content license status</link> for the text and recordings you plan to use. The Free plan is for testing.",
+      "commercialA": "Yes. Paid plans unlock the full catalog and include a license to use it in your product, and you can also purchase a content license. See the <link>content license</link> for what each covers. The Free plan is for testing.",
       "audioQ": "How is audio metered?",
       "audioA": "Audio allowances measure data delivered each month, not storage. {{plans}}.",
       "audioPlan": "{{plan}} includes {{audio}}"
@@ -516,7 +516,7 @@
       "servesTitle": "Who it serves",
       "serves": "Mantrilo helps developers build Hindu devotional, learning and calendar apps. The API organizes mantra verses, scripture collections and available recordings, and calculates astrology data from inputs your app supplies.",
       "catalogTitle": "How to read the catalog",
-      "catalog": "Original text, transliteration, translation and audio are separate fields. Coverage varies by record. Preserve source references where supplied, and verify the edition, translator or performer with Mantrilo before using a title commercially.",
+      "catalog": "Original text, transliteration, translation and audio are separate fields. Coverage varies by record. Keep source references where supplied. Paid plans include a license to use the catalog in your product.",
       "sandbox": "The sandbox uses a limited sample. Check the <library>Library</library> and <docs>API docs</docs> to see data formats, then <contact>contact Mantrilo</contact> for title-specific rights and coverage."
     },
     "contact": {
@@ -547,14 +547,20 @@
       "draftMessage": "Message"
     },
     "license": {
-      "title": "Content license status.",
-      "lede": "Reuse guidance for Sanskrit texts, modern editions, and English retellings.",
+      "title": "Content license.",
+      "lede": "How you can use Mantrilo’s mantras, recordings, books and astrology results in your product.",
+      "licensedTitle": "Mantrilo licenses its catalog",
+      "licensed": "Mantrilo holds the licensing for the content it serves: mantra texts and transliterations, audio recordings, scripture books and retellings, and astrology results. You can use that content in your own product in two ways: through the Mantrilo API, or by purchasing a content license.",
+      "serviceTitle": "Use it through the Mantrilo API",
+      "service": "Every paid plan includes a license to use the catalog through the API in the apps and websites your plan covers, and to show it to your users. The license applies while your plan is active.",
+      "purchaseTitle": "Purchase a content license",
+      "purchase": "If you want the content inside your app, available offline or without calling the API, you can purchase a license for the titles and recordings you need. Tell us what you need and how you will use it, and we will send you a quote.",
+      "limitsTitle": "What the license does not cover",
+      "limits": "You may not resell Mantrilo’s catalog itself, or offer it as a dataset or an API of your own. The Free plan’s sandbox key is for testing only.",
       "publicTitle": "Public-domain Sanskrit",
-      "public": "You can reuse original Sanskrit text in a commercial app where the text is in the public domain. Check the specific edition and the countries where you plan to distribute it. Keep the source reference with the text where available.",
-      "modernTitle": "Modern editions and retellings",
-      "modern": "Modern translations, commentary, editorial additions, and prose retellings can have separate rights. This includes the English retellings of the Ramayana and Mahabharata in the Books API. Check the terms for the version you plan to use and follow its attribution requirements.",
+      "public": "Many original Sanskrit texts are in the public domain. Mantrilo’s license covers the catalog as we provide it, including our transliterations, recordings and retellings. Keep the source reference with the text where one is supplied.",
       "questionsTitle": "Licensing questions",
-      "questions": "For reuse questions or rights concerns, <link>contact Mantrilo</link> with the title or source reference and a brief description of how you plan to use the material."
+      "questions": "To purchase a license or ask about a title, <link>contact Mantrilo</link> with the titles you need and a short description of how you plan to use them."
     },
     "privacy": {
       "title": "Privacy & data.",
@@ -572,8 +578,8 @@
       "site": "This website presents Mantrilo’s content API and monthly plans. Catalog examples use placeholder values unless marked otherwise.",
       "keys": "API keys are issued in the developer console. Preparing a message on the contact page does not create an account or start a subscription.",
       "commercialTitle": "Commercial content use",
-      "commercial": "Commercial integration is subject to the documented content license. The final service terms and content license must be provided and reviewed before onboarding customers.",
-      "license": "View content license status"
+      "commercial": "Paid plans include a license to use Mantrilo’s content in your product through the API, and you can also purchase a content license. The content license page explains what each covers.",
+      "license": "View the content license"
     }
   },
   "guides": {
@@ -1623,8 +1629,8 @@
           "copy": "A mantra with a recording includes an audio link in its response. Request the signed recording link through your server, and show a listening control only when that link is present."
         },
         "s3": {
-          "title": "Confirm provenance before commercial use",
-          "copy": "A verse’s text, translation, and recording can each carry different rights. Ask for the source and translator details of the records you plan to use, and review the content license status before distribution."
+          "title": "Licensed for your product",
+          "copy": "Paid plans include a license to use the verses and recordings in your app. Keep source references with the text, and see the content license for what it covers."
         }
       },
       "workflow": {
@@ -1652,8 +1658,8 @@
           "copy": "Audio allowances measure the data delivered, not file storage. The pricing page compares each plan’s monthly allowance. Recording length and how often people listen will affect delivery usage. Ask us about recording coverage and formats."
         },
         "s3": {
-          "title": "Confirm recording-specific permissions",
-          "copy": "Commercial use is subject to the documented content license. Confirm which recordings are available, how they may be distributed, and what source or performer information can be shown. The software license does not establish recording rights."
+          "title": "Recordings licensed for your app",
+          "copy": "Paid plans include a license to play the recordings to your users through the API. To bundle recordings in your app for offline listening, purchase a content license."
         }
       },
       "workflow": {

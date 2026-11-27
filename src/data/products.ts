@@ -20,8 +20,8 @@ export const productPages = {
         copy: 'A mantra with a recording includes an audio link in its response. Request the signed recording link through your server, and show a listening control only when that link is present.',
       },
       {
-        title: 'Confirm provenance before commercial use',
-        copy: 'A verse’s text, translation, and recording can each carry different rights. Ask for the source and translator details of the records you plan to use, and review the content license status before distribution.',
+        title: 'Licensed for your product',
+        copy: 'Paid plans include a license to use the verses and recordings in your app. Keep source references with the text, and see the content license for what it covers.',
       },
     ],
     sample: 'mantra' as const,
@@ -53,8 +53,8 @@ export const productPages = {
         copy: 'Audio allowances measure the data delivered, not file storage. The pricing page compares each plan’s monthly allowance. Recording length and how often people listen will affect delivery usage. Ask us about recording coverage and formats.',
       },
       {
-        title: 'Confirm recording-specific permissions',
-        copy: 'Commercial use is subject to the documented content license. Confirm which recordings are available, how they may be distributed, and what source or performer information can be shown. The software license does not establish recording rights.',
+        title: 'Recordings licensed for your app',
+        copy: 'Paid plans include a license to play the recordings to your users through the API. To bundle recordings in your app for offline listening, purchase a content license.',
       },
     ],
     sample: 'mantra' as const,
