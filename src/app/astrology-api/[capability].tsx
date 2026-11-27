@@ -19,8 +19,8 @@ export const loader = createStaticLoader((params) => {
   const item = astrologyItems.find((entry) => entry.id === `astrology-${page.operation}`)!;
   const related = astrologyPages
     .filter((entry) => entry.category === page.category && entry.slug !== page.slug)
-    .slice(0, 8)
-    .map(({ path, label }) => ({ path, label }));
+    .slice(0, 6)
+    .map(({ path, label, operation }) => ({ path, label, id: `astrology-${operation}` }));
   // A hand-written seo-pages.json label (the three original pages) wins over the generated one.
   const heading = seoPages[page.path]?.label ?? page.label;
   return { page, heading, item, related };

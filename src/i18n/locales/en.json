@@ -1564,7 +1564,32 @@
     "search": "Search {{n}} capabilities: chart, panchang, transit…",
     "note": "Availability reflects the catalog at the time this page was published. Core capabilities run on Mantrilo’s own engine. Limited operations may be unavailable. Every successful calculation is one request on any plan, and failed calculations are not charged.",
     "ctaTitle": "Run a calculation in the sandbox.",
-    "ctaCopy": "Use a sandbox key to test available calculations. The console shows current availability."
+    "ctaCopy": "Use a sandbox key to test available calculations. The console shows current availability.",
+    "browse": "Browse all capabilities",
+    "byCategory": {
+      "kicker": "By category",
+      "title": "{{n}} categories. One endpoint.",
+      "copy": "Pick a category to filter the list below. Every capability is a POST to the same endpoint; only the <code>operation</code> and its inputs change."
+    },
+    "featuredSection": {
+      "kicker": "Most used",
+      "title": "Start with the calculations apps use most."
+    },
+    "all": {
+      "kicker": "All capabilities",
+      "title": "Find a calculation by name.",
+      "searchLabel": "Search capabilities by name",
+      "sandbox": "In the sandbox",
+      "capability": "Capability",
+      "sandboxCol": "Sandbox",
+      "empty": "No capabilities match. Try another name or clear the filters.",
+      "showing": "Showing {{n}} of {{total}} capabilities"
+    },
+    "request": {
+      "kicker": "One endpoint",
+      "title": "Every calculation is one POST.",
+      "copy": "Send an <code>operation</code> and its inputs from your server with your API key. The result comes back under <code>data</code>."
+    }
   },
   "astroCap": {
     "try": "Try this calculation",
@@ -1580,7 +1605,11 @@
     "readReference": "Read the endpoint reference",
     "trySandbox": "Try this calculation in the sandbox",
     "related": "Related {{category}} capabilities",
-    "browseAll": "Browse all astrology capabilities"
+    "browseAll": "Browse all astrology capabilities",
+    "checkFailed": "Failed calculations are free",
+    "operation": "Operation",
+    "response": "What comes back.",
+    "relatedTitle": "Same endpoint, another operation."
   },
   "products": {
     "mantra-api": {

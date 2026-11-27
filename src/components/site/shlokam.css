@@ -2212,3 +2212,345 @@ button.mx-chip:hover {
     transition: none;
   }
 }
+
+/* Astrology API (/astrology-api and its capability pages). The hero draws the sidereal zodiac
+   with the Sun and Moon from the samples; tiles, cards and the list reuse the library's pieces. */
+@keyframes mx-appear {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes mx-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+@keyframes mx-breathe {
+  50% {
+    opacity: 0.55;
+    transform: scale(1.2);
+  }
+}
+.mx-sky-art {
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 0;
+}
+.mx-sky {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  overflow: visible;
+  user-select: none;
+}
+/* The wheel and the sample values read left to right, like code, in Urdu too. */
+.mx-sky,
+.mx-sky-card .mx-cell b,
+.mx-astro-leaves b {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+.mx-sky-face {
+  fill: var(--surface);
+  stroke: none;
+  filter: drop-shadow(0 18px 40px var(--mx-glow));
+}
+.mx-sky-ring {
+  fill: none;
+  stroke: var(--line-2);
+  stroke-width: 1;
+}
+.mx-sky-faint {
+  stroke: var(--line);
+}
+.mx-sky-dash {
+  stroke-dasharray: 2 5;
+}
+.mx-sky-lit {
+  fill: color-mix(in srgb, var(--saffron) 14%, transparent);
+}
+.mx-sky-star {
+  fill: color-mix(in srgb, var(--saffron) 40%, transparent);
+}
+.mx-sky-tick {
+  stroke: var(--ink-3);
+  stroke-width: 1;
+  opacity: 0.55;
+}
+.mx-sky text {
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.mx-sky-rashi {
+  font-family: var(--deva);
+  font-size: 15px;
+  fill: var(--ink-3);
+  animation: mx-appear 0.7s var(--ease) both;
+}
+.mx-sky-rashi.is-lit {
+  font-weight: 600;
+  fill: var(--accent-text);
+}
+.mx-sky-sweep {
+  animation: mx-spin 28s linear infinite;
+}
+.mx-sky-arc {
+  fill: none;
+  stroke: var(--saffron);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  animation: mx-draw calc(0.7s + var(--mx-arc, 0.5) * 1.6s) var(--ease) 0.6s both;
+}
+.mx-sky-glow {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: mx-breathe 4s ease-in-out infinite;
+}
+.mx-sky-sun {
+  fill: var(--saffron);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+.mx-sky-moon {
+  fill: var(--ink-2);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+.mx-sky-body {
+  font-family: var(--deva);
+  font-size: 13px;
+  fill: var(--ink-2);
+}
+.mx-sky-at {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  fill: var(--ink-3);
+}
+.mx-sky-tithi {
+  font-family: var(--deva);
+  font-size: 30px;
+  fill: var(--ink);
+}
+.mx-sky-paksha {
+  font-family: var(--deva);
+  font-size: 12.5px;
+  fill: var(--accent-text);
+}
+.mx-sky-card {
+  width: min(100%, 380px);
+  margin-top: -52px;
+}
+.mx-sky-card .mx-cells {
+  margin: 0;
+  padding: 14px 16px 16px;
+}
+
+.mx-tiles-astro {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+.mx-grid-astro {
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+.mh .mx-mcard-copy {
+  display: -webkit-box;
+  margin-top: 8px;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink-3);
+}
+.mh .mx-mcard .mx-field + h3 {
+  margin-top: 14px;
+  font-size: 17px;
+  color: var(--ink);
+}
+.mx-table-astro .mx-table-head,
+.mx-table-astro .mx-row {
+  grid-template-columns: minmax(0, 1fr) 150px 110px 16px;
+}
+.mh .mx-astro-note {
+  margin-top: 14px;
+  max-width: 72ch;
+  font-size: 13.5px;
+}
+
+.mh .mx-astro-op code {
+  padding: 0;
+  background: none;
+  font-size: 13px;
+  color: var(--accent-text);
+}
+.mh .mx-astro-body {
+  margin: 6px 0 0;
+  padding: 12px 14px;
+  overflow: hidden;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  white-space: pre;
+  mask-image: linear-gradient(90deg, #000 82%, transparent);
+}
+.mx-astro-body + .mx-field {
+  margin-top: 16px;
+}
+.mx-astro-leaves {
+  display: grid;
+  gap: 6px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.mx-astro-leaves li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  animation: mx-rise 0.8s var(--ease) both;
+}
+.mh .mx-astro-leaves code,
+.mx-astro-leaves b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mh .mx-astro-leaves code {
+  padding: 0;
+  background: none;
+  font-size: inherit;
+  color: var(--ink-3);
+  overflow-wrap: normal;
+}
+.mx-astro-leaves b {
+  flex: none;
+  max-width: 55%;
+  font-weight: 500;
+  color: var(--ink);
+}
+.mx-astro-response {
+  padding: 20px 12px 12px;
+}
+.mx-astro-response .mh-pre {
+  max-height: 520px;
+  overflow: auto;
+}
+.mx-astro-build {
+  padding-bottom: 24px;
+}
+.mx-astro-build .mh-callout {
+  margin: 20px 24px 0;
+}
+.mx-astro-daily {
+  margin: 20px 24px 0;
+  padding: 18px 20px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  border-inline-start: 3px solid var(--saffron);
+  background: var(--surface);
+}
+.mh .mx-astro-daily h3 {
+  font-size: 16px;
+}
+.mh .mx-astro-daily p {
+  margin-top: 8px;
+  font-size: 14.5px;
+  color: var(--ink-2);
+}
+.mx-facts > .mx-fact-wide {
+  flex-direction: column;
+  gap: 4px;
+}
+.mx-fact-wide dd {
+  text-align: start;
+}
+.mh .mx-fact-wide code {
+  word-break: normal;
+}
+.mx-astro-links {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.mx-astro-links li {
+  border-bottom: 1px solid var(--line);
+}
+.mx-astro-links li:last-child {
+  border-bottom: 0;
+}
+.mx-astro-links a {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--accent-text);
+}
+.mx-astro-links a::after {
+  content: '→';
+  transition: transform 0.3s var(--ease);
+}
+[dir='rtl'] .mx-astro-links a::after {
+  content: '←';
+}
+.mx-astro-links a:hover::after {
+  transform: translateX(4px);
+}
+[dir='rtl'] .mx-astro-links a:hover::after {
+  transform: translateX(-4px);
+}
+
+@media (max-width: 760px) {
+  .mx-table-astro .mx-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+@media (max-width: 640px) {
+  .mx-sky-card {
+    margin-top: -36px;
+  }
+  .mx-sky-card .mx-cells {
+    gap: 6px;
+  }
+  .mx-sky-card .mx-cell {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 12px;
+  }
+  .mx-sky-card .mx-cell b {
+    margin-top: 0;
+  }
+  .mx-astro-build .mh-callout,
+  .mx-astro-daily {
+    margin-inline: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mx-sky-rashi,
+  .mx-sky-sweep,
+  .mx-sky-arc,
+  .mx-sky-glow,
+  .mx-astro-leaves li {
+    animation: none !important;
+  }
+  .mx-astro-links a::after {
+    transition: none;
+  }
+}
