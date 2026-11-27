@@ -32,6 +32,39 @@ const TITHI = [
   'त्रयोदशी',
   'चतुर्दशी',
 ];
+// English beside the Sanskrit: sign names, and each tithi's transliteration.
+const RASHI_EN = [
+  'Aries',
+  'Taurus',
+  'Gemini',
+  'Cancer',
+  'Leo',
+  'Virgo',
+  'Libra',
+  'Scorpio',
+  'Sagittarius',
+  'Capricorn',
+  'Aquarius',
+  'Pisces',
+];
+const TITHI_EN = [
+  'Pratipada',
+  'Dvitiya',
+  'Tritiya',
+  'Chaturthi',
+  'Panchami',
+  'Shashthi',
+  'Saptami',
+  'Ashtami',
+  'Navami',
+  'Dashami',
+  'Ekadashi',
+  'Dvadashi',
+  'Trayodashi',
+  'Chaturdashi',
+];
+const ordinal = (n: number) =>
+  `${n}${n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !== 12 ? 'nd' : n % 10 === 3 && n !== 13 ? 'rd' : 'th'}`;
 const NAKSHATRA_SPAN = 360 / 27;
 
 export type Sky = {
@@ -87,8 +120,14 @@ export function SkyWheel({ sky }: { sky: Sky }) {
   const moonSign = Math.floor(sky.moon / 30);
   const star = (sky.nakshatra.number - 1) * NAKSHATRA_SPAN;
   const span = (((sky.moon - sky.sun) % 360) + 360) % 360;
-  const tithiName =
-    sky.tithi === 15 ? (sky.paksha === 'Krishna' ? 'अमावस्या' : 'पूर्णिमा') : TITHI[sky.tithi - 1];
+  const krishna = sky.paksha === 'Krishna';
+  const tithiName = sky.tithi === 15 ? (krishna ? 'अमावस्या' : 'पूर्णिमा') : TITHI[sky.tithi - 1];
+  const tithiEnglish =
+    sky.tithi === 15
+      ? krishna
+        ? 'Amavasya · new moon'
+        : 'Purnima · full moon'
+      : `${TITHI_EN[sky.tithi - 1]} · ${ordinal(sky.tithi)} lunar day`;
   const [sunX, sunY] = at(sky.sun, 108);
   const [moonX, moonY] = at(sky.moon, 108);
   return (
@@ -124,14 +163,20 @@ export function SkyWheel({ sky }: { sky: Sky }) {
           <g key={name}>
             <line className="mx-sky-ring" x1={x1} y1={y1} x2={x2} y2={y2} />
             <text
-              className={
-                i === sunSign || i === moonSign ? 'mx-sky-rashi is-lit' : 'mx-sky-rashi'
-              }
+              className={i === sunSign || i === moonSign ? 'mx-sky-rashi is-lit' : 'mx-sky-rashi'}
               x={tx}
-              y={ty}
+              y={ty - 6}
               style={{ animationDelay: `${0.25 + i * 0.05}s` }}
             >
               {name}
+            </text>
+            <text
+              className={i === sunSign || i === moonSign ? 'mx-sky-en is-lit' : 'mx-sky-en'}
+              x={tx}
+              y={ty + 9}
+              style={{ animationDelay: `${0.3 + i * 0.05}s` }}
+            >
+              {RASHI_EN[i]}
             </text>
           </g>
         );
@@ -157,20 +202,26 @@ export function SkyWheel({ sky }: { sky: Sky }) {
       <circle cx={sunX} cy={sunY} r={8} className="mx-sky-sun" />
       <circle cx={moonX} cy={moonY} r={6.5} className="mx-sky-moon" />
       <text className="mx-sky-body" x={at(sky.sun, 84)[0]} y={at(sky.sun, 84)[1]}>
-        सूर्य
+        सूर्य <tspan className="mx-sky-en">Sun</tspan>
       </text>
       <text className="mx-sky-body" x={at(sky.moon, 84)[0]} y={at(sky.moon, 84)[1]}>
-        चन्द्र
+        चन्द्र <tspan className="mx-sky-en">Moon</tspan>
       </text>
 
-      <text className="mx-sky-at" x={C} y={C - 28}>
-        {sky.at.slice(0, 16).replace('T', ' · ')} UTC
-      </text>
-      <text className="mx-sky-tithi" x={C} y={C + 6}>
+      <text className="mx-sky-tithi" x={C} y={C - 14}>
         {tithiName}
       </text>
-      <text className="mx-sky-paksha" x={C} y={C + 38}>
-        {sky.paksha === 'Krishna' ? 'कृष्ण पक्ष' : 'शुक्ल पक्ष'} · {span.toFixed(1)}°
+      <text className="mx-sky-en mx-sky-en-center" x={C} y={C + 12}>
+        {tithiEnglish}
+      </text>
+      <text className="mx-sky-paksha" x={C} y={C + 36}>
+        {krishna ? 'कृष्ण पक्ष' : 'शुक्ल पक्ष'} · {span.toFixed(1)}°
+      </text>
+      <text className="mx-sky-en" x={C} y={C + 52}>
+        {krishna ? 'Krishna paksha · waning' : 'Shukla paksha · waxing'}
+      </text>
+      <text className="mx-sky-at" x={C} y={C + 80}>
+        {sky.at.slice(0, 16).replace('T', ' · ')} UTC
       </text>
     </svg>
   );

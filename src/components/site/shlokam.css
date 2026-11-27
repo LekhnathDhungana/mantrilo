@@ -2339,6 +2339,24 @@ button.mx-chip:hover {
   font-size: 12.5px;
   fill: var(--accent-text);
 }
+.mx-sky-en {
+  font-family: inherit;
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  fill: var(--ink-3);
+  animation: mx-appear 0.7s var(--ease) both;
+}
+.mx-sky-en.is-lit {
+  fill: var(--accent-text);
+}
+.mx-sky-body .mx-sky-en {
+  font-size: 10px;
+  animation: none;
+}
+.mx-sky-en-center {
+  font-size: 11px;
+  fill: var(--ink-2);
+}
 .mx-sky-card {
   width: min(100%, 380px);
   margin-top: -52px;
@@ -2544,6 +2562,7 @@ button.mx-chip:hover {
 }
 @media (prefers-reduced-motion: reduce) {
   .mx-sky-rashi,
+  .mx-sky-en,
   .mx-sky-sweep,
   .mx-sky-arc,
   .mx-sky-glow,
