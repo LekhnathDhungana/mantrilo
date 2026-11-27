@@ -56,11 +56,10 @@ function PromoForm() {
 
 export default function Billing() {
   const { session, refresh } = useConsole();
-  const { checkout, stripe, plan, market, interval } = useLocalSearchParams<{
+  const { checkout, stripe, plan, interval } = useLocalSearchParams<{
     checkout?: string;
     stripe?: string;
     plan?: string;
-    market?: string;
     interval?: string;
   }>();
   const actions = useBillingActions();
@@ -232,7 +231,6 @@ export default function Billing() {
         session={session}
         actions={actions}
         selectedPlan={plan}
-        preferredIndia={market === 'IN'}
         preferredAnnual={interval === 'year'}
       />
     </>

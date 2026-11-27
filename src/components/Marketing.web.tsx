@@ -539,10 +539,6 @@ export default function Marketing() {
             <Link href="/pricing" className="mh-textlink">
               {t('home.pricing.compare')} <Arrow />
             </Link>
-            {' · '}
-            <Link href={{ pathname: '/pricing', params: { market: 'IN' } }} className="mh-textlink">
-              {t('home.pricing.india')}
-            </Link>
           </p>
         </div>
       </section>

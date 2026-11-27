@@ -256,8 +256,6 @@
       "Growth": "Growth",
       "Business": "Business"
     },
-    "customQuote": "Custom quote",
-    "requestQuote": "Request a quote",
     "choose": "Choose {{plan}}",
     "startFree": "Start free",
     "recommended": "Recommended",
@@ -417,8 +415,7 @@
       "eyebrow": "Pricing",
       "title": "Start free. Pay as your product grows.",
       "copy": "Monthly billing. Every allowance resets monthly. Astrology included on every plan.",
-      "compare": "Compare plans in detail",
-      "india": "View India pricing"
+      "compare": "Compare plans in detail"
     },
     "faq": {
       "eyebrow": "Questions",
@@ -463,11 +460,7 @@
     "title": "Mantrilo API plans and limits",
     "lede": "Every account starts with a sandbox key. Subscribe for a live key, the full catalog and higher limits. Allowances reset monthly in UTC.",
     "plans": "Plans",
-    "market": "Pricing market",
-    "global": "Global · USD",
-    "india": "India · INR",
-    "indiaNote": "India pricing is available for workspaces with a verified India billing address.",
-    "globalNote": "Global prices are billed monthly in USD.",
+    "billingNote": "Prices are billed monthly in USD.",
     "compare": "Compare plans",
     "compareCopy": "Each row matches the limits the API and billing enforce.",
     "comparison": "Plan comparison",
@@ -507,8 +500,7 @@
     "monthly": "Monthly",
     "annual": "Annual",
     "save": "Save 20%",
-    "globalNoteAnnual": "Global prices are shown per month and billed once a year in USD.",
-    "annualNote": "Annual prices are shown per month and billed once a year."
+    "billingNoteAnnual": "Prices are shown per month and billed once a year in USD."
   },
   "info": {
     "eyebrow": {

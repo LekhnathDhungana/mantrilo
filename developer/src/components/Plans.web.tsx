@@ -76,12 +76,10 @@ export function Plans({
   session,
   actions,
   selectedPlan,
-  preferredIndia = false,
   preferredAnnual = false,
 }: {
   session: Session;
   selectedPlan?: string;
-  preferredIndia?: boolean;
   preferredAnnual?: boolean;
   actions: ReturnType<typeof useBillingActions>;
 }) {
@@ -94,7 +92,6 @@ export function Plans({
   const dialog = useRef<HTMLDialogElement>(null);
   const checkoutTitle = useId();
   const [checkoutPlan, setCheckoutPlan] = useState<Plan | null>(null);
-  const [selectedIndia, setSelectedIndia] = useState<boolean | null>(null);
   const [selectedAnnual, setSelectedAnnual] = useState<boolean | null>(null);
   useEffect(() => {
     if (checkoutPlan && !dialog.current?.open) dialog.current?.showModal();
@@ -114,14 +111,13 @@ export function Plans({
   const status = session.workspace.billing?.status;
   const subscribed = status === 'active' || status === 'trialing' || status === 'past_due';
   const inrSubscription = subscribed && session.workspace.billing?.currency === 'inr';
-  const india = subscribed ? inrSubscription : (selectedIndia ?? preferredIndia);
+  // New customers in India pay the global USD prices; only an existing INR subscription shows INR.
+  const india = inrSubscription;
   // A subscriber's plan changes keep their billing interval, so the choice only shows before one.
   const annual = subscribed
     ? session.workspace.billing?.interval === 'year'
     : (selectedAnnual ?? preferredAnnual);
   const interval: Interval = annual ? 'year' : 'month';
-  const regionalPurchasable =
-    (annual ? billing.data?.indiaAnnualPurchasable : billing.data?.indiaPurchasable) ?? [];
   const globalPurchasable = annual ? (billing.data?.annualPurchasable ?? []) : purchasable;
   const contactIndia = (plan: string) => {
     const subject = encodeURIComponent(`Mantrilo ${plan} pricing in India`);
@@ -136,9 +132,7 @@ export function Plans({
   }
 
   function choosePlan(plan: Plan) {
-    if (!subscribed && india) {
-      void openStripe('checkout', { plan: plan.name, market: 'IN', interval });
-    } else if (subscribed) {
+    if (subscribed) {
       void openStripe('portal', { plan: plan.name });
     } else if (!annual && billing.data?.promotionPlans?.includes(plan.name)) {
       // The first-month promo code applies to monthly billing only.
@@ -163,10 +157,10 @@ export function Plans({
           Checking billing…
         </button>
       );
-    if (india && plan.price && (subscribed || !regionalPurchasable.includes(plan.name)))
+    if (india && plan.price)
       return (
         <a href={contactIndia(plan.name)} className="button subtle">
-          {plan.name === 'Business' ? 'Request a quote' : subscribed ? 'Contact billing to switch' : 'Request India checkout'}
+          Contact billing to switch
         </a>
       );
     if (subscribed && !portalAvailable)
@@ -175,7 +169,7 @@ export function Plans({
           Contact billing support
         </a>
       );
-    if (!connected || (plan.price > 0 && !(india ? regionalPurchasable : globalPurchasable).includes(plan.name)))
+    if (!connected || (plan.price > 0 && !globalPurchasable.includes(plan.name)))
       return (
         <button className="button outline" disabled>
           Billing unavailable
@@ -216,16 +210,6 @@ export function Plans({
         </p>
       )}
       {!subscribed && (
-        <div className="segmented compact" role="group" aria-label="Billing market">
-          <button type="button" aria-pressed={!india} onClick={() => setSelectedIndia(false)}>
-            Global · USD
-          </button>
-          <button type="button" aria-pressed={india} onClick={() => setSelectedIndia(true)}>
-            India · INR
-          </button>
-        </div>
-      )}
-      {!subscribed && (
         <div className="segmented compact" role="group" aria-label="Billing period">
           <button type="button" aria-pressed={!annual} onClick={() => setSelectedAnnual(false)}>
             Monthly
@@ -234,9 +218,6 @@ export function Plans({
             Annual · save 20%
           </button>
         </div>
-      )}
-      {india && !subscribed && (
-        <p className="small muted">India pricing requires a verified India billing address.</p>
       )}
       {annual && (
         <p className="small muted">

@@ -9,11 +9,10 @@ import { useI18n } from '../i18n';
 import { Rich } from '../i18n/Rich';
 
 export default function PricingPage() {
-  const [marketChoice, setIndia] = useState<boolean | null>(null);
   const [periodChoice, setAnnual] = useState<boolean | null>(null);
-  const { market, interval } = useLocalSearchParams<{ market?: string; interval?: string }>();
+  // Old links may still carry ?market=IN; India pays the global prices, so it is ignored.
+  const { interval } = useLocalSearchParams<{ interval?: string }>();
   const hydrated = useHydrated();
-  const india = marketChoice ?? (hydrated && market === 'IN');
   // Monthly by default; ?interval=year opens on annual. Annual prices are still shown per month.
   const annual = periodChoice ?? (hydrated && interval === 'year');
   const i18n = useI18n();
@@ -39,35 +38,11 @@ export default function PricingPage() {
                 <span className="mh-save">{t('pricing.save')}</span>
               </button>
             </div>
-            <div role="group" aria-label={t('pricing.market')} className="mh-actions">
-              <button
-                type="button"
-                className={india ? 'mh-btn mh-btn-outline' : 'mh-btn mh-btn-primary'}
-                aria-pressed={!india}
-                onClick={() => setIndia(false)}
-              >
-                {t('pricing.global')}
-              </button>
-              <button
-                type="button"
-                className={india ? 'mh-btn mh-btn-primary' : 'mh-btn mh-btn-outline'}
-                aria-pressed={india}
-                onClick={() => setIndia(true)}
-              >
-                {t('pricing.india')}
-              </button>
-            </div>
           </div>
           <p className="mh-muted" aria-live="polite">
-            {india
-              ? annual
-                ? `${t('pricing.indiaNote')} ${t('pricing.annualNote')}`
-                : t('pricing.indiaNote')
-              : annual
-                ? t('pricing.globalNoteAnnual')
-                : t('pricing.globalNote')}
+            {annual ? t('pricing.billingNoteAnnual') : t('pricing.billingNote')}
           </p>
-          <PlanCards india={india} annual={annual} />
+          <PlanCards annual={annual} />
         </div>
       </section>
       <section className="mh-section-sm">
@@ -96,11 +71,9 @@ export default function PricingPage() {
                     >
                       {planName(i18n, p.name)}
                       <span>
-                        {india && p.name === 'Business'
-                          ? planPrice(i18n, p, india)
-                          : p.price
-                            ? t('pricing.perMonth', { price: planPrice(i18n, p, india, annual) })
-                            : t('pricing.free')}
+                        {p.price
+                          ? t('pricing.perMonth', { price: planPrice(i18n, p, annual) })
+                          : t('pricing.free')}
                       </span>
                     </th>
                   ))}
@@ -129,7 +102,6 @@ export default function PricingPage() {
                       <PlanAction
                         plan={p}
                         featured={p.name === 'Growth'}
-                        india={india}
                         annual={annual}
                       />
                     </td>
