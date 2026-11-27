@@ -1,0 +1,94 @@
+{
+  "hosting": {
+    "site": "mantrilo",
+    "public": "dist",
+    "predeploy": ["python3 scripts/check-seo.py dist https://www.mantrilo.com"],
+    "cleanUrls": true,
+    "trailingSlash": false,
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**", "nginx-seo.conf"],
+    "rewrites": [
+      {
+        "source": "/blog",
+        "run": {
+          "serviceId": "mantrilo-console-hosting",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/blog/**",
+        "run": {
+          "serviceId": "mantrilo-console-hosting",
+          "region": "us-central1"
+        }
+      },
+      {
+        "regex": "^/console(/.*)?$",
+        "run": {
+          "serviceId": "mantrilo-console-hosting",
+          "region": "us-central1"
+        }
+      }
+    ],
+    "headers": [
+      {
+        "source": "/!(console|blog){,/**}",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=0, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "/_expo/static/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      },
+      {
+        "source": "/fonts/*.woff2",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      }
+    ],
+    "redirects": [
+      {
+        "source": "/shastra-books-api",
+        "destination": "/books-api",
+        "type": 301
+      },
+      {
+        "source": "/mantra-shloka-api",
+        "destination": "/mantra-api",
+        "type": 301
+      },
+      {
+        "source": "/implementation",
+        "destination": "/docs",
+        "type": 301
+      },
+      {
+        "source": "/access",
+        "destination": "/contact",
+        "type": 301
+      },
+      {
+        "source": "/library/mantras/aham-vaishvanaro-bhutva",
+        "destination": "/library/mantras/aham-vaishvanaro-bhuthva",
+        "type": 301
+      },
+      {
+        "source": "/admin/blog",
+        "destination": "https://mantrilo.com/console/blog",
+        "type": 302
+      }
+    ]
+  }
+}

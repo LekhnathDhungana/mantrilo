@@ -31,7 +31,12 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
+.env.production
+
+# Firebase deploy cache
+.firebase/
 
 # typescript
 *.tsbuildinfo
@@ -39,3 +44,5 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+/public/locales/
+/src/app/(i18n)/

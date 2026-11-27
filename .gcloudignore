@@ -1,0 +1,13 @@
+# Cloud Build only needs the console, API, shared plans and the favicon.
+/*
+!/developer/
+!/shared/
+!/assets/
+/assets/*
+!/assets/mantrilo-favicon.png
+developer/node_modules/
+developer/dist/
+developer/.expo/
+developer/rewrite-review/
+developer/.env*
+!developer/.env.example

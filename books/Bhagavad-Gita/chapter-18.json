@@ -1,0 +1,789 @@
+{
+ "title": "Chapter 18 – Mokṣa-Sannyāsa Yoga (The Yoga of Liberation and Renunciation)",
+ "yoga_name": "Mokṣa-Sannyāsa Yoga",
+ "subtitle": "Yoga of Liberation and Renunciation",
+ "chapter": 18,
+ "source_url": "https://app.shlokam.org/api/unified/chapter/18",
+ "verses": [
+  {
+   "key": "18.1",
+   "chapter": 18,
+   "verse": 1,
+   "title": "18.1 sannyasasya maha-baho",
+   "sanskrit": "अर्जुन उवाच ।\nसंन्यासस्य महाबाहो तत्त्वमिच्छामि वेदितुम् ।\nत्यागस्य च हृषीकेश पृथक्केशिनिषूदन ॥ १८-१॥",
+   "roman": "arjuna uvāca\nsaṃnyāsasya mahābāho tattvamicchāmi veditum\ntyāgasya ca hṛṣīkeśa pṛthakkeśiniṣūdana 18-1",
+   "colloquial": "arjuna uvaacha\nsamnyaasasya mahaa baaho tattvam icchaami veditum\ntyaagasya cha hrishiikesha prithak keshinishuudana 18-1",
+   "translation_reworded": "Arjuna said: O mighty-armed one, O Hrishikesa, O slayer of Keshi (Krishna), I want to understand, each on its own, the real nature or truth of Renunciation and also of Abandonment."
+  },
+  {
+   "key": "18.2",
+   "chapter": 18,
+   "verse": 2,
+   "title": "18.2 kamyanam karmanam",
+   "sanskrit": "श्रीभगवानुवाच ।\nकाम्यानां कर्मणां न्यासं संन्यासं कवयो विदुः ।\nसर्वकर्मफलत्यागं प्राहुस्त्यागं विचक्षणाः ॥ १८-२॥",
+   "roman": "śrībhagavānuvāca\nkāmyānāṃ karmaṇāṃ nyāsaṃ saṃnyāsaṃ kavayo viduḥ\nsarvakarmaphalatyāgaṃ prāhustyāgaṃ vicakṣaṇāḥ 18-2",
+   "colloquial": "shrii bhagavaan uvaacha\nkaamyaanaam karmanaam nyaasam samnyaasam kavayo viduh\nsarva karma phala tyaagam praahus tyaagam vichakshanaah 18-2",
+   "translation_reworded": "The Blessed Lord said: The Sages understand SAMNYASA to mean giving up actions driven by desire. The wise call giving up the fruits of all actions TYAAGA."
+  },
+  {
+   "key": "18.3",
+   "chapter": 18,
+   "verse": 3,
+   "title": "18.3 tyajyam dosha-vad",
+   "sanskrit": "त्याज्यं दोषवदित्येके कर्म प्राहुर्मनीषिणः ।\nयज्ञदानतपःकर्म न त्याज्यमिति चापरे ॥ १८-३॥",
+   "roman": "tyājyaṃ doṣavadityeke karma prāhurmanīṣiṇaḥ\nyajñadānatapaḥkarma na tyājyamiti cāpare 18-3",
+   "colloquial": "tyaajyam doshavad ityeke karma praahur maniishinah\nyajna daana tapah karma na tyaajyam iti cha apare 18-3",
+   "translation_reworded": "Some thinkers say that all action should be given up as something evil. Others say that acts of sacrifice, giving, and austerity should never be given up."
+  },
+  {
+   "key": "18.4",
+   "chapter": 18,
+   "verse": 4,
+   "title": "18.4 nishchayam shrinu",
+   "sanskrit": "निश्चयं श‍ृणु मे तत्र त्यागे भरतसत्तम ।\nत्यागो हि पुरुषव्याघ्र त्रिविधः सम्प्रकीर्तितः ॥ १८-४॥",
+   "roman": "niścayaṃ śṛṇu me tatra tyāge bharatasattama\ntyāgo hi puruṣavyāghra trividhaḥ samprakīrtitaḥ 18-4",
+   "colloquial": "nishchayam shrinu me tatra tyaage bharata sattama\ntyaago hi purusha vyaaghra trividhah samprakiirtitah 18-4",
+   "translation_reworded": "O best of the Bharatas, hear from Me the settled truth about this abandonment. Abandonment, O best of men, has indeed been described as being of three kinds."
+  },
+  {
+   "key": "18.5",
+   "chapter": 18,
+   "verse": 5,
+   "title": "18.5 yajna-dana-tapah-karma",
+   "sanskrit": "यज्ञदानतपःकर्म न त्याज्यं कार्यमेव तत् ।\nयज्ञो दानं तपश्चैव पावनानि मनीषिणाम् ॥ १८-५॥",
+   "roman": "yajñadānatapaḥkarma na tyājyaṃ kāryameva tat\nyajño dānaṃ tapaścaiva pāvanāni manīṣiṇām 18-5",
+   "colloquial": "yajna daana tapah karma na tyaajyam kaaryam eva tat\nyajnah daanam tapah cha eva paavanaani maniishinaam 18-5",
+   "translation_reworded": "Acts of sacrifice, charity, and austerity are not to be given up; they should be carried out. Worship, charity, and austerity purify even the wise."
+  },
+  {
+   "key": "18.6",
+   "chapter": 18,
+   "verse": 6,
+   "title": "18.6 etany api tu karmani",
+   "sanskrit": "एतान्यपि तु कर्माणि सङ्गं त्यक्त्वा फलानि च ।\nकर्तव्यानीति मे पार्थ निश्चितं मतमुत्तमम् ॥ १८-६॥",
+   "roman": "etānyapi tu karmāṇi saṅgaṃ tyaktvā phalāni ca\nkartavyānīti me pārtha niścitaṃ matamuttamam 18-6",
+   "colloquial": "etaani api tu karmaani sangam tyaktvaa phalaani cha\nkartavyaani iti me paartha nishchitam matam uttamam 18-6",
+   "translation_reworded": "Yet even these actions, O Partha, should be done after setting aside attachment and the desire for results. This is My firm and considered view."
+  },
+  {
+   "key": "18.7",
+   "chapter": 18,
+   "verse": 7,
+   "title": "18.7 niyatasya tu sannyasah",
+   "sanskrit": "नियतस्य तु संन्यासः कर्मणो नोपपद्यते ।\nमोहात्तस्य परित्यागस्तामसः परिकीर्तितः ॥ १८-७॥",
+   "roman": "niyatasya tu saṃnyāsaḥ karmaṇo nopapadyate\nmohāttasya parityāgastāmasaḥ parikīrtitaḥ 18-7",
+   "colloquial": "niyatasya tu samnyaasah karmano nopapadyate\nmohaat tasya parityaagah taamasah parikiirtitah 18-7",
+   "translation_reworded": "It is not right to give up actions that are obligatory. Giving them up out of delusion is said to be TAMASIC (dull)."
+  },
+  {
+   "key": "18.8",
+   "chapter": 18,
+   "verse": 8,
+   "title": "18.8 duhkham ity eva yat",
+   "sanskrit": "दुःखमित्येव यत्कर्म कायक्लेशभयात्त्यजेत् ।\nस कृत्वा राजसं त्यागं नैव त्यागफलं लभेत् ॥ १८-८॥",
+   "roman": "duḥkhamityeva yatkarma kāyakleśabhayāttyajet\nsa kṛtvā rājasaṃ tyāgaṃ naiva tyāgaphalaṃ labhet 18-8",
+   "colloquial": "duhkhamityeva yatkarma kaaya klesha bhayaat tyajet\nsa kritvaa raajasam tyaagam naiva tyaaga phalam labhet 18-8",
+   "translation_reworded": "The person who gives up action because it is painful, out of fear of physical hardship, performs a RAJASIC (passionate) abandonment and does not gain the fruit of abandonment."
+  },
+  {
+   "key": "18.9",
+   "chapter": 18,
+   "verse": 9,
+   "title": "18.9 karyam ity eva yat",
+   "sanskrit": "कार्यमित्येव यत्कर्म नियतं क्रियतेऽर्जुन ।\nसङ्गं त्यक्त्वा फलं चैव स त्यागः सात्त्विको मतः ॥ १८-९॥",
+   "roman": "kāryamityeva yatkarma niyataṃ kriyate'rjuna\nsaṅgaṃ tyaktvā phalaṃ caiva sa tyāgaḥ sāttviko mataḥ 18-9",
+   "colloquial": "kaaryam ity eva yat karma niyatam kriyate'rjuna\nsangam tyaktvaa phalam chaiva sa tyaagah saattvikah matah 18-9",
+   "translation_reworded": "O Arjuna, when an obligatory action is done simply because it ought to be done, with attachment and the desire for results both let go, that abandonment is considered SATTVIC (pure)."
+  },
+  {
+   "key": "18.10",
+   "chapter": 18,
+   "verse": 10,
+   "title": "18.10 na dveshty akushalam",
+   "sanskrit": "न द्वेष्ट्यकुशलं कर्म कुशले नानुषज्जते ।\nत्यागी सत्त्वसमाविष्टो मेधावी छिन्नसंशयः ॥ १८-१०॥",
+   "roman": "na dveṣṭyakuśalaṃ karma kuśale nānuṣajjate\ntyāgī sattvasamāviṣṭo medhāvī chinnasaṃśayaḥ 18-10",
+   "colloquial": "na dveshti akushalam karma kushale na anushajjate\ntyaagii sattva samaavishto medhaavii chinna samshayah 18-10",
+   "translation_reworded": "The one who abandons in this way, steeped in purity, intelligent, with every doubt cut away, neither dislikes unpleasant work nor clings to pleasant work."
+  },
+  {
+   "key": "18.11",
+   "chapter": 18,
+   "verse": 11,
+   "title": "18.11 na hi deha-bhrita",
+   "sanskrit": "न हि देहभृता शक्यं त्यक्तुं कर्माण्यशेषतः ।\nयस्तु कर्मफलत्यागी स त्यागीत्यभिधीयते ॥ १८-११॥",
+   "roman": "na hi dehabhṛtā śakyaṃ tyaktuṃ karmāṇyaśeṣataḥ\nyastu karmaphalatyāgī sa tyāgītyabhidhīyate 18-11",
+   "colloquial": "na hi deha bhritaa shakyam tyaktum karmaani asheshatah\nyastu karma phala tyaagii sa tyaagiitya bhidhiiyate 18-11",
+   "translation_reworded": "It is simply not possible for an embodied being to give up action completely. But the one who gives up the fruits of action is truly called a relinquisher (TYAAGI)."
+  },
+  {
+   "key": "18.12",
+   "chapter": 18,
+   "verse": 12,
+   "title": "18.12 anishtam ishtam mishram",
+   "sanskrit": "अनिष्टमिष्टं मिश्रं च त्रिविधं कर्मणः फलम् ।\nभवत्यत्यागिनां प्रेत्य न तु संन्यासिनां क्वचित् ॥ १८-१२॥",
+   "roman": "aniṣṭamiṣṭaṃ miśraṃ ca trividhaṃ karmaṇaḥ phalam\nbhavatyatyāgināṃ pretya na tu saṃnyāsināṃ kvacit 18-12",
+   "colloquial": "anishtamishtam mishram cha trividham karmanah phalam\nbhavati atyaaginaam pretya na tu samnyaasinaam kvachit 18-12",
+   "translation_reworded": "The threefold fruit of action, bad, good, and mixed, comes after death only to those who lack the spirit of abandonment. It never comes to those who have relinquished completely."
+  },
+  {
+   "key": "18.13",
+   "chapter": 18,
+   "verse": 13,
+   "title": "18.13 panchaitani maha-baho",
+   "sanskrit": "पञ्चैतानि महाबाहो कारणानि निबोध मे ।\nसाङ्ख्ये कृतान्ते प्रोक्तानि सिद्धये सर्वकर्मणाम् ॥ १८-१३॥",
+   "roman": "pañcaitāni mahābāho kāraṇāni nibodha me\nsāṅkhye kṛtānte proktāni siddhaye sarvakarmaṇām 18-13",
+   "colloquial": "pancha etaani mahaabaaho kaaranaani nibodha me\nsaankhye kritaante proktaani siddhaye sarva karmanaam 18-13",
+   "translation_reworded": "O mighty-armed one, learn from Me these five causes behind the accomplishment of every action, as set out in the SANKHYA (UPANISHAD) system, which is the culmination of all action."
+  },
+  {
+   "key": "18.14",
+   "chapter": 18,
+   "verse": 14,
+   "title": "18.14 adhishthanam tatha",
+   "sanskrit": "अधिष्ठानं तथा कर्ता करणं च पृथग्विधम् ।\nविविधाश्च पृथक्चेष्टा दैवं चैवात्र पञ्चमम् ॥ १८-१४॥",
+   "roman": "adhiṣṭhānaṃ tathā kartā karaṇaṃ ca pṛthagvidham\nvividhāśca pṛthakceṣṭā daivaṃ caivātra pañcamam 18-14",
+   "colloquial": "adhishthaanam tathaa kartaa karanam cha prithag vidham\nvividhaah cha prithak cheshtaa daivam cha eva atra panchamam 18-14",
+   "translation_reworded": "The seat (the body), the doer (the ego), the various organs of perception, the different functions of the various organs of action, and the presiding deity as the fifth."
+  },
+  {
+   "key": "18.15",
+   "chapter": 18,
+   "verse": 15,
+   "title": "18.15 sharira-van-manobhir",
+   "sanskrit": "शरीरवाङ्मनोभिर्यत्कर्म प्रारभते नरः ।\nन्याय्यं वा विपरीतं वा पञ्चैते तस्य हेतवः ॥ १८-१५॥",
+   "roman": "śarīravāṅmanobhiryat karma prārabhate naraḥ\nnyāyyaṃ vā viparītaṃ vā pañcaite tasya hetavaḥ 18-15",
+   "colloquial": "shariira vaan manobhir yat karma praarabhate narah\nnyaayyam vaa vipariitam vaa panchaite tasya hetavah 18-15",
+   "translation_reworded": "Whatever action a person carries out with body, speech, or mind, whether right or wrong, these five are its causes."
+  },
+  {
+   "key": "18.16",
+   "chapter": 18,
+   "verse": 16,
+   "title": "18.16 tatraivam sati kartaram",
+   "sanskrit": "तत्रैवं सति कर्तारमात्मानं केवलं तु यः ।\nपश्यत्यकृतबुद्धित्वान्न स पश्यति दुर्मतिः ॥ १८-१६॥",
+   "roman": "tatraivaṃ sati kartāramātmānaṃ kevalaṃ tu yaḥ\npaśyatyakṛtabuddhitvānna sa paśyati durmatiḥ 18-16",
+   "colloquial": "tatraivam sati kartaaram aatmaanam kevalam tu yah\npashyati akrita buddhi tvaanna sa pashyati durmatih 18-16",
+   "translation_reworded": "This being so, the person who, through an untrained understanding, regards his Self, which stands alone (never conditioned by the engine), as the doer, has a distorted intelligence and does not see."
+  },
+  {
+   "key": "18.17",
+   "chapter": 18,
+   "verse": 17,
+   "title": "18.17 yasya nahankrito bhavo",
+   "sanskrit": "यस्य नाहङ्कृतो भावो बुद्धिर्यस्य न लिप्यते ।\nहत्वाऽपि स इमाँल्लोकान्न हन्ति न निबध्यते ॥ १८-१७॥",
+   "roman": "yasya nāhaṅkṛto bhāvo buddhiryasya na lipyate\nhatvā'pi sa imām̐llokānna hanti na nibadhyate 18-17",
+   "colloquial": "yasya naahankrito bhaavo buddhir yasya na lipyate\nhatvaa'pi sa imaaml lokaan na hanti na nibadhyate 18-17",
+   "translation_reworded": "The one who is free from the sense of ego, whose intelligence is not stained (by good or evil), does not really slay even if he slays these people, nor is he bound (by the action)."
+  },
+  {
+   "key": "18.18",
+   "chapter": 18,
+   "verse": 18,
+   "title": "18.18 jnanam jneyam parijnata",
+   "sanskrit": "ज्ञानं ज्ञेयं परिज्ञाता त्रिविधा कर्मचोदना ।\nकरणं कर्म कर्तेति त्रिविधः कर्मसङ्ग्रहः ॥ १८-१८॥",
+   "roman": "jñānaṃ jñeyaṃ parijñātā trividhā karmacodanā\nkaraṇaṃ karma karteti trividhaḥ karmasaṅgrahaḥ 18-18",
+   "colloquial": "jnaanam jneyam parijnaataa trividhaa karma chodanaa\nkaranam karma kartaa iti trividhah karma sangrahah 18-18",
+   "translation_reworded": "Knowledge, the thing known, and the knower are the threefold impulse behind action. The organs, the action, and the agent are the threefold basis of action."
+  },
+  {
+   "key": "18.19",
+   "chapter": 18,
+   "verse": 19,
+   "title": "18.19 jnanam karma cha karta",
+   "sanskrit": "ज्ञानं कर्म च कर्ता च त्रिधैव गुणभेदतः ।\nप्रोच्यते गुणसङ्ख्याने यथावच्छृणु तान्यपि ॥ १८-१९॥",
+   "roman": "jñānaṃ karma ca kartā ca tridhaiva guṇabhedataḥ\nprocyate guṇasaṅkhyāne yathāvacchṛṇu tānyapi 18-19",
+   "colloquial": "jnaanam karma cha kartaa cha tridhaiva guna bhedatah\nprochyate guna sankhyaane yathaavat shrinu taani api 18-19",
+   "translation_reworded": "The Science of Temperaments (gunas) declares that knowledge, action, and the actor are each of three kinds only, according to the differences in temperament. Listen to these as well, in due order."
+  },
+  {
+   "key": "18.20",
+   "chapter": 18,
+   "verse": 20,
+   "title": "18.20 sarva-bhuteshu yenaikam",
+   "sanskrit": "सर्वभूतेषु येनैकं भावमव्ययमीक्षते ।\nअविभक्तं विभक्तेषु तज्ज्ञानं विद्धि सात्त्विकम् ॥ १८-२०॥",
+   "roman": "sarvabhūteṣu yenaikaṃ bhāvamavyayamīkṣate\navibhaktaṃ vibhakteṣu tajjñānaṃ viddhi sāttvikam 18-20",
+   "colloquial": "sarva bhuuteshu yena ekam bhaavam avyayam iikshate\navibhaktam vibhakteshu tat jnaanam viddhi saattvikam 18-20",
+   "translation_reworded": "The knowledge by which one sees the single indestructible reality in all beings, undivided within the divided, know that knowledge to be SATTVIC (Pure)."
+  },
+  {
+   "key": "18.21",
+   "chapter": 18,
+   "verse": 21,
+   "title": "18.21 prithaktvena tu yaj",
+   "sanskrit": "पृथक्त्वेन तु यज्ज्ञानं नानाभावान्पृथग्विधान् ।\nवेत्ति सर्वेषु भूतेषु तज्ज्ञानं विद्धि राजसम् ॥ १८-२१॥",
+   "roman": "pṛthaktvena tu yajjñānaṃ nānābhāvānpṛthagvidhān\nvetti sarveṣu bhūteṣu tajjñānaṃ viddhi rājasam 18-21",
+   "colloquial": "prithaktvena tu yajjnaanam naanaa bhaavaan prithag vidhaan\nvetti sarveshu bhuuteshu tajjnaanam viddhi raajasam 18-21",
+   "translation_reworded": "But the knowledge that sees in all beings separate entities of different kinds, distinct from one another, know that knowledge to be RAJASIC (Passionate)."
+  },
+  {
+   "key": "18.22",
+   "chapter": 18,
+   "verse": 22,
+   "title": "18.22 yat tu kritsna-vad",
+   "sanskrit": "यत्तु कृत्स्नवदेकस्मिन्कार्ये सक्तमहैतुकम् ।\nअतत्त्वार्थवदल्पं च तत्तामसमुदाहृतम् ॥ १८-२२॥",
+   "roman": "yattu kṛtsnavadekasminkārye saktamahaitukam\natattvārthavadalpaṃ ca tattāmasamudāhṛtam 18-22",
+   "colloquial": "yattu kritsnavad ekasmin kaarye saktam ahaitukam\natattvaarthavad alpam cha tat taamasam udaahritam 18-22",
+   "translation_reworded": "And the knowledge that fastens onto one single effect as though it were everything, without reason, without any basis in truth, and narrow, is said to be TAMASIC (Dull)."
+  },
+  {
+   "key": "18.23",
+   "chapter": 18,
+   "verse": 23,
+   "title": "18.23 niyatam sanga-rahitam",
+   "sanskrit": "नियतं सङ्गरहितमरागद्वेषतः कृतम् ।\nअफलप्रेप्सुना कर्म यत्तत्सात्त्विकमुच्यते ॥ १८-२३॥",
+   "roman": "niyataṃ saṅgarahitamarāgadveṣataḥ kṛtam\naphalaprepsunā karma yattatsāttvikamucyate 18-23",
+   "colloquial": "niyatam sanga rahitam araaga dveshatah kritam\naphala prepsunaa karma yat tat saattvikam uchyate 18-23",
+   "translation_reworded": "An action that is prescribed, free from attachment, done without liking or disliking by someone who does not want the result, is declared SATTVIC (pure)."
+  },
+  {
+   "key": "18.24",
+   "chapter": 18,
+   "verse": 24,
+   "title": "18.24 yat tu kamepsuna karma",
+   "sanskrit": "यत्तु कामेप्सुना कर्म साहङ्कारेण वा पुनः ।\nक्रियते बहुलायासं तद्राजसमुदाहृतम् ॥ १८-२४॥",
+   "roman": "yattu kāmepsunā karma sāhaṅkāreṇa vā punaḥ\nkriyate bahulāyāsaṃ tadrājasamudāhṛtam 18-24",
+   "colloquial": "yattu kaamepsunaa karma saahankaarena vaa punah\nkriyate bahulaayaasam tad raajasam udaahritam 18-24",
+   "translation_reworded": "But an action done by someone craving the satisfaction of desires or personal gain, done with egoism or with great strain, is declared RAJASIC (Passionate)."
+  },
+  {
+   "key": "18.25",
+   "chapter": 18,
+   "verse": 25,
+   "title": "18.25 anubandham kshayam",
+   "sanskrit": "अनुबन्धं क्षयं हिंसामनपेक्ष्य च पौरुषम् ।\nमोहादारभ्यते कर्म यत्तत्तामसमुच्यते ॥ १८-२५॥",
+   "roman": "anubandhaṃ kṣayaṃ hiṃsāmanapekṣya ca pauruṣam\nmohādārabhyate karma yattattāmasamucyate 18-25",
+   "colloquial": "anubandham kshayam himsaam anapekshya cha paurusham\nmohaad aarabhyate karma yat tat taamasam uchyate 18-25",
+   "translation_reworded": "An action undertaken out of delusion, with no thought for the consequences, the loss, the harm, or one's own ability, is declared TAMASIC (dull)."
+  },
+  {
+   "key": "18.26",
+   "chapter": 18,
+   "verse": 26,
+   "title": "18.26 mukta-sango naham-vadi",
+   "sanskrit": "मुक्तसङ्गोऽनहंवादी धृत्युत्साहसमन्वितः ।\nसिद्ध्यसिद्ध्योर्निर्विकारः कर्ता सात्त्विक उच्यते ॥ १८-२६॥",
+   "roman": "muktasaṅgo'nahaṃvādī dhṛtyutsāhasamanvitaḥ\nsiddhyasiddhyornirvikāraḥ kartā sāttvika ucyate 18-26",
+   "colloquial": "mukta sangah anahamvaadii dhriti utsaaha samanvitah\nsiddhi asiddhyor nirvikaarah kartaa saattvika uchyate 18-26",
+   "translation_reworded": "An agent who is free from attachment, without ego, full of steadiness and enthusiasm, and unmoved by success or failure is called SATTVIC (pure)."
+  },
+  {
+   "key": "18.27",
+   "chapter": 18,
+   "verse": 27,
+   "title": "18.27 ragi karma-phala-prepsur",
+   "sanskrit": "रागी कर्मफलप्रेप्सुर्लुब्धो हिंसात्मकोऽशुचिः ।\nहर्षशोकान्वितः कर्ता राजसः परिकीर्तितः ॥ १८-२७॥",
+   "roman": "rāgī karmaphalaprepsurlubdho hiṃsātmako'śuciḥ\nharṣaśokānvitaḥ kartā rājasaḥ parikīrtitaḥ 18-27",
+   "colloquial": "raagii karma phala prepsur lubdho himsaatmako'shuchih\nharsha shoka anvitah kartaa raajasah parikiirtitah 18-27",
+   "translation_reworded": "An agent who is passionate, eager for the fruits of actions, greedy, harmful, impure, and swinging between joy and grief is said to be RAJASIC (passionate)."
+  },
+  {
+   "key": "18.28",
+   "chapter": 18,
+   "verse": 28,
+   "title": "18.28 ayuktah prakritah",
+   "sanskrit": "अयुक्तः प्राकृतः स्तब्धः शठो नैष्कृतिकोऽलसः ।\nविषादी दीर्घसूत्री च कर्ता तामस उच्यते ॥ १८-२८॥",
+   "roman": "ayuktaḥ prākṛtaḥ stabdhaḥ śaṭho naiṣkṛtiko'lasaḥ\nviṣādī dīrghasūtrī ca kartā tāmasa ucyate 18-28",
+   "colloquial": "ayuktah praakritah stabdhah shathah naishkritikah alasah\nvishaadii diirgha suutrii cha kartaa taamasa uchyate 18-28",
+   "translation_reworded": "An agent who is unsteady, coarse, stubborn, deceitful, spiteful, lazy, gloomy, and given to putting things off is said to be TAMASIC (Dull)."
+  },
+  {
+   "key": "18.29",
+   "chapter": 18,
+   "verse": 29,
+   "title": "18.29 buddher bhedam dhritesh",
+   "sanskrit": "बुद्धेर्भेदं धृतेश्चैव गुणतस्त्रिविधं श‍ृणु ।\nप्रोच्यमानमशेषेण पृथक्त्वेन धनञ्जय ॥ १८-२९॥",
+   "roman": "buddherbhedaṃ dhṛteścaiva guṇatastrividhaṃ śṛṇu\nprocyamānamaśeṣeṇa pṛthaktvena dhanañjaya 18-29",
+   "colloquial": "buddher bhedam dhritesh chaiva gunatas trividham shrinu\nprochyamaanam asheshena prithaktvena dhananjaya 18-29",
+   "translation_reworded": "O Dhananjaya, hear the threefold division of understanding and of fortitude according to the qualities, as I set them out fully and one by one."
+  },
+  {
+   "key": "18.30",
+   "chapter": 18,
+   "verse": 30,
+   "title": "18.30 pravrittim cha nivrittim",
+   "sanskrit": "प्रवृत्तिं च निवृत्तिं च कार्याकार्ये भयाभये ।\nबन्धं मोक्षं च या वेत्ति बुद्धिः सा पार्थ सात्त्विकी ॥ १८-३०॥",
+   "roman": "pravṛttiṃ ca nivṛttiṃ ca kāryākārye bhayābhaye\nbandhaṃ mokṣaṃ ca yā vetti buddhiḥ sā pārtha sāttvikī 18-30",
+   "colloquial": "pravrittim cha nivrittim cha kaarya akaarye bhaya abhaye\nbandham moksham cha yaa vetti buddhih saa paartha saattvikii 18-30",
+   "translation_reworded": "O Partha, the understanding that knows the paths of work and renunciation, what should and should not be done, fear and fearlessness, bondage and liberation, is SATTVIC (pure)."
+  },
+  {
+   "key": "18.31",
+   "chapter": 18,
+   "verse": 31,
+   "title": "18.31 yaya dharmam adharmam",
+   "sanskrit": "यया धर्ममधर्मं च कार्यं चाकार्यमेव च ।\nअयथावत्प्रजानाति बुद्धिः सा पार्थ राजसी ॥ १८-३१॥",
+   "roman": "yayā dharmamadharmaṃ ca kāryaṃ cākāryameva ca\nayathāvatprajānāti buddhiḥ sā pārtha rājasī 18-31",
+   "colloquial": "yayaa dharma madharmam cha kaaryam cha akaaryam eva cha\nayathaavat prajaanaati buddhih saa paartha raajasii 18-31",
+   "translation_reworded": "O Partha, the intellect (understanding) through which one misjudges DHARMA and ADHARMA, and also what should and should not be done, is RAJASIC (passionate)."
+  },
+  {
+   "key": "18.32",
+   "chapter": 18,
+   "verse": 32,
+   "title": "18.32 adharmam dharmam iti",
+   "sanskrit": "अधर्मं धर्ममिति या मन्यते तमसावृता ।\nसर्वार्थान्विपरीतांश्च बुद्धिः सा पार्थ तामसी ॥ १८-३२॥",
+   "roman": "adharmaṃ dharmamiti yā manyate tamasāvṛtā\nsarvārthānviparītāṃśca buddhiḥ sā pārtha tāmasī 18-32",
+   "colloquial": "adharmam dharmam iti yaa manyate tamasaavritaa\nsarva arthaan vipariitaamsh cha buddhih saa paartha taamasii 18-32",
+   "translation_reworded": "O Partha, the intellect (understanding) that, wrapped in darkness, takes ADHARMA for DHARMA and sees everything upside down, is TAMASIC (dull)."
+  },
+  {
+   "key": "18.33",
+   "chapter": 18,
+   "verse": 33,
+   "title": "18.33 dhritya yaya dharayate",
+   "sanskrit": "धृत्या यया धारयते मनःप्राणेन्द्रियक्रियाः ।\nयोगेनाव्यभिचारिण्या धृतिः सा पार्थ सात्त्विकी ॥ १८-३३॥",
+   "roman": "dhṛtyā yayā dhārayate manaḥprāṇendriyakriyāḥ\nyogenāvyabhicāriṇyā dhṛtiḥ sā pārtha sāttvikī 18-33",
+   "colloquial": "dhrityaa yayaa dhaarayate manah praana indriya kriyaah\nyogena avyabhichaarinyaa dhritih saa paartha saattvikii 18-33",
+   "translation_reworded": "O Partha, the unwavering fortitude by which, through YOGA, the activities of the mind, the PRANA, and the senses are held in check is SATTVIC (pure)."
+  },
+  {
+   "key": "18.34",
+   "chapter": 18,
+   "verse": 34,
+   "title": "18.34 yaya tu dharma",
+   "sanskrit": "यया तु धर्मकामार्थान्धृत्या धारयतेऽर्जुन ।\nप्रसङ्गेन फलाकाङ्क्षी धृतिः सा पार्थ राजसी ॥ १८-३४॥",
+   "roman": "yayā tu dharmakāmārthāndhṛtyā dhārayate'rjuna\nprasaṅgena phalākāṅkṣī dhṛtiḥ sā pārtha rājasī 18-34",
+   "colloquial": "yayaa tu dharma kaama arthaan dhrityaa dhaarayate'rjuna\nprasangena phala aakaankshii dhritih saa paartha raajasii 18-34",
+   "translation_reworded": "But, O Arjuna, the fortitude by which one clings to duty, pleasure, and wealth out of attachment and craving for the fruits of actions, that fortitude, O Partha, is RAJASIC (passionate)."
+  },
+  {
+   "key": "18.35",
+   "chapter": 18,
+   "verse": 35,
+   "title": "18.35 yaya svapnam bhayam",
+   "sanskrit": "यया स्वप्नं भयं शोकं विषादं मदमेव च ।\nन विमुञ्चति दुर्मेधा धृतिः सा पार्थ तामसी ॥ १८-३५॥",
+   "roman": "yayā svapnaṃ bhayaṃ śokaṃ viṣādaṃ madameva ca\nna vimuñcati durmedhā dhṛtiḥ sā pārtha tāmasī 18-35",
+   "colloquial": "yayaa svapnam bhayam shokam vishaadam madameva cha\nna vimunchati durmedhaa dhritih saa paartha taamasii 18-35",
+   "translation_reworded": "O Partha, the persistence by which a foolish person refuses to let go of sleep, fear, grief, depression, and also arrogance (conceit), that fortitude is TAMASIC (dull)."
+  },
+  {
+   "key": "18.36",
+   "chapter": 18,
+   "verse": 36,
+   "title": "18.36 sukham tv idanim",
+   "sanskrit": "सुखं त्विदानीं त्रिविधं श‍ृणु मे भरतर्षभ ।\nअभ्यासाद्रमते यत्र दुःखान्तं च निगच्छति ॥ १८-३६॥",
+   "roman": "sukhaṃ tvidānīṃ trividhaṃ śṛṇu me bharatarṣabha\nabhyāsādramate yatra duḥkhāntaṃ ca nigacchati 18-36",
+   "colloquial": "sukham tvidaaniim trividham shrinu me bharatarshabha\nabhyaasaat ramate yatra duhkhaantam cha nigacchati 18-36",
+   "translation_reworded": "And now, O best of the Bharatas, hear from Me about the three kinds of pleasure, in which one takes delight through practice and so surely comes to the end of pain."
+  },
+  {
+   "key": "18.37",
+   "chapter": 18,
+   "verse": 37,
+   "title": "18.37 yat tad agre visham",
+   "sanskrit": "यत्तदग्रे विषमिव परिणामेऽमृतोपमम् ।\nतत्सुखं सात्त्विकं प्रोक्तमात्मबुद्धिप्रसादजम् ॥ १८-३७॥",
+   "roman": "yattadagre viṣamiva pariṇāme'mṛtopamam\ntatsukhaṃ sāttvikaṃ proktamātmabuddhiprasādajam 18-37",
+   "colloquial": "yattadagre visham iva parinaame'mritopamam\ntatsukham saattvikam proktam aatma buddhi prasaadajam 18-37",
+   "translation_reworded": "The pleasure that seems like poison at first but is like nectar in the end is declared SATTVIC (pure). It is born of the purity of one's own mind that comes from Self-realisation."
+  },
+  {
+   "key": "18.38",
+   "chapter": 18,
+   "verse": 38,
+   "title": "18.38 vishayendriya-sanyogad",
+   "sanskrit": "विषयेन्द्रियसंयोगाद्यत्तदग्रेऽमृतोपमम् ।\nपरिणामे विषमिव तत्सुखं राजसं स्मृतम् ॥ १८-३८॥",
+   "roman": "viṣayendriyasaṃyogādyat tadagre'mṛtopamam\npariṇāme viṣamiva tatsukhaṃ rājasaṃ smṛtam 18-38",
+   "colloquial": "vishaya indriya samyogaad yat tad agre 'mrita upamam\nparinaame visham iva tat sukham raajasam smritam 18-38",
+   "translation_reworded": "The pleasure that comes from contact between the sense organs and their objects, which is like nectar at first but like poison in the end, is declared RAJASIC (passionate)."
+  },
+  {
+   "key": "18.39",
+   "chapter": 18,
+   "verse": 39,
+   "title": "18.39 yad agre chanubandhe",
+   "sanskrit": "यदग्रे चानुबन्धे च सुखं मोहनमात्मनः ।\nनिद्रालस्यप्रमादोत्थं तत्तामसमुदाहृतम् ॥ १८-३९॥",
+   "roman": "yadagre cānubandhe ca sukhaṃ mohanamātmanaḥ\nnidrālasyapramādotthaṃ tattāmasamudāhṛtam 18-39",
+   "colloquial": "yadagre chaanubandhe cha sukham mohanam aatmanah\nnidraalasya pramaada uttham tat taamasa mudaahritam 18-39",
+   "translation_reworded": "The pleasure that deludes the Self both at the start and afterwards, arising from sleep, laziness, and carelessness, is declared TAMASIC (Dull)."
+  },
+  {
+   "key": "18.40",
+   "chapter": 18,
+   "verse": 40,
+   "title": "18.40 na tad asti prithivyam",
+   "sanskrit": "न तदस्ति पृथिव्यां वा दिवि देवेषु वा पुनः ।\nसत्त्वं प्रकृतिजैर्मुक्तं यदेभिः स्यात्त्रिभिर्गुणैः ॥ १८-४०॥",
+   "roman": "na tadasti pṛthivyāṃ vā divi deveṣu vā punaḥ\nsattvaṃ prakṛtijairmuktaṃ yadebhiḥ syāttribhirguṇaiḥ 18-40",
+   "colloquial": "na tadasti prithivyaam vaa divi deveshu vaa punah\nsattvam prakriti jair muktam yad ebhih syaat tribhir gunaih 18-40",
+   "translation_reworded": "There is no being on earth, nor even in heaven among the DEVAS (heavenly beings), who is completely free from the three qualities born of PRAKRITI (matter)."
+  },
+  {
+   "key": "18.41",
+   "chapter": 18,
+   "verse": 41,
+   "title": "18.41 brahmana-kshatriya-visham",
+   "sanskrit": "ब्राह्मणक्षत्रियविशां शूद्राणां च परन्तप ।\nकर्माणि प्रविभक्तानि स्वभावप्रभवैर्गुणैः ॥ १८-४१॥",
+   "roman": "brāhmaṇakṣatriyaviśāṃ śūdrāṇāṃ ca parantapa\nkarmāṇi pravibhaktāni svabhāvaprabhavairguṇaiḥ 18-41",
+   "colloquial": "braahmana kshatriya vishaam shuudraanaam cha parantapa\nkarmaani pravibhaktaani svabhaava prabhavaih gunaih 18-41",
+   "translation_reworded": "O Parantapa, the duties of scholars (BRAHMANAS), of leaders (KSHATRIYAS), of traders (VAISHYAS), and also of workers (SHUDRAS) are allotted according to the qualities that arise from their own nature."
+  },
+  {
+   "key": "18.42",
+   "chapter": 18,
+   "verse": 42,
+   "title": "18.42 shamo damas tapah",
+   "sanskrit": "शमो दमस्तपः शौचं क्षान्तिरार्जवमेव च ।\nज्ञानं विज्ञानमास्तिक्यं ब्रह्मकर्म स्वभावजम् ॥ १८-४२॥",
+   "roman": "śamo damastapaḥ śaucaṃ kṣāntirārjavameva ca\njñānaṃ vijñānamāstikyaṃ brahmakarma svabhāvajam 18-42",
+   "colloquial": "shamah damah tapah shaucham kshaantih aarjavam eva cha\njnaanam vijnaanam aastikyam brahma karma svabhaavajam 18-42",
+   "translation_reworded": "Calmness, self-control, austerity, purity, forgiveness, and also honesty, knowledge, realisation, and belief in God are the duties of the BRAHMANAS, born of (their own) nature."
+  },
+  {
+   "key": "18.43",
+   "chapter": 18,
+   "verse": 43,
+   "title": "18.43 shauryam tejo dhritir",
+   "sanskrit": "शौर्यं तेजो धृतिर्दाक्ष्यं युद्धे चाप्यपलायनम् ।\nदानमीश्वरभावश्च क्षात्रं कर्म स्वभावजम् ॥ १८-४३॥",
+   "roman": "śauryaṃ tejo dhṛtirdākṣyaṃ yuddhe cāpyapalāyanam\ndānamīśvarabhāvaśca kṣātraṃ karma svabhāvajam 18-43",
+   "colloquial": "shauryam tejo dhritih daakshyam yuddhe cha api apalaayanam\ndaanam iishvara bhaavah cha kshaatram karma svabhaavajam 18-43",
+   "translation_reworded": "Courage, brilliance, steadiness, skill, not running from battle, generosity, and leadership are the duties of the KSHATRIYAS, born of (their own) nature."
+  },
+  {
+   "key": "18.44",
+   "chapter": 18,
+   "verse": 44,
+   "title": "18.44 krishi-gau-rakshya",
+   "sanskrit": "कृषिगौरक्ष्यवाणिज्यं वैश्यकर्म स्वभावजम् ।\nपरिचर्यात्मकं कर्म शूद्रस्यापि स्वभावजम् ॥ १८-४४॥",
+   "roman": "kṛṣigaurakṣyavāṇijyaṃ vaiśyakarma svabhāvajam\nparicaryātmakaṃ karma śūdrasyāpi svabhāvajam 18-44",
+   "colloquial": "krishi gaurakshya vaanijyam vaishya karma svabhaavajam\nparicharyaatmakam karma shuudrasya api svabhaavajam 18-44",
+   "translation_reworded": "Farming, raising cattle, and trade are the duties of the VAISHYAS, born of (their own) nature. Service is the duty of the SHUDRAS, born of (their own) nature."
+  },
+  {
+   "key": "18.45",
+   "chapter": 18,
+   "verse": 45,
+   "title": "18.45 sve sve karmany",
+   "sanskrit": "स्वे स्वे कर्मण्यभिरतः संसिद्धिं लभते नरः ।\nस्वकर्मनिरतः सिद्धिं यथा विन्दति तच्छृणु ॥ १८-४५॥",
+   "roman": "sve sve karmaṇyabhirataḥ saṃsiddhiṃ labhate naraḥ\nsvakarmanirataḥ siddhiṃ yathā vindati tacchṛṇu 18-45",
+   "colloquial": "sve sve karmany abhiratah samsiddhim labhate narah\nsvakarma niratah siddhim yathaa vindati tac chrinu 18-45",
+   "translation_reworded": "By devoting himself to his own duty, a person reaches Perfection. Listen to how he reaches Perfection while engaged in his own duty."
+  },
+  {
+   "key": "18.46",
+   "chapter": 18,
+   "verse": 46,
+   "title": "18.46 yatah pravrittir",
+   "sanskrit": "यतः प्रवृत्तिर्भूतानां येन सर्वमिदं ततम् ।\nस्वकर्मणा तमभ्यर्च्य सिद्धिं विन्दति मानवः ॥ १८-४६॥",
+   "roman": "yataḥ pravṛttirbhūtānāṃ yena sarvamidaṃ tatam\nsvakarmaṇā tamabhyarcya siddhiṃ vindati mānavaḥ 18-46",
+   "colloquial": "yatah pravrittih bhuutaanaam yena sarvam idam tatam\nsvakarmanaa tam abhyarchya siddhim vindati maanavah 18-46",
+   "translation_reworded": "By worshipping, through his own duty, the One from whom all beings have evolved and by whom all this is pervaded, a person reaches Perfection."
+  },
+  {
+   "key": "18.47",
+   "chapter": 18,
+   "verse": 47,
+   "title": "18.47 shreyan sva-dharmo",
+   "sanskrit": "श्रेयान्स्वधर्मो विगुणः परधर्मात्स्वनुष्ठितात् ।\nस्वभावनियतं कर्म कुर्वन्नाप्नोति किल्बिषम् ॥ १८-४७॥",
+   "roman": "śreyānsvadharmo viguṇaḥ paradharmātsvanuṣṭhitāt\nsvabhāvaniyataṃ karma kurvannāpnoti kilbiṣam 18-47",
+   "colloquial": "shreyaan svadharmo vigunah paradharmaat svanushthitaat\nsvabhaava niyatam karma kurvan naapnoti kilbisham 18-47",
+   "translation_reworded": "One's own duty, even when it lacks merit, is better than another's duty done well. The one who does the duty set by his own nature incurs no sin."
+  },
+  {
+   "key": "18.48",
+   "chapter": 18,
+   "verse": 48,
+   "title": "18.48 saha-jam karma",
+   "sanskrit": "सहजं कर्म कौन्तेय सदोषमपि न त्यजेत् ।\nसर्वारम्भा हि दोषेण धूमेनाग्निरिवावृताः ॥ १८-४८॥",
+   "roman": "sahajaṃ karma kaunteya sadoṣamapi na tyajet\nsarvārambhā hi doṣeṇa dhūmenāgnirivāvṛtāḥ 18-48",
+   "colloquial": "sahajam karma kaunteya sadosham api na tyajet\nsarva aarambhaa hi doshena dhuumena agnih iva aavritaah 18-48",
+   "translation_reworded": "O Kaunteya, one should not give up the duty one is born to, even if it has faults. For is not every undertaking wrapped in some evil, just as fire is wrapped in smoke?"
+  },
+  {
+   "key": "18.49",
+   "chapter": 18,
+   "verse": 49,
+   "title": "18.49 asakta-buddhih sarvatra",
+   "sanskrit": "असक्तबुद्धिः सर्वत्र जितात्मा विगतस्पृहः ।\nनैष्कर्म्यसिद्धिं परमां संन्यासेनाधिगच्छति ॥ १८-४९॥",
+   "roman": "asaktabuddhiḥ sarvatra jitātmā vigataspṛhaḥ\nnaiṣkarmyasiddhiṃ paramāṃ saṃnyāsenādhigacchati 18-49",
+   "colloquial": "asakta buddhih sarvatra jitaatmaa vigata sprihah\nnaishkarmya siddhim paramaam samnyaasena adhigacchati 18-49",
+   "translation_reworded": "The one whose intellect is unattached in every situation, who has mastered himself, and from whom desire has gone, reaches through renunciation the Supreme State of Freedom from action."
+  },
+  {
+   "key": "18.50",
+   "chapter": 18,
+   "verse": 50,
+   "title": "18.50 siddhim prapto yatha",
+   "sanskrit": "सिद्धिं प्राप्तो यथा ब्रह्म तथाप्नोति निबोध मे ।\nसमासेनैव कौन्तेय निष्ठा ज्ञानस्य या परा ॥ १८-५०॥",
+   "roman": "siddhiṃ prāpto yathā brahma tathāpnoti nibodha me\nsamāsenaiva kaunteya niṣṭhā jñānasya yā parā 18-50",
+   "colloquial": "siddhim praapto yathaa brahma tathaapnoti nibodha me\nsamaasenaiva kaunteya nishthaa jnaanasya yaa paraa 18-50",
+   "translation_reworded": "O Kaunteya, learn from Me in brief how the person who has reached perfection attains BRAHMAN (the Eternal), that Supreme State of Knowledge."
+  },
+  {
+   "key": "18.51",
+   "chapter": 18,
+   "verse": 51,
+   "title": "18.51 buddhya vishuddhaya",
+   "sanskrit": "बुद्ध्या विशुद्धया युक्तो धृत्यात्मानं नियम्य च ।\nशब्दादीन्विषयांस्त्यक्त्वा रागद्वेषौ व्युदस्य च ॥ १८-५१॥",
+   "roman": "buddhyā viśuddhayā yukto dhṛtyātmānaṃ niyamya ca\nśabdādīnviṣayāṃstyaktvā rāgadveṣau vyudasya ca 18-51",
+   "colloquial": "buddhyaa vishuddhayaa yukto dhrityaatmaanam niyamya cha\nshabdaadiin vishayaams tyaktvaa raagadveshau vyudasya cha 18-51",
+   "translation_reworded": "Possessing a pure intellect, controlling the self with steadiness, letting go of sound and the other sense objects, and casting off attraction and hatred;"
+  },
+  {
+   "key": "18.52",
+   "chapter": 18,
+   "verse": 52,
+   "title": "18.52 vivikta-sevi laghvashi",
+   "sanskrit": "विविक्तसेवी लघ्वाशी यतवाक्कायमानसः ।\nध्यानयोगपरो नित्यं वैराग्यं समुपाश्रितः ॥ १८-५२॥",
+   "roman": "viviktasevī laghvāśī yatavākkāyamānasaḥ\ndhyānayogaparo nityaṃ vairāgyaṃ samupāśritaḥ 18-52",
+   "colloquial": "vivikta sevii laghu aashii yata vaak kaaya maanasah\ndhyaana yoga parah nityam vairaagyam sam upaashritah 18-52",
+   "translation_reworded": "living in solitude, eating little, with speech, body, and mind under control, always engaged in meditation and concentration, and taking shelter in dispassion;"
+  },
+  {
+   "key": "18.53",
+   "chapter": 18,
+   "verse": 53,
+   "title": "18.53 ahankaram balam darpam",
+   "sanskrit": "अहङ्कारं बलं दर्पं कामं क्रोधं परिग्रहम् ।\nविमुच्य निर्ममः शान्तो ब्रह्मभूयाय कल्पते ॥ १८-५३॥",
+   "roman": "ahaṅkāraṃ balaṃ darpaṃ kāmaṃ krodhaṃ parigraham\nvimucya nirmamaḥ śānto brahmabhūyāya kalpate 18-53",
+   "colloquial": "ahankaaram balam darpam kaamam krodham parigraham\nvimuchya nirmamah shaanto brahma bhuuyaaya kalpate 18-53",
+   "translation_reworded": "having given up egoism, power, arrogance, desire, anger, and the drive to possess, free from any sense of \"mine,\" and therefore at peace, he is fit to become BRAHMAN."
+  },
+  {
+   "key": "18.54",
+   "chapter": 18,
+   "verse": 54,
+   "title": "18.54 brahma-bhutah prasannatma",
+   "sanskrit": "ब्रह्मभूतः प्रसन्नात्मा न शोचति न काङ्क्षति ।\nसमः सर्वेषु भूतेषु मद्भक्तिं लभते पराम् ॥ १८-५४॥",
+   "roman": "brahmabhūtaḥ prasannātmā na śocati na kāṅkṣati\nsamaḥ sarveṣu bhūteṣu madbhaktiṃ labhate parām 18-54",
+   "colloquial": "brahma bhuutah prasanna aatmaa na shochati na kaankshati\nsamah sarveshu bhuuteshu mad bhaktim labhate paraam 18-54",
+   "translation_reworded": "Having become BRAHMAN, calm in the Self, he neither grieves nor craves. Treating all beings alike, he gains supreme devotion to Me."
+  },
+  {
+   "key": "18.55",
+   "chapter": 18,
+   "verse": 55,
+   "title": "18.55 bhaktya mam abhijanati",
+   "sanskrit": "भक्त्या मामभिजानाति यावान्यश्चास्मि तत्त्वतः ।\nततो मां तत्त्वतो ज्ञात्वा विशते तदनन्तरम् ॥ १८-५५॥",
+   "roman": "bhaktyā māmabhijānāti yāvānyaścāsmi tattvataḥ\ntato māṃ tattvato jñātvā viśate tadanantaram 18-55",
+   "colloquial": "bhaktyaa maam abhijaanaati yaavaan yah cha asmi tattvatah\ntato maam tattvato jnaatvaa vishate tad anantaram 18-55",
+   "translation_reworded": "Through devotion he comes to know Me in Essence, what I am and who I am. Then, having known Me in My Essence, he enters the Supreme straight away."
+  },
+  {
+   "key": "18.56",
+   "chapter": 18,
+   "verse": 56,
+   "title": "18.56 sarva-karmany api",
+   "sanskrit": "सर्वकर्माण्यपि सदा कुर्वाणो मद्व्यपाश्रयः ।\nमत्प्रसादादवाप्नोति शाश्वतं पदमव्ययम् ॥ १८-५६॥",
+   "roman": "sarvakarmāṇyapi sadā kurvāṇo madvyapāśrayaḥ\nmatprasādādavāpnoti śāśvataṃ padamavyayam 18-56",
+   "colloquial": "sarva karmaani api sadaa kurvaano mad vyapaashrayah\nmat prasaadaat avaapnoti shaashvatam padam avyayam 18-56",
+   "translation_reworded": "Performing all actions while always taking shelter in Me, he gains by My grace the Eternal, Indestructible State or Abode."
+  },
+  {
+   "key": "18.57",
+   "chapter": 18,
+   "verse": 57,
+   "title": "18.57 chetasa sarva-karmani",
+   "sanskrit": "चेतसा सर्वकर्माणि मयि संन्यस्य मत्परः ।\nबुद्धियोगमुपाश्रित्य मच्चित्तः सततं भव ॥ १८-५७॥",
+   "roman": "cetasā sarvakarmāṇi mayi saṃnyasya matparaḥ\nbuddhiyogamupāśritya maccittaḥ satataṃ bhava 18-57",
+   "colloquial": "chetasaa sarva karmaani mayi samnyasya mat parah\nbuddhi yogam upaashritya mat chittah satatam bhava 18-57",
+   "translation_reworded": "Giving up all actions to Me in your mind, holding Me as the Highest Goal, and relying on the YOGA of discrimination, keep your mind fixed on Me always."
+  },
+  {
+   "key": "18.58",
+   "chapter": 18,
+   "verse": 58,
+   "title": "18.58 mach-chittah sarva-durgani",
+   "sanskrit": "मच्चित्तः सर्वदुर्गाणि मत्प्रसादात्तरिष्यसि ।\nअथ चेत्त्वमहङ्कारान्न श्रोष्यसि विनङ्क्ष्यसि ॥ १८-५८॥",
+   "roman": "maccittaḥ sarvadurgāṇi matprasādāttariṣyasi\natha cettvamahaṅkārānna śroṣyasi vinaṅkṣyasi 18-58",
+   "colloquial": "macchittah sarva durgaani matprasaadaat tarishyasi\natha chet tvam ahankaaraan na shroshyasi vinankshyasi 18-58",
+   "translation_reworded": "With your mind fixed on Me, you will overcome every obstacle by My grace. But if, out of egoism, you refuse to listen to Me, you will be destroyed."
+  },
+  {
+   "key": "18.59",
+   "chapter": 18,
+   "verse": 59,
+   "title": "18.59 yad ahankaram ashritya",
+   "sanskrit": "यदहङ्कारमाश्रित्य न योत्स्य इति मन्यसे ।\nमिथ्यैष व्यवसायस्ते प्रकृतिस्त्वां नियोक्ष्यति ॥ १८-५९॥",
+   "roman": "yadahaṅkāramāśritya na yotsya iti manyase\nmithyaiṣa vyavasāyaste prakṛtistvāṃ niyokṣyati 18-59",
+   "colloquial": "yad ahankaaram aashritya na yotsya iti manyase\nmithyaa esha vyavasaayas te prakritis tvaam niyokshyati 18-59",
+   "translation_reworded": "If, filled with egoism, you think, \"I will not fight,\" that resolve of yours is pointless, for your nature will force you."
+  },
+  {
+   "key": "18.60",
+   "chapter": 18,
+   "verse": 60,
+   "title": "18.60 svbhava-jena kaunteya",
+   "sanskrit": "स्वभावजेन कौन्तेय निबद्धः स्वेन कर्मणा ।\nकर्तुं नेच्छसि यन्मोहात्करिष्यस्यवशोऽपि तत् ॥ १८-६०॥",
+   "roman": "svabhāvajena kaunteya nibaddhaḥ svena karmaṇā\nkartuṃ necchasi yanmohātkariṣyasyavaśo'pi tat 18-60",
+   "colloquial": "svabhaavajena kaunteya nibaddhah svena karmanaa\nkartum necchasi yan mohaat karishyasi avasho'pi tat 18-60",
+   "translation_reworded": "O son of Kunti, bound by your own KARMA (action), which springs from your own nature, you will helplessly do even the very thing that, through delusion, you do not wish to do."
+  },
+  {
+   "key": "18.61",
+   "chapter": 18,
+   "verse": 61,
+   "title": "18.61 ishvarah sarva-bhutanam",
+   "sanskrit": "ईश्वरः सर्वभूतानां हृद्देशेऽर्जुन तिष्ठति ।\nभ्रामयन्सर्वभूतानि यन्त्रारूढानि मायया ॥ १८-६१॥",
+   "roman": "īśvaraḥ sarvabhūtānāṃ hṛddeśe'rjuna tiṣṭhati\nbhrāmayansarvabhūtāni yantrārūḍhāni māyayā 18-61",
+   "colloquial": "iishvarah sarva bhuutaanaam hrid deshe'rjuna tishthati\nbhraamayan sarva bhuutaani yantra aaruudhaani maayayaa 18-61",
+   "translation_reworded": "O Arjuna, the Lord lives in the hearts of all beings, and through His power of illusion He sets every being turning, as though it were mounted on a machine."
+  },
+  {
+   "key": "18.62",
+   "chapter": 18,
+   "verse": 62,
+   "title": "18.62 tam eva sharanam",
+   "sanskrit": "तमेव शरणं गच्छ सर्वभावेन भारत ।\nतत्प्रसादात्परां शान्तिं स्थानं प्राप्स्यसि शाश्वतम् ॥ १८-६२॥",
+   "roman": "tameva śaraṇaṃ gaccha sarvabhāvena bhārata\ntatprasādātparāṃ śāntiṃ sthānaṃ prāpsyasi śāśvatam 18-62",
+   "colloquial": "tameva sharanam gaccha sarva bhaavena bhaarata\ntat prasaadaat paraam shaantim sthaanam praapsyasi shaashvatam 18-62",
+   "translation_reworded": "Take shelter in Him with your whole being, O Bharata. Through His grace you will gain Supreme Peace and the Eternal Abode."
+  },
+  {
+   "key": "18.63",
+   "chapter": 18,
+   "verse": 63,
+   "title": "18.63 iti te jnanam akhyatam",
+   "sanskrit": "इति ते ज्ञानमाख्यातं गुह्याद्गुह्यतरं मया ।\nविमृश्यैतदशेषेण यथेच्छसि तथा कुरु ॥ १८-६३॥",
+   "roman": "iti te jñānamākhyātaṃ guhyādguhyataraṃ mayā\nvimṛśyaitadaśeṣeṇa yathecchasi tathā kuru 18-63",
+   "colloquial": "iti te jnaanam aakhyaatam guhyaad guhyataram mayaa\nvimrishya etad asheshena yathaa icchasi tathaa kuru 18-63",
+   "translation_reworded": "So I have revealed to you this Wisdom, a secret deeper than every other secret. Think it over completely, and then act however you choose."
+  },
+  {
+   "key": "18.64",
+   "chapter": 18,
+   "verse": 64,
+   "title": "18.64 sarva-guhyatamam bhuyah",
+   "sanskrit": "सर्वगुह्यतमं भूयः श‍ृणु मे परमं वचः ।\nइष्टोऽसि मे दृढमिति ततो वक्ष्यामि ते हितम् ॥ १८-६४॥",
+   "roman": "sarvaguhyatamaṃ bhūyaḥ śṛṇu me paramaṃ vacaḥ\niṣṭo'si me dṛḍhamiti tato vakṣyāmi te hitam 18-64",
+   "colloquial": "sarva guhyatamam bhuuyah shrinu me paramam vachah\nishto'si me dridham iti tato vakshyaami te hitam 18-64",
+   "translation_reworded": "Listen once more to My highest word, the most secret of all. Because you are very dear to Me, I will tell you what is for your good."
+  },
+  {
+   "key": "18.65",
+   "chapter": 18,
+   "verse": 65,
+   "title": "18.65 man-mana bhava mad",
+   "sanskrit": "मन्मना भव मद्भक्तो मद्याजी मां नमस्कुरु ।\nमामेवैष्यसि सत्यं ते प्रतिजाने प्रियोऽसि मे ॥ १८-६५॥",
+   "roman": "manmanā bhava madbhakto madyājī māṃ namaskuru\nmāmevaiṣyasi satyaṃ te pratijāne priyo'si me 18-65",
+   "colloquial": "manmanaa bhava madbhakto madyaajii maam namaskuru\nmaam eva eshyasi satyam te pratijaane priyah asi me 18-65",
+   "translation_reworded": "Set your mind on Me, be devoted to Me, offer sacrifice to Me, and bow down to Me. Then you will surely come to Me alone. I promise you this truly, because you are dear to Me."
+  },
+  {
+   "key": "18.66",
+   "chapter": 18,
+   "verse": 66,
+   "title": "18.66 sarva-dharman parityajya",
+   "sanskrit": "सर्वधर्मान्परित्यज्य मामेकं शरणं व्रज ।\nअहं त्वा सर्वपापेभ्यो मोक्षयिष्यामि मा शुचः ॥ १८-६६॥",
+   "roman": "sarvadharmānparityajya māmekaṃ śaraṇaṃ vraja\nahaṃ tvā sarvapāpebhyo mokṣayiṣyāmi mā śucaḥ 18-66",
+   "colloquial": "sarva dharmaan parityajya maam ekam sharanam vraja\naham tvaa sarva paapebhyo mokshayishyaami maa shuchah 18-66",
+   "translation_reworded": "Letting go of all dharmas (of body, mind, and intellect), take refuge in Me alone. I will free you from every sin. Do not grieve."
+  },
+  {
+   "key": "18.67",
+   "chapter": 18,
+   "verse": 67,
+   "title": "18.67 idam te natapaskaya",
+   "sanskrit": "इदं ते नातपस्काय नाभक्ताय कदाचन ।\nन चाशुश्रूषवे वाच्यं न च मां योऽभ्यसूयति ॥ १८-६७॥",
+   "roman": "idaṃ te nātapaskāya nābhaktāya kadācana\nna cāśuśrūṣave vācyaṃ na ca māṃ yo'bhyasūyati 18-67",
+   "colloquial": "idam te na atapaskaaya na abhaktaaya kadaachana\nna cha aashushruushave vaachyam na cha maam yah abhyasuuyati 18-67",
+   "translation_reworded": "You must never speak of this to anyone who lacks austerity or devotion, or who does no service, or who has no wish to hear it, or who speaks ill of Me."
+  },
+  {
+   "key": "18.68",
+   "chapter": 18,
+   "verse": 68,
+   "title": "18.68 ya idam paramam guhyam",
+   "sanskrit": "य इदं परमं गुह्यं मद्भक्तेष्वभिधास्यति ।\nभक्तिं मयि परां कृत्वा मामेवैष्यत्यसंशयः ॥ १८-६८॥",
+   "roman": "ya idaṃ paramaṃ guhyaṃ madbhakteṣvabhidhāsyati\nbhaktiṃ mayi parāṃ kṛtvā māmevaiṣyatyasaṃśayaḥ 18-68",
+   "colloquial": "ya idam paramam guhyam madbhakteshu abhidhaasyati\nbhaktim mayi paraam kritvaa maam eva eshyati asamshayah 18-68",
+   "translation_reworded": "Whoever, out of supreme devotion to Me, teaches this highest secret to My devotees will without doubt come to Me."
+  },
+  {
+   "key": "18.69",
+   "chapter": 18,
+   "verse": 69,
+   "title": "18.69 na cha tasman manushyeshu",
+   "sanskrit": "न च तस्मान्मनुष्येषु कश्चिन्मे प्रियकृत्तमः ।\nभविता न च मे तस्मादन्यः प्रियतरो भुवि ॥ १८-६९॥",
+   "roman": "na ca tasmānmanuṣyeṣu kaścinme priyakṛttamaḥ\nbhavitā na ca me tasmādanyaḥ priyataro bhuvi 18-69",
+   "colloquial": "na cha tasmaan manushyeshu kashchin me priya krittamah\nbhavitaa na cha me tasmaad anyah priya taro bhuvi 18-69",
+   "translation_reworded": "No one among human beings does Me a dearer service than such a person, and no one on earth will ever be dearer to Me."
+  },
+  {
+   "key": "18.70",
+   "chapter": 18,
+   "verse": 70,
+   "title": "18.70 adhyeshyate cha ya",
+   "sanskrit": "अध्येष्यते च य इमं धर्म्यं संवादमावयोः ।\nज्ञानयज्ञेन तेनाहमिष्टः स्यामिति मे मतिः ॥ १८-७०॥",
+   "roman": "adhyeṣyate ca ya imaṃ dharmyaṃ saṃvādamāvayoḥ\njñānayajñena tenāhamiṣṭaḥ syāmiti me matiḥ 18-70",
+   "colloquial": "adhyeshyate cha ya imam dharmyam samvaadam aavayoh\njnaana yajnena tena aham ishtah syaam iti me matih 18-70",
+   "translation_reworded": "And whoever studies this sacred dialogue of ours will, by doing so, have worshipped Me through the sacrifice of wisdom. That is My conviction."
+  },
+  {
+   "key": "18.71",
+   "chapter": 18,
+   "verse": 71,
+   "title": "18.71 shraddhavan anasuyash",
+   "sanskrit": "श्रद्धावाननसूयश्च श‍ृणुयादपि यो नरः ।\nसोऽपि मुक्तः शुभाँल्लोकान्प्राप्नुयात्पुण्यकर्मणाम् ॥ १८-७१॥",
+   "roman": "śraddhāvānanasūyaśca śṛṇuyādapi yo naraḥ\nso'pi muktaḥ śubhām̐llokān prāpnuyātpuṇyakarmaṇām 18-71",
+   "colloquial": "shraddhaavaan anasuuyashcha shrinuyaadapi yo narah\nso'pi muktah shubhaamllokaan praapnuyaat punya karmanaam 18-71",
+   "translation_reworded": "And the person who simply listens to this with faith and without ill will is also set free, and will reach the happy worlds of those who perform righteous deeds."
+  },
+  {
+   "key": "18.72",
+   "chapter": 18,
+   "verse": 72,
+   "title": "18.72 kachchid etach chhrutam",
+   "sanskrit": "कच्चिदेतच्छ्रुतं पार्थ त्वयैकाग्रेण चेतसा ।\nकच्चिदज्ञानसम्मोहः प्रनष्टस्ते धनञ्जय ॥ १८-७२॥",
+   "roman": "kaccidetacchrutaṃ pārtha tvayaikāgreṇa cetasā\nkaccidajñānasammohaḥ pranaṣṭaste dhanañjaya 18-72",
+   "colloquial": "kacchid etac chrutam paartha tvayaa ekaagrena chetasaa\nkacchid ajnaana sammohah pranashtah te dhananjaya 18-72",
+   "translation_reworded": "O son of Pritha, have you listened to this with a single-pointed mind? O Dhananjaya, has the confusion born of your ignorance been cleared away?"
+  },
+  {
+   "key": "18.73",
+   "chapter": 18,
+   "verse": 73,
+   "title": "18.73 nashto mohah smritir",
+   "sanskrit": "अर्जुन उवाच ।\nनष्टो मोहः स्मृतिर्लब्धा त्वत्प्रसादान्मयाच्युत ।\nस्थितोऽस्मि गतसन्देहः करिष्ये वचनं तव ॥ १८-७३॥",
+   "roman": "arjuna uvāca\nnaṣṭo mohaḥ smṛtirlabdhā tvatprasādānmayācyuta\nsthito'smi gatasandehaḥ kariṣye vacanaṃ tava 18-73",
+   "colloquial": "arjuna uvaacha\nnashto mohah smritir labdhaa tvat prasaadaan mayaachyuta\nsthito'smi gata sandehah karishye vachanam tava 18-73",
+   "translation_reworded": "Arjuna said: My delusion is gone. Through your grace, O Achyuta, I have regained my memory (knowledge). I stand firm; my doubts have vanished. I will act according to your word."
+  },
+  {
+   "key": "18.74",
+   "chapter": 18,
+   "verse": 74,
+   "title": "18.74 ity aham vasudevasya",
+   "sanskrit": "सञ्जय उवाच ।\nइत्यहं वासुदेवस्य पार्थस्य च महात्मनः ।\nसंवादमिममश्रौषमद्भुतं रोमहर्षणम् ॥ १८-७४॥",
+   "roman": "sañjaya uvāca\nityahaṃ vāsudevasya pārthasya ca mahātmanaḥ\nsaṃvādamimamaśrauṣamadbhutaṃ romaharṣaṇam 18-74",
+   "colloquial": "sanjaya uvaacha\niti aham vaasudevasya paarthasya cha mahaatmanah\nsamvaadam imam ashrausham adbhutam roma harshanam 18-74",
+   "translation_reworded": "Sanjaya said: In this way I heard this marvelous dialogue between Vaasudeva and the noble-souled Paartha, a dialogue that makes the hair stand on end."
+  },
+  {
+   "key": "18.75",
+   "chapter": 18,
+   "verse": 75,
+   "title": "18.75 vyasa-prasadach",
+   "sanskrit": "व्यासप्रसादाच्छ्रुतवानेतद्गुह्यमहं परम् ।\nयोगं योगेश्वरात्कृष्णात्साक्षात्कथयतः स्वयम् ॥ १८-७५॥",
+   "roman": "vyāsaprasādācchrutavān etadguhyamahaṃ param\nyogaṃ yogeśvarātkṛṣṇāt sākṣātkathayataḥ svayam 18-75",
+   "colloquial": "vyaasa prasaadaat shrutavaan etad guhyam aham param\nyogam yogeshvaraat krishnaat saakshaat kathayatah svayam 18-75",
+   "translation_reworded": "By the grace of Vyasa I heard this supreme and most secret Yoga directly from Krishna, the Lord of Yoga, as He Himself declared it."
+  },
+  {
+   "key": "18.76",
+   "chapter": 18,
+   "verse": 76,
+   "title": "18.76 rajan sansmritya",
+   "sanskrit": "राजन्संस्मृत्य संस्मृत्य संवादमिममद्भुतम् ।\nकेशवार्जुनयोः पुण्यं हृष्यामि च मुहुर्मुहुः ॥ १८-७६॥",
+   "roman": "rājansaṃsmṛtya saṃsmṛtya saṃvādamimamadbhutam\nkeśavārjunayoḥ puṇyaṃ hṛṣyāmi ca muhurmuhuḥ 18-76",
+   "colloquial": "raajan samsmritya samsmritya samvaadam imam adbhutam\nkeshava arjunayoh punyam hrishyaami cha muhur muhuh 18-76",
+   "translation_reworded": "O King, as I recall this wonderful and holy dialogue between Keshava and Arjuna, I rejoice again and again."
+  },
+  {
+   "key": "18.77",
+   "chapter": 18,
+   "verse": 77,
+   "title": "18.77 tach cha sansmritya",
+   "sanskrit": "तच्च संस्मृत्य संस्मृत्य रूपमत्यद्भुतं हरेः ।\nविस्मयो मे महान् राजन्हृष्यामि च पुनः पुनः ॥ १८-७७॥",
+   "roman": "tacca saṃsmṛtya saṃsmṛtya rūpamatyadbhutaṃ hareḥ\nvismayo me mahān rājanhṛṣyāmi ca punaḥ punaḥ 18-77",
+   "colloquial": "taccha samsmritya samsmritya ruupam atyadbhutam hareh\nvismayo me mahaan raajan hrishyaami cha punah punah 18-77",
+   "translation_reworded": "And as I recall, over and over, that most wonderful Form of Hari, my amazement is great, O king, and I rejoice again and again."
+  },
+  {
+   "key": "18.78",
+   "chapter": 18,
+   "verse": 78,
+   "title": "18.78 yatra yogeshvarah",
+   "sanskrit": "यत्र योगेश्वरः कृष्णो यत्र पार्थो धनुर्धरः ।\nतत्र श्रीर्विजयो भूतिर्ध्रुवा नीतिर्मतिर्मम ॥ १८-७८॥ \n\nॐ तत्सदिति श्रीमद्भगवद्गीतासूपनिषत्सु\nब्रह्मविद्यायां योगशास्त्रे श्रीकृष्णार्जुनसंवादे\nमोक्षसंन्यासयोगो नाम अष्टादशोऽध्यायः ॥ १८॥",
+   "roman": "yatra yogeśvaraḥ kṛṣṇo yatra pārtho dhanurdharaḥ\ntatra śrīrvijayo bhūtirdhruvā nītirmatirmama 18-78\n\noṃ tatsaditi śrīmadbhagavadgītāsūpaniṣatsu\nbrahmavidyāyāṃ yogaśāstre śrīkṛṣṇārjunasaṃvāde\nmokṣasaṃnyāsayogo nāma aṣṭādaśo'dhyāyaḥ 18",
+   "colloquial": "yatra yogeshvarah krishno yatra paartho dhanurdharah\ntatra shriir vijayo bhuutir dhruvaa niitir matir mama\n\nom tat sad iti shriimad bhagavad giitaasu upanishatsu\nbrahma vidyaayaam yoga shaastre shrii krishna arjuna samvaade\nmoksha samnyaasa yogo naama ashtaadasho'dhyaayah 18",
+   "translation_reworded": "Wherever Krishna, the Lord of Yoga, is present, and wherever Paartha the archer is present, there you will find prosperity, victory, happiness, and firm (steady, sound) policy. This is my conviction.\n\nThus, in the Upanishads of the glorious Bhagavad Gita, the science of the Eternal, the scripture of Yoga, the dialogue between Sri Krishna and Arjuna, ends the eighteenth discourse, entitled The Yoga of Liberation by Renunciation."
+  }
+ ]
+}

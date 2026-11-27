@@ -1,0 +1,9 @@
+# Builds one image from the repository root. deploy.sh supplies the substitutions.
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: [build, -f, '${_DOCKERFILE}', --build-arg, 'CONSOLE_BASE_PATH=${_CONSOLE_BASE_PATH}', -t, '${_IMAGE}', .]
+images: ['${_IMAGE}']
+substitutions:
+  _CONSOLE_BASE_PATH: ''
+options:
+  logging: CLOUD_LOGGING_ONLY

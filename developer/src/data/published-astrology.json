@@ -1,0 +1,1577 @@
+[
+  {
+    "id": "positions",
+    "name": "Planetary positions",
+    "description": "Geocentric Sun, Moon, Mercury, Venus, Mars, Jupiter, and Saturn; tropical and sidereal longitudes, rashis, nakshatras, and apparent motion."
+  },
+  {
+    "id": "panchang",
+    "name": "Instant Panchang elements",
+    "description": "Tithi, nakshatra and pada, yoga number, karana, and Sun/Moon rashis at a specified instant. Not a sunrise-based daily almanac."
+  },
+  {
+    "id": "chart",
+    "name": "Vedic birth chart",
+    "description": "Lahiri D1, D9 and optional Vimshottari Dasha."
+  },
+  {
+    "id": "daily-panchang",
+    "name": "Daily Panchang",
+    "description": "Sunrise, sunset, transitions and Rahu Kalam for a location and local date."
+  },
+  {
+    "id": "match",
+    "name": "Guna Milan",
+    "description": "Ashtakoota compatibility scores for two birth profiles."
+  },
+  {
+    "id": "chart-image",
+    "name": "Vedic chart image",
+    "description": "A PNG in a North, South or East Indian layout."
+  },
+  {
+    "id": "places",
+    "name": "Find a place",
+    "description": "Coordinates and time zones for cities and districts."
+  },
+  {
+    "id": "western-chat",
+    "name": "Western astrology chat",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "message": "What is my birth chart ascendant?"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-natal",
+    "name": "Natal chart",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "year": 1990,
+        "month": 5,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "lat": 51.5074,
+        "lng": -0.1278,
+        "tz_str": "Europe/London"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-natal-insights",
+    "name": "Natal insights",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "year": 1990,
+        "month": 5,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "lat": 51.5074,
+        "lng": -0.1278,
+        "tz_str": "Europe/London"
+      }
+    },
+    "availability": "limited"
+  },
+  {
+    "id": "western-chart-similarity",
+    "name": "Birth chart similarity",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "natal": {
+          "name": "Sample User",
+          "year": 1995,
+          "month": 9,
+          "day": 5,
+          "hour": 20,
+          "minute": 0,
+          "city": "Paris, France",
+          "lat": 48.8566,
+          "lng": 2.3522,
+          "tz_str": "Europe/Paris",
+          "true_node": true
+        },
+        "settings": {
+          "top_n": 3,
+          "include_angles": true,
+          "close_position_orb_deg": 5,
+          "close_angle_orb_deg": 5,
+          "close_aspect_orb_deg": 2,
+          "max_detail_items": 3
+        }
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-ephemeris",
+    "name": "Ephemeris",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "start": "2026-03-01T00:00:00Z",
+        "bodies": [
+          "Sun",
+          "Moon",
+          "Mercury"
+        ],
+        "include_moon_void_of_course": true,
+        "fixed_stars": [
+          "Spica",
+          "Regulus"
+        ]
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-astrocartography",
+    "name": "Astrocartography lines",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "natal": {
+          "year": 1990,
+          "month": 5,
+          "day": 15,
+          "hour": 14,
+          "minute": 30,
+          "lat": 51.5074,
+          "lng": -0.1278,
+          "tz_str": "Europe/London"
+        }
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-astrocartography-parans",
+    "name": "Astrocartography parans",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "natal": {
+          "year": 1990,
+          "month": 5,
+          "day": 15,
+          "hour": 14,
+          "minute": 30,
+          "lat": 51.5074,
+          "lng": -0.1278,
+          "tz_str": "Europe/London"
+        }
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-astrocartography-relocation",
+    "name": "Relocated chart",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "natal": {
+          "year": 1990,
+          "month": 5,
+          "day": 15,
+          "hour": 14,
+          "minute": 30,
+          "lat": 51.5074,
+          "lng": -0.1278,
+          "tz_str": "Europe/London"
+        },
+        "city": "Paris",
+        "country": "FR",
+        "lat": 48.8566,
+        "lng": 2.3522
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-astrocartography-recommendations",
+    "name": "Astrocartography recommendations",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "natal": {
+          "year": 1995,
+          "month": 9,
+          "day": 5,
+          "hour": 20,
+          "minute": 0,
+          "city": "Paris",
+          "lat": 48.8566,
+          "lng": 2.3522,
+          "tz_str": "Europe/Paris",
+          "time_known": true,
+          "house_system": "placidus"
+        },
+        "focus": "home",
+        "country_scope": "selected_countries",
+        "countries": [
+          "FR",
+          "ES",
+          "PT"
+        ],
+        "limit": 10,
+        "min_population": 100000
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-astrocartography-city",
+    "name": "Astrocartography city check",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "natal": {
+          "year": 1995,
+          "month": 9,
+          "day": 5,
+          "hour": 20,
+          "minute": 0,
+          "city": "Paris",
+          "lat": 48.8566,
+          "lng": 2.3522,
+          "tz_str": "Europe/Paris",
+          "time_known": true,
+          "house_system": "placidus"
+        },
+        "city": "Lisbon",
+        "country": "PT"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-wedding-electional",
+    "name": "Wedding electional search",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "search_window": {
+          "start": "2026-06-01T09:00:00",
+          "end": "2026-06-01T18:00:00",
+          "step_minutes": 60
+        },
+        "city": "Paris",
+        "lat": 48.8566,
+        "lng": 2.3522,
+        "tz_str": "Europe/Paris",
+        "max_results": 1
+      }
+    },
+    "availability": "limited"
+  },
+  {
+    "id": "western-sun-sign",
+    "name": "Sun sign",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "year": 1990,
+        "month": 5,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "lat": 51.5074,
+        "lng": -0.1278,
+        "tz_str": "Europe/London"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-moon-sign",
+    "name": "Moon sign",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "year": 1990,
+        "month": 5,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "lat": 51.5074,
+        "lng": -0.1278,
+        "tz_str": "Europe/London"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-rising-sign",
+    "name": "Rising sign",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "year": 1990,
+        "month": 5,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "lat": 51.5074,
+        "lng": -0.1278,
+        "tz_str": "Europe/London"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-midheaven-sign",
+    "name": "Midheaven sign",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "year": 1990,
+        "month": 5,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "lat": 51.5074,
+        "lng": -0.1278,
+        "tz_str": "Europe/London"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-transits",
+    "name": "Transits",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "natal": {
+          "name": "John Doe",
+          "city": "New York",
+          "year": 1990,
+          "month": 5,
+          "day": 15,
+          "time_known": false,
+          "hour": 10,
+          "minute": 30,
+          "lat": 40.7128,
+          "lng": -74.006,
+          "tz_str": "AUTO"
+        },
+        "transit_date": "2025-01-15T12:00",
+        "current_city": "Paris",
+        "current_lat": 48.8566,
+        "current_lng": 2.3522,
+        "tz_str": "AUTO",
+        "orb_settings": {
+          "Conjunction": 8,
+          "Opposition": 8,
+          "Trine": 6,
+          "Square": 6,
+          "Sextile": 4
+        }
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-transit-timeline",
+    "name": "Transit timeline",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "natal": {
+          "year": 1990,
+          "month": 5,
+          "day": 15,
+          "hour": 14,
+          "minute": 30,
+          "lat": 51.5074,
+          "lng": -0.1278,
+          "tz_str": "Europe/London",
+          "time_known": true
+        },
+        "range_start": "2026-11-01",
+        "range_end": "2026-11-30",
+        "mode": "month"
+      }
+    },
+    "availability": "limited"
+  },
+  {
+    "id": "western-transit-insights",
+    "name": "Transit insights",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "natal": {
+          "name": "October Sample",
+          "year": 1995,
+          "month": 11,
+          "day": 3,
+          "hour": 21,
+          "minute": 10,
+          "time_known": true,
+          "city": "Paris",
+          "lat": 48.8566,
+          "lng": 2.3522,
+          "tz_str": "Europe/Paris"
+        },
+        "range_start": "2026-10-01",
+        "range_end": "2026-10-31",
+        "mode": "month",
+        "include_houses": true
+      }
+    },
+    "availability": "limited"
+  },
+  {
+    "id": "western-profections",
+    "name": "Annual profections",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "name": "Live Docs Example",
+        "year": 1990,
+        "month": 1,
+        "day": 1,
+        "hour": 12,
+        "minute": 0,
+        "time_known": true,
+        "city": "London",
+        "lat": 51.5074,
+        "lng": -0.1278,
+        "tz_str": "Europe/London",
+        "annual_profection": {
+          "year": 2024,
+          "settings": {
+            "zodiac_type": "Tropical",
+            "orb_policy": {
+              "default_orb_deg": 6,
+              "by_aspect_deg": {}
+            }
+          }
+        }
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-primary-directions",
+    "name": "Primary directions",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "natal": {
+          "name": "Documentation Sample",
+          "datetime": "1990-01-01 12:00",
+          "time_known": true,
+          "location": {
+            "city": "London",
+            "lat": 51.5074,
+            "lng": -0.1278,
+            "tz_str": "Europe/London"
+          }
+        },
+        "settings": {
+          "method": "regiomontanus_in_mundo",
+          "direction": "both",
+          "key": "naibod",
+          "secondary_motion": "moon",
+          "latitude_doctrine": "both",
+          "bounds_system": "egyptian",
+          "include_bounds": true,
+          "include_natal_reference": false,
+          "promissors": [
+            "sun",
+            "moon",
+            "mercury",
+            "venus",
+            "mars",
+            "jupiter",
+            "saturn"
+          ],
+          "significators": [
+            "asc",
+            "mc",
+            "dc",
+            "ic",
+            "sun",
+            "moon",
+            "lot_of_fortune"
+          ],
+          "aspects": [
+            "conjunction",
+            "sextile",
+            "square",
+            "trine",
+            "opposition"
+          ],
+          "orb_years": 1
+        },
+        "range": {
+          "start_date": "2026-01-01",
+          "end_date": "2030-12-31",
+          "limit": 5
+        }
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-secondary-progressions",
+    "name": "Secondary progressions",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "natal": {
+          "name": "User",
+          "datetime": "1990-01-01 12:00",
+          "time_known": true,
+          "location": {
+            "city": "London",
+            "lat": 51.5074,
+            "lng": -0.1278,
+            "tz_str": "AUTO"
+          }
+        },
+        "secondary_progression": {
+          "target_date": "2026-03-30"
+        }
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-progressions-calendar",
+    "name": "Progressions calendar",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "natal": {
+          "name": "User",
+          "datetime": "1990-01-01 12:00",
+          "time_known": true,
+          "location": {
+            "city": "London",
+            "lat": 51.5074,
+            "lng": -0.1278,
+            "tz_str": "AUTO"
+          }
+        },
+        "calendar": {
+          "from": "2026-03-30",
+          "to": "2027-03-30"
+        }
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-solar-return",
+    "name": "Solar return",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "natal": {
+          "datetime": "1990-05-15T14:30:00",
+          "location": {
+            "city": "London",
+            "lat": 51.5074,
+            "lng": -0.1278,
+            "tz_str": "Europe/London"
+          }
+        },
+        "solar_return": {
+          "year": 2026,
+          "location": {
+            "city": "London"
+          }
+        }
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-planetary-return",
+    "name": "Planetary return",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "natal": {
+          "datetime": "1990-01-01 12:00",
+          "location": {
+            "city": "London",
+            "lat": 51.5074,
+            "lng": -0.1278
+          }
+        },
+        "return_target": {
+          "body": "moon",
+          "search_start": "2024-05-15T00:00:00Z",
+          "location": {
+            "city": "Paris",
+            "lat": 48.8566,
+            "lng": 2.3522
+          }
+        },
+        "settings": {
+          "zodiac_type": "Sidereal",
+          "sidereal_ayanamsa": "lahiri"
+        }
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-synastry",
+    "name": "Synastry",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "person_a": {
+          "datetime": "1990-05-15T14:30:00",
+          "location": {
+            "city": "New York, USA"
+          },
+          "tz_str": "AUTO"
+        },
+        "person_b": {
+          "datetime": "1992-08-20T09:15:00",
+          "location": {
+            "city": "Los Angeles, USA"
+          },
+          "tz_str": "AUTO"
+        },
+        "settings": {
+          "zodiac": "sidereal",
+          "sidereal_ayanamsa": "lahiri",
+          "aspect_set": "extended",
+          "bodies": [
+            "sun",
+            "moon",
+            "mercury",
+            "venus",
+            "mars",
+            "jupiter",
+            "saturn",
+            "uranus",
+            "neptune",
+            "pluto",
+            "node",
+            "chiron",
+            "lilith",
+            "asc",
+            "mc",
+            "vertex"
+          ],
+          "include": {
+            "natal_snapshots": true,
+            "aspects": true,
+            "house_overlays": true,
+            "scores": true,
+            "archetype": true,
+            "text": false
+          }
+        }
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-synastry-cards",
+    "name": "Synastry cards",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "person_a": {
+          "datetime": "1990-05-15T14:30:00",
+          "location": {
+            "city": "New York, USA"
+          },
+          "tz_str": "AUTO"
+        },
+        "person_b": {
+          "datetime": "1992-08-20T09:15:00",
+          "location": {
+            "city": "Los Angeles, USA"
+          },
+          "tz_str": "AUTO"
+        },
+        "settings": {
+          "zodiac": "sidereal",
+          "sidereal_ayanamsa": "lahiri",
+          "aspect_set": "major_plus"
+        }
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-daily-sign",
+    "name": "Daily sign horoscope",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "sign": "aries"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-daily-personal",
+    "name": "Daily personal horoscope",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "birth": {
+          "year": 1990,
+          "month": 5,
+          "day": 15,
+          "hour": 10,
+          "minute": 0,
+          "city": "London, UK",
+          "lat": 51.5074,
+          "lng": -0.1278,
+          "tz_str": "Europe/London",
+          "time_known": true
+        },
+        "date": "2026-04-20",
+        "include_interpretation_blocks": true
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-weekly-personal",
+    "name": "Weekly personal horoscope",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "birth": {
+          "year": 1990,
+          "month": 5,
+          "day": 15,
+          "hour": 10,
+          "minute": 0,
+          "city": "London, UK",
+          "lat": 51.5074,
+          "lng": -0.1278,
+          "tz_str": "Europe/London",
+          "time_known": true
+        },
+        "week_start": "2026-04-20",
+        "include_interpretation_blocks": true
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-couples-horoscope",
+    "name": "Couples horoscope",
+    "category": "Western",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "person_a": {
+          "datetime": "1990-01-01T12:00:00+00:00",
+          "location": {
+            "lat": 40.71,
+            "lng": -74,
+            "city": "New York"
+          }
+        },
+        "person_b": {
+          "datetime": "1992-05-15T14:30:00+00:00",
+          "location": {
+            "lat": 48.85,
+            "lng": 2.35,
+            "city": "Paris"
+          }
+        },
+        "date": "2026-02-25",
+        "tz_str": "America/New_York"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-natal-image",
+    "name": "Natal chart image",
+    "category": "Western",
+    "description": "Returns a PNG chart.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "year": 1990,
+        "month": 5,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "lat": 51.5074,
+        "lng": -0.1278,
+        "tz_str": "Europe/London"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-transit-image",
+    "name": "Transit chart image",
+    "category": "Western",
+    "description": "Returns a PNG chart.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "natal": {
+          "name": "John Doe",
+          "year": 1990,
+          "month": 5,
+          "day": 15,
+          "hour": 14,
+          "minute": 30,
+          "time_known": false,
+          "city": "London",
+          "tz_str": "AUTO",
+          "size": 700,
+          "theme_type": "light",
+          "format": "svg",
+          "chart_config": {
+            "custom_sign_bg_color": "#e8e0f0",
+            "custom_house_bg_color": "#e0f0f8",
+            "show_retrograde_markers": true,
+            "retrograde_marker_style": "R",
+            "french_style": true,
+            "french_planet_radius_offset": 0,
+            "french_transit_planet_radius_offset": 24,
+            "french_transit_degree_label_offset": -28,
+            "french_transit_natal_planets_inside": false,
+            "french_transit_natal_inner_radius_offset": 0,
+            "french_transit_inner_natal_house_gap": 60,
+            "french_transit_inner_natal_planet_radius_offset": null,
+            "custom_planet_color": null
+          }
+        },
+        "current_city": "New York",
+        "transit_date": "2026-02-26T12:00",
+        "show_inter_aspects": true,
+        "show_natal_aspects": false,
+        "show_transit_aspects": false,
+        "natal_planet_color": "#1565C0",
+        "transit_planet_color": "#C62828"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-solar-return-image",
+    "name": "Solar return chart image",
+    "category": "Western",
+    "description": "Returns a PNG chart.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "natal": {
+          "name": "Maya",
+          "year": 1990,
+          "month": 5,
+          "day": 15,
+          "hour": 14,
+          "minute": 30,
+          "city": "London",
+          "tz_str": "AUTO",
+          "format": "svg",
+          "size": 700,
+          "theme_type": "light"
+        },
+        "solar_return_year": 2026,
+        "solar_return_city": "Paris",
+        "solar_return_tz_str": "AUTO",
+        "show_inter_aspects": true,
+        "show_natal_aspects": false,
+        "show_solar_return_aspects": false,
+        "natal_planet_color": "#1565C0",
+        "solar_return_planet_color": "#C62828"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-progressions-image",
+    "name": "Progressions chart image",
+    "category": "Western",
+    "description": "Returns a PNG chart.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "natal": {
+          "year": 1990,
+          "month": 5,
+          "day": 15,
+          "hour": 14,
+          "minute": 30,
+          "lat": 51.5074,
+          "lng": -0.1278,
+          "tz_str": "Europe/London"
+        },
+        "secondary_progression": {
+          "target_date": "2026-11-12"
+        },
+        "target_date": "2026-11-12"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-synastry-image",
+    "name": "Synastry chart image",
+    "category": "Western",
+    "description": "Returns a PNG chart.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "person_a": {
+          "name": "Person A",
+          "year": 1990,
+          "month": 5,
+          "day": 15,
+          "hour": 14,
+          "minute": 30,
+          "time_known": true,
+          "city": "London",
+          "tz_str": "AUTO",
+          "format": "svg",
+          "size": 900,
+          "theme_type": "light"
+        },
+        "person_b": {
+          "name": "Person B",
+          "year": 1992,
+          "month": 8,
+          "day": 6,
+          "hour": 6,
+          "minute": 45,
+          "time_known": true,
+          "city": "Paris",
+          "tz_str": "AUTO"
+        },
+        "show_a_aspects": false,
+        "show_inter_aspects": true,
+        "show_b_aspects": false,
+        "person_a_planet_color": "#1565C0",
+        "person_b_planet_color": "#C62828",
+        "person_a_angle_color": "#1A1A1A",
+        "person_b_angle_color": "#1A1A1A",
+        "show_person_b_houses": true,
+        "show_person_b_angles": true,
+        "person_a_zone_bg_color": "#fde3e3",
+        "person_a_zone_bg_opacity": 0.55,
+        "person_b_zone_bg_color": "#e3ecff",
+        "person_b_zone_bg_opacity": 0.55
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "western-composite-image",
+    "name": "Composite chart image",
+    "category": "Western",
+    "description": "Returns a PNG chart.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "person_a": {
+          "year": 1990,
+          "month": 5,
+          "day": 15,
+          "city": "London"
+        },
+        "person_b": {
+          "year": 1992,
+          "month": 8,
+          "day": 6,
+          "city": "Paris"
+        }
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "numerology-profile",
+    "name": "Numerology profile",
+    "category": "Numerology",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "method": {
+          "system": "pythagorean"
+        },
+        "subject": {
+          "birth_date": "1992-07-16"
+        },
+        "date_context": {
+          "reference_date": "2026-11-12"
+        }
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "vedic-chat",
+    "name": "Vedic astrology chat",
+    "category": "Vedic",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "message": "What is my birth chart ascendant?"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "vedic-natal",
+    "name": "Sidereal natal chart",
+    "category": "Vedic",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "year": 1995,
+        "month": 6,
+        "day": 20,
+        "hour": 12,
+        "minute": 30,
+        "lat": 28.6139,
+        "lng": 77.209,
+        "tz_str": "Asia/Kolkata",
+        "ayanamsha": "lahiri",
+        "house_system": "whole_sign",
+        "node_type": "mean"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "vedic-full-chart",
+    "name": "Full Vedic chart",
+    "category": "Vedic",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "year": 1995,
+        "month": 6,
+        "day": 20,
+        "hour": 12,
+        "minute": 30,
+        "lat": 28.6139,
+        "lng": 77.209,
+        "tz_str": "Asia/Kolkata",
+        "ayanamsha": "lahiri",
+        "house_system": "whole_sign",
+        "node_type": "mean",
+        "vargas": [
+          1,
+          9
+        ]
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "vedic-kp",
+    "name": "KP astrology",
+    "category": "Vedic",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "year": 1995,
+        "month": 6,
+        "day": 20,
+        "hour": 12,
+        "minute": 30,
+        "lat": 28.6139,
+        "lng": 77.209,
+        "tz_str": "Asia/Kolkata",
+        "ayanamsha": "kp",
+        "house_system": "placidus",
+        "node_type": "mean"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "vedic-kp-image",
+    "name": "KP chart image",
+    "category": "Vedic",
+    "description": "Returns a PNG chart.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "year": 1995,
+        "month": 6,
+        "day": 20,
+        "hour": 12,
+        "minute": 30,
+        "lat": 28.6139,
+        "lng": 77.209,
+        "tz_str": "Asia/Kolkata",
+        "ayanamsha": "kp",
+        "house_system": "placidus",
+        "node_type": "mean"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "vedic-dasha",
+    "name": "Vimshottari Dasha",
+    "category": "Vedic",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "year": 1995,
+        "month": 6,
+        "day": 20,
+        "hour": 12,
+        "minute": 30,
+        "lat": 28.6139,
+        "lng": 77.209,
+        "tz_str": "Asia/Kolkata",
+        "ayanamsha": "lahiri",
+        "house_system": "whole_sign",
+        "node_type": "mean"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "vedic-dasha-insights",
+    "name": "Dasha insights",
+    "category": "Vedic",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "year": 1985,
+        "month": 8,
+        "day": 22,
+        "hour": 6,
+        "minute": 45,
+        "lat": 19.076,
+        "lng": 72.8777,
+        "tz_str": "Asia/Kolkata",
+        "ayanamsha": "lahiri",
+        "house_system": "whole_sign",
+        "node_type": "mean",
+        "levels": 3
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "vedic-gochar",
+    "name": "Gochar timeline",
+    "category": "Vedic",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "year": 1997,
+        "month": 9,
+        "day": 22,
+        "hour": 23,
+        "minute": 25,
+        "city": "Mumbai",
+        "lat": 19.391928,
+        "lng": 72.839732,
+        "tz_str": "Asia/Kolkata",
+        "ayanamsha": "lahiri",
+        "house_system": "whole_sign",
+        "node_type": "mean",
+        "range_start": "2026-04-01",
+        "range_end": "2026-04-03",
+        "transit_hour": 12,
+        "transit_minute": 0,
+        "transit_tz_str": "Asia/Kolkata",
+        "transit_planets": [
+          "saturn",
+          "jupiter",
+          "rahu",
+          "ketu"
+        ],
+        "include_dasha_overlay": false
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "vedic-gochar-insights",
+    "name": "Gochar timeline insights",
+    "category": "Vedic",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "year": 1997,
+        "month": 9,
+        "day": 22,
+        "hour": 23,
+        "minute": 25,
+        "city": "Mumbai",
+        "lat": 19.391928,
+        "lng": 72.839732,
+        "tz_str": "Asia/Kolkata",
+        "ayanamsha": "lahiri",
+        "house_system": "whole_sign",
+        "node_type": "mean",
+        "range_start": "2026-04-01",
+        "range_end": "2026-04-03",
+        "transit_hour": 12,
+        "transit_minute": 0,
+        "transit_tz_str": "Asia/Kolkata",
+        "transit_planets": [
+          "saturn",
+          "jupiter",
+          "rahu",
+          "ketu"
+        ],
+        "include_dasha_overlay": false
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "vedic-daily-personal",
+    "name": "Daily personal Vedic horoscope",
+    "category": "Vedic",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "year": 1995,
+        "month": 6,
+        "day": 20,
+        "hour": 12,
+        "minute": 30,
+        "lat": 28.6139,
+        "lng": 77.209,
+        "tz_str": "Asia/Kolkata",
+        "target_date": "2026-11-12"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "vedic-daily-sign",
+    "name": "Daily Rashifal",
+    "category": "Vedic",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "sign": "aries",
+        "target_date": "2026-11-12"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "vedic-daily-bulk",
+    "name": "Daily Rashifal for all signs",
+    "category": "Vedic",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {}
+    },
+    "availability": "available"
+  },
+  {
+    "id": "vedic-yogas",
+    "name": "Yoga detection",
+    "category": "Vedic",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "year": 1995,
+        "month": 6,
+        "day": 20,
+        "hour": 12,
+        "minute": 30,
+        "lat": 28.6139,
+        "lng": 77.209,
+        "tz_str": "Asia/Kolkata",
+        "ayanamsha": "lahiri",
+        "house_system": "whole_sign",
+        "node_type": "mean"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "vedic-strength",
+    "name": "Planetary strength",
+    "category": "Vedic",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "year": 1995,
+        "month": 6,
+        "day": 20,
+        "hour": 12,
+        "minute": 30,
+        "lat": 28.6139,
+        "lng": 77.209,
+        "tz_str": "Asia/Kolkata",
+        "ayanamsha": "lahiri",
+        "house_system": "whole_sign",
+        "node_type": "mean"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "vedic-vargas",
+    "name": "Divisional charts",
+    "category": "Vedic",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "year": 1995,
+        "month": 6,
+        "day": 20,
+        "hour": 12,
+        "minute": 30,
+        "lat": 28.6139,
+        "lng": 77.209,
+        "tz_str": "Asia/Kolkata",
+        "ayanamsha": "lahiri",
+        "house_system": "whole_sign",
+        "node_type": "mean",
+        "divisions": [
+          1,
+          9,
+          10,
+          60
+        ]
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "vedic-muhurat",
+    "name": "Daily Muhurat lookup",
+    "category": "Vedic",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "question": "chaughadia",
+        "date": "2026-04-30",
+        "time": "10:30",
+        "city": "New Delhi",
+        "lat": 28.62137,
+        "lng": 77.2148,
+        "ayanamsha": "lahiri",
+        "language": "en"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "vedic-muhurat-search",
+    "name": "Muhurat search",
+    "category": "Vedic",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "purpose": "vehicle_purchase",
+        "start_date": "2026-04-01",
+        "end_date": "2026-04-30",
+        "city": "New Delhi",
+        "lat": 28.62137,
+        "lng": 77.2148,
+        "ayanamsha": "lahiri",
+        "language": "en",
+        "limit": 3
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "vedic-personalized-muhurat",
+    "name": "Personalized Muhurat search",
+    "category": "Vedic",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "purpose": "vehicle_purchase",
+        "start_date": "2026-04-01",
+        "end_date": "2026-04-30",
+        "city": "New Delhi",
+        "lat": 28.62137,
+        "lng": 77.2148,
+        "ayanamsha": "lahiri",
+        "language": "en",
+        "limit": 3,
+        "subject": {
+          "year": 1990,
+          "month": 5,
+          "day": 17,
+          "hour": 9,
+          "minute": 30,
+          "city": "New Delhi",
+          "lat": 28.62137,
+          "lng": 77.2148,
+          "ayanamsha": "lahiri"
+        }
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "vedic-compatibility",
+    "name": "Moon sign compatibility",
+    "category": "Vedic",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "person1_moon": {
+          "label": "Person 1",
+          "moon_nakshatra": 22,
+          "moon_sign": 10,
+          "moon_degree": 14.2,
+          "moon_pada": 2
+        },
+        "person2_moon": {
+          "label": "Person 2",
+          "moon_nakshatra": 13,
+          "moon_sign": 6,
+          "moon_degree": 8.5,
+          "moon_pada": 3
+        },
+        "language": "en"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "moon-phase",
+    "name": "Moon phase",
+    "category": "Utilities",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "date": "2026-11-12"
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "moon-timeline",
+    "name": "Monthly Moon timeline",
+    "category": "Utilities",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "year": 2026,
+        "month": 11
+      }
+    },
+    "availability": "available"
+  },
+  {
+    "id": "sky-events",
+    "name": "Sky events",
+    "category": "Utilities",
+    "description": "Returns structured astrology results.",
+    "requestFormat": "parameters",
+    "example": {
+      "parameters": {
+        "date": "2026-11-12",
+        "preset": "quiet",
+        "timezone": "America/New_York"
+      }
+    },
+    "availability": "available"
+  }
+]

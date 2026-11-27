@@ -1,0 +1,53 @@
+{
+  "name": "mantrilo-developer",
+  "version": "1.0.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "web": "expo start --web",
+    "build": "expo export --platform web && node scripts/finalize.mjs",
+    "start": "node --env-file-if-exists=.env.local server/index.mjs",
+    "rewrite:sample": "node --env-file-if-exists=.env.local scripts/rewrite-descriptions.mjs",
+    "dev": "npm run build && npm start",
+    "lint": "expo lint",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/*.test.mjs",
+    "bootstrap:admin": "node --env-file-if-exists=.env.local scripts/bootstrap-admin.mjs",
+    "api": "node --env-file-if-exists=.env.local api/index.mjs",
+    "site:sample": "node --env-file-if-exists=.env.local scripts/export-site-sample.mjs",
+    "seo:apply": "node --env-file-if-exists=.env.local scripts/apply-seo-descriptions.mjs"
+  },
+  "dependencies": {
+    "@google-cloud/storage": "8.4.0",
+    "astronomy-engine": "^2.1.19",
+    "expo": "~58.0.26",
+    "expo-constants": "~58.0.15",
+    "expo-linking": "~58.0.17",
+    "expo-router": "~58.0.32",
+    "expo-status-bar": "~58.0.5",
+    "firebase": "12.19.0",
+    "firebase-admin": "^14.5.0",
+    "google-auth-library": "11.3.3",
+    "highlight.js": "^11.12.0",
+    "marked": "^18.2.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-native": "0.88.1",
+    "react-native-safe-area-context": "~5.11.1",
+    "react-native-screens": "~4.30.1",
+    "react-native-web": "^0.21.4",
+    "stripe": "^23.1.0"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^1.7.0",
+    "@types/react": "~19.3.0",
+    "eslint": "^9.39.5",
+    "eslint-config-expo": "~58.0.4",
+    "typescript": "~6.0.3"
+  },
+  "overrides": {
+    "@firebase/app": "0.16.2",
+    "@firebase/app-compat": "0.5.18",
+    "@grpc/grpc-js": "1.13.6"
+  }
+}

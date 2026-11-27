@@ -1,0 +1,1927 @@
+{
+  "common": {
+    "getApiKey": "Get API key",
+    "signIn": "Sign in",
+    "readDocs": "Read the docs",
+    "language": "Language",
+    "verses_one": "{{n}} verse",
+    "verses_other": "{{n}} verses"
+  },
+  "nav": {
+    "docs": "Docs",
+    "mantras": "Mantras",
+    "books": "Books",
+    "astrology": "Astrology",
+    "calculators": "Calculators",
+    "blog": "Blog",
+    "pricing": "Pricing"
+  },
+  "chrome": {
+    "skip": "Skip to content",
+    "home": "Mantrilo home",
+    "mainNav": "Main navigation",
+    "theme": "Toggle dark mode",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "breadcrumb": "Breadcrumb",
+    "crumbHome": "Home"
+  },
+  "footer": {
+    "tagline": "Sacred content, thoughtfully connected.",
+    "products": "Products",
+    "mantras": "Mantras",
+    "sacredAudio": "Sacred audio",
+    "books": "Books",
+    "astrology": "Astrology",
+    "signCalculators": "Sign calculators",
+    "developers": "Developers",
+    "apiDocs": "API docs",
+    "guides": "Guides by goal",
+    "library": "Content library",
+    "pricing": "Pricing",
+    "company": "Company",
+    "about": "About Mantrilo",
+    "license": "Content license",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "contact": "Contact"
+  },
+  "meta": {
+    "/": {
+      "title": "Hindu Content API for Developers | Mantrilo",
+      "description": "Add Sanskrit mantras, scripture books, linked audio, and astrology calculations to your app with one REST API. See sample responses, pricing, and content terms.",
+      "label": "Home"
+    },
+    "/mantra-api": {
+      "title": "Sanskrit Mantra & Shloka API for Developers | Mantrilo",
+      "description": "Add Sanskrit verses to your app with a REST API for original Sanskrit, transliteration, and source references. Review the real response format.",
+      "label": "Mantra API"
+    },
+    "/sacred-audio-api": {
+      "title": "Mantra Recording API for Developers | Mantrilo",
+      "description": "Request temporary playback links for mantra recordings. See the response format, link expiry and audio usage limits.",
+      "label": "Sacred audio API"
+    },
+    "/books-api": {
+      "title": "Books API for Chapters and Verses | Mantrilo",
+      "description": "Retrieve Sanskrit books and English retellings of the Ramayana and Mahabharata by chapter. Try Bhagavad Gita or Isha Upanishad in the sandbox.",
+      "label": "Books API"
+    },
+    "/astrology-api": {
+      "title": "Astrology API for Developers: Vedic & Western | Mantrilo",
+      "description": "Build Hindu calendars and Vedic astrology apps with Mantrilo. Explore Panchang, Kundli, planetary positions, matching, sample responses, and API limits.",
+      "label": "Astrology API"
+    },
+    "/library": {
+      "title": "Hindu Content Library and API Coverage | Mantrilo",
+      "description": "Browse Sanskrit book previews, mantra and recording examples, and astrology capabilities. See what the API returns and what you can try in the sandbox.",
+      "label": "Library"
+    },
+    "/library/books": {
+      "title": "Hindu Scripture Books API: Gita, Upanishads & Epics | Mantrilo",
+      "description": "Browse every book in the Mantrilo catalog by collection: the Bhagavad Gita, the Upanishads, Advaita classics, the sutras and the epics, each with its API id and verse count.",
+      "label": "Books"
+    },
+    "/pricing": {
+      "title": "Mantrilo API Pricing & Request Limits",
+      "description": "Compare Mantrilo’s monthly API plans: Free, $49.99, $149, and $399, with request limits, audio data delivery, catalog access, and customer-product allowances.",
+      "label": "Pricing"
+    },
+    "/docs": {
+      "title": "Mantrilo API Quickstart & Developer Reference",
+      "description": "Integrate Mantrilo with copyable requests, server examples, authentication, pagination and rate limits for mantras, books, audio and astrology.",
+      "label": "API documentation"
+    },
+    "/contact": {
+      "title": "Contact Mantrilo",
+      "description": "Questions about Mantrilo’s Hindu content and astrology API, licensing, recordings or a larger plan? Tell us what you’re building and we’ll reply by email.",
+      "label": "Contact"
+    },
+    "/privacy": {
+      "title": "Privacy & Data Handling Status | Mantrilo",
+      "description": "Understand how this Mantrilo preview prepares request drafts locally and which privacy-policy details remain to be supplied before launch.",
+      "label": "Privacy"
+    },
+    "/terms": {
+      "title": "Website Terms Status | Mantrilo",
+      "description": "Review the current status of Mantrilo website and service terms. See the status of the public website and developer service terms.",
+      "label": "Terms"
+    },
+    "/license": {
+      "title": "Content License | Mantrilo",
+      "description": "Use Mantrilo’s mantras, recordings, books and astrology results in your product through the API on a paid plan, or purchase a content license.",
+      "label": "Content license"
+    },
+    "/astrology-api/planetary-positions": {
+      "title": "Planetary Positions API: Sidereal & Tropical | Mantrilo",
+      "description": "Calculate planetary longitudes, rashis, nakshatras and apparent motion for a UTC instant with the Mantrilo astrology API.",
+      "label": "Planetary Positions API"
+    },
+    "/astrology-api/instant-panchang": {
+      "title": "Instant Panchang API for Tithi and Nakshatra | Mantrilo",
+      "description": "Calculate tithi, nakshatra, yoga and karana for a supplied instant. See the JSON response, supported UTC dates and sidereal calculation method.",
+      "label": "Instant Panchang API"
+    },
+    "/about": {
+      "title": "About Mantrilo: Hindu Content API for Developers",
+      "description": "Learn what Mantrilo provides, how catalog records represent text, translations and recordings, and how the content is licensed for your product.",
+      "label": "About Mantrilo"
+    },
+    "/astrology-api/daily-panchang": {
+      "title": "Daily Panchang API for Hindu Calendar Apps | Mantrilo",
+      "description": "Get local sunrise, sunset, tithi and nakshatra transitions, yoga, karanas and Rahu Kalam for a date, coordinates and time zone.",
+      "label": "Daily Panchang API"
+    },
+    "/library/books/upanishads": {
+      "title": "Upanishads Library and Books API | Mantrilo",
+      "description": "Browse Sanskrit Upanishad previews by title, compare chapter coverage, and try the Isha Upanishad example with the Mantrilo Books API.",
+      "label": "Upanishads"
+    },
+    "/docs/guides/upanishads": {
+      "title": "Upanishads API: Load Books and Verses | Mantrilo",
+      "description": "Filter the Mantrilo books API for the Upanishads, follow pagination, and load chapters and verses from your server.",
+      "label": "Load the Upanishads"
+    },
+    "/docs/guides/search-mantras": {
+      "title": "Build a Searchable Mantra & Shloka Library | Mantrilo",
+      "description": "Use the Mantrilo API to list mantras and shlokas, filter by deity, paginate results, and search your loaded catalog.",
+      "label": "Build a searchable shloka library"
+    },
+    "/docs/guides/sacred-audio": {
+      "title": "Mantra Audio Playback Integration Guide | Mantrilo",
+      "description": "Request signed mantra recording URLs from your server and pass them to your app’s player. See expiration, usage, and availability.",
+      "label": "Play sacred audio"
+    },
+    "/docs/guides/book-reader": {
+      "title": "Build a Book Reader with Mantrilo | Mantrilo",
+      "description": "Build a reader for Sanskrit verse pages and English retellings of the Ramayana and Mahabharata with the Mantrilo Books API.",
+      "label": "Build a book reader"
+    },
+    "/docs/guides/vedic-birth-chart": {
+      "title": "Vedic Birth Chart & Kundli API Integration Guide | Mantrilo",
+      "description": "Build a Kundli with Mantrilo. See a verified synthetic D1 and D9 response, optional Vimshottari Dasha, and birth time and timezone requirements.",
+      "label": "Add birth charts"
+    },
+    "/docs/guides/daily-panchang": {
+      "title": "Daily Panchang API Integration Guide | Mantrilo",
+      "description": "Build a Hindu calendar using the Mantrilo Daily Panchang API. See local date and location inputs, sunrise-based values, and server code.",
+      "label": "Add a daily Panchang"
+    },
+    "/docs/guides/featured-mantra": {
+      "title": "Add a Daily Sanskrit Mantra to Your App | Mantrilo",
+      "description": "Fetch one mantra from the Mantrilo API and display its Sanskrit and transliteration in your app.",
+      "label": "Feature a daily mantra"
+    },
+    "notFound": {
+      "title": "Page Not Found | Mantrilo",
+      "description": "This Mantrilo page could not be found. Explore the content API overview, product pages, or API documentation.",
+      "label": "Page not found"
+    },
+    "socialImageAlt": "Mantrilo Hindu Content API for developers",
+    "/calculators/zodiac-signs": {
+      "title": "Zodiac Sign Calculator: Sun, Moon, Rising and Vedic Signs | Mantrilo",
+      "description": "Find your Sun, Moon and Rising signs plus your Vedic Rashi, Lagna and Nakshatra from your birth date, time and place. Free, no sign-up.",
+      "label": "Zodiac sign calculator"
+    },
+    "/calculators/sun-sign": {
+      "title": "Sun Sign Calculator: Western and Vedic Sun Sign | Mantrilo",
+      "description": "Find your Sun sign from your birth date, with the exact degree, and see your Vedic (sidereal) Sun sign too. Free sun sign calculator, no sign-up.",
+      "label": "Sun sign calculator"
+    },
+    "/calculators/moon-sign": {
+      "title": "Moon Sign Calculator: Find Your Moon Sign | Mantrilo",
+      "description": "Calculate your Moon sign from your birth date, time and place, in both the Western and the Vedic zodiac. Free Moon sign calculator, no sign-up.",
+      "label": "Moon sign calculator"
+    },
+    "/calculators/rising-sign": {
+      "title": "Rising Sign Calculator: Find Your Ascendant | Mantrilo",
+      "description": "Calculate your Rising sign (ascendant) from your birth date, exact time and place. See your Vedic Lagna too. Free rising sign calculator, no sign-up.",
+      "label": "Rising sign calculator"
+    },
+    "/calculators/rashi": {
+      "title": "Rashi Calculator: Find Your Vedic Moon Sign | Mantrilo",
+      "description": "Find your Rashi (Vedic Moon sign) and Nakshatra from your birth date, time and place, calculated with the Lahiri ayanamsa. Free, no sign-up.",
+      "label": "Rashi calculator"
+    },
+    "/calculators/lagna": {
+      "title": "Lagna Calculator: Find Your Vedic Ascendant | Mantrilo",
+      "description": "Calculate your Lagna (Vedic ascendant) from your birth date, exact time and place, with its Nakshatra and pada. Lahiri ayanamsa. Free, no sign-up.",
+      "label": "Lagna calculator"
+    },
+    "/calculators/nakshatra": {
+      "title": "Nakshatra Calculator: Find Your Birth Star and Pada | Mantrilo",
+      "description": "Find your birth Nakshatra (janma nakshatra), its pada and its lord from your birth date, time and place. Free Nakshatra calculator, no sign-up.",
+      "label": "Nakshatra calculator"
+    },
+    "/calculators": {
+      "title": "Free Astrology Sign Calculators: Western and Vedic | Mantrilo",
+      "description": "Free calculators for your Sun, Moon and Rising signs and your Vedic Rashi, Lagna and Nakshatra, from your birth date, time and place.",
+      "label": "Calculators"
+    },
+    "astrologyCapability": {
+      "title": "{{name}} API for Developers | Mantrilo",
+      "description": "See the inputs, a copyable POST {{path}} request and a sample JSON response for the {{name}} API.",
+      "label": "{{name}} API"
+    },
+    "/library/mantras": {
+      "title": "Mantra & Stotra Library with API Access | Mantrilo",
+      "description": "Browse nearly {{records}} Sanskrit mantras and stotras by deity, about {{recordings}} with recordings. Each page shows the text, the API request and the exact JSON response.",
+      "label": "Mantras"
+    }
+  },
+  "code": {
+    "copyCurl": "Copy cURL",
+    "tabsLabel": "Code example language",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyFailed": "Copy failed",
+    "response": "Response",
+    "request": "Request"
+  },
+  "astro": {
+    "tithi": "Tithi",
+    "nakshatra": "Nakshatra",
+    "karana": "Karana",
+    "yoga": "Yoga",
+    "rashi": "Rashi",
+    "sun": "Sun",
+    "moon": "Moon",
+    "panchang": "Panchang"
+  },
+  "plans": {
+    "customerProduct": "A customer product is an app or website covered by your plan.",
+    "names": {
+      "Free": "Free",
+      "Starter": "Starter",
+      "Growth": "Growth",
+      "Business": "Business"
+    },
+    "choose": "Choose {{plan}}",
+    "startFree": "Start free",
+    "recommended": "Recommended",
+    "perMonth": "/month",
+    "forever": "forever",
+    "fullCatalog": "Full available catalog",
+    "sandboxForTesting": "Sandbox key for testing",
+    "requestsPerMonthPrefix": "",
+    "requestsPerMonth": "requests / month",
+    "audioDelivery": "{{audio}} audio delivery",
+    "sampleTextAudio": "Sample text & audio",
+    "customerProducts_one": "{{n}} customer product",
+    "customerProducts_other": "{{n}} customer products",
+    "firstFive": "First 5 items of each resource",
+    "astrology": "Astrology calculations",
+    "support": {
+      "Free": "No promised support level",
+      "Starter": "Email support",
+      "Growth": "Priority email support",
+      "Business": "Integration assistance"
+    },
+    "rows": {
+      "requests": "API requests / month",
+      "audio": "Audio delivery / month",
+      "mantras": "Mantras",
+      "books": "Books & collections",
+      "astrology": "Astrology calculations",
+      "rateLimit": "Rate limit",
+      "keys": "Keys",
+      "products": "Customer products",
+      "support": "Support"
+    },
+    "sampleAudio": "{{size}} sample",
+    "firstFiveShort": "First 5",
+    "sampleBooks": "Sample books, opening verses",
+    "astrologyIncluded": "Included, 1 request each",
+    "rateLimit": "{{rate}} per second, burst {{burst}}",
+    "sandboxLive": "Sandbox + live",
+    "sandbox": "Sandbox",
+    "testingOnly": "Testing only",
+    "sampleAudioOnly": "Sample audio only",
+    "perSecond": "{{rate}} per second",
+    "billedMonthly": "Billed monthly",
+    "billedAnnually": "Billed {{total}} a year",
+    "noCard": "No card needed"
+  },
+  "home": {
+    "hero": {
+      "pillTag": "Included",
+      "pill": "Astrology on every plan",
+      "heading": "Hindu content API<br/><accent>for developers.</accent>",
+      "lede": "One REST API for Sanskrit mantras, scripture books and chapters, linked recordings, and astrology calculations.",
+      "trySandbox": "Try the sandbox",
+      "freeCalls_one": "{{calls}} free call a month",
+      "freeCalls_other": "{{calls}} free calls a month",
+      "noCard": "No card needed",
+      "liveFrom": "Live keys from {{price}}/mo",
+      "rendered": "Rendered in your app"
+    },
+    "demo": {
+      "eyebrow": "Try it",
+      "title": "Pick an endpoint. See exactly what comes back.",
+      "copy": "Explore a production mantra record, an example signed link, and output from the astrology engine.",
+      "endpoint": "Endpoint",
+      "options": {
+        "mantra": "Mantra with verses",
+        "audio": "Recording link",
+        "positions": "Planetary positions",
+        "panchang": "Instant Panchang"
+      },
+      "script": "Script",
+      "scriptBoth": "Devanagari + IAST",
+      "scriptDeva": "Devanagari only",
+      "scriptIast": "IAST only",
+      "moment": "Moment"
+    },
+    "story": {
+      "eyebrow": "Customer story",
+      "quote": "Mantrilo powers the parts of Satyam our users turn to for <em>daily practice</em>. It helps them read and listen to Sanskrit mantras, explore the Bhagavad Gita chapter by chapter, check their local Panchang, and generate their Vedic birth chart. It’s been a great partner in bringing all of that into <em>one app</em>.",
+      "role": "Head of Satyam",
+      "visit": "Visit Satyam",
+      "sideLabel": "What Satyam builds with Mantrilo",
+      "inside": "Inside Satyam",
+      "uses": {
+        "mantras": "Mantras with audio",
+        "gita": "Bhagavad Gita, by chapter",
+        "panchang": "Local Panchang",
+        "chart": "Vedic birth chart"
+      }
+    },
+    "features": {
+      "eyebrow": "What’s in the response",
+      "title": "Built for reading, listening and reckoning time.",
+      "copy": "Content shaped the way people actually use it, with the care the source material deserves.",
+      "items": {
+        "devanagari": {
+          "title": "Devanagari, as sourced",
+          "copy": "Sanskrit in Unicode Devanagari with its line breaks intact, ready for any font stack."
+        },
+        "iast": {
+          "title": "IAST transliteration",
+          "copy": "Every verse carries full diacritics, so ahaṃ stays ahaṃ for readers who don’t read the script."
+        },
+        "verses": {
+          "title": "Structured verses",
+          "copy": "Verse numbers and original text let your app build reading and recitation views."
+        },
+        "recordings": {
+          "title": "Linked recordings",
+          "copy": "Request a 15-minute signed link to the recording for any mantra that has one."
+        },
+        "astrology": {
+          "title": "Vedic astrology engine",
+          "copy": "D1 and D9 charts, Vimshottari Dasha, Panchang, Guna Milan and planetary positions. On every plan."
+        },
+        "sandbox": {
+          "title": "Sandbox to production",
+          "copy": "A free sandbox key with {{calls}} calls a month on sample records. Live keys unlock the full catalog."
+        }
+      }
+    },
+    "code": {
+      "eyebrow": "Integrate in minutes",
+      "title": "A familiar interface, in the language you already use.",
+      "copy": "Plain HTTPS and JSON. Keep your key on the server, call the API, and render the verse however your design calls for.",
+      "auth": "Bearer-token auth with sandbox and live keys",
+      "pagination": "Cursor pagination and deity filters",
+      "errors": "Stable error codes and a requestId on every response",
+      "reference": "Read the API reference"
+    },
+    "uses": {
+      "eyebrow": "What you can build",
+      "title": "Build with the Mantrilo API",
+      "browse": "Browse the Library",
+      "verse": {
+        "title": "Verse of the day",
+        "copy": "Display original Sanskrit and transliteration in a daily widget or reading view.",
+        "link": "Build a mantra library"
+      },
+      "audio": {
+        "title": "Chanting & listening",
+        "copy": "Play an available recording beside its mantra using a temporary link.",
+        "link": "Add audio playback"
+      },
+      "panchang": {
+        "title": "Panchang calendars",
+        "copy": "Show sunrise, tithi, nakshatra and transitions for a local calendar day.",
+        "link": "See the Panchang API"
+      },
+      "books": {
+        "title": "Scripture and epic readers",
+        "copy": "Display Sanskrit verses from the Upanishads or English retellings of the Ramayana and Mahabharata.",
+        "link": "Explore the epic retellings"
+      }
+    },
+    "pricing": {
+      "eyebrow": "Pricing",
+      "title": "Start free. Pay as your product grows.",
+      "copy": "Monthly billing. Every allowance resets monthly. Astrology included on every plan.",
+      "compare": "Compare plans in detail"
+    },
+    "faq": {
+      "eyebrow": "Questions",
+      "title": "Good to know.",
+      "contact": "Something else? <link>Get in touch</link>.",
+      "contentQ": "What content is available today?",
+      "contentA": "Mantras with Sanskrit, transliteration and source references; recordings linked to those mantras; scripture books by collection, chapter and verse; and astrology calculations.",
+      "sandboxQ": "How does the free sandbox work?",
+      "sandboxA_one": "Every account gets a sandbox key with {{calls}} call a month, a sample of mantras and books, and access to available astrology calculations. Paid plans add a live key for the full available catalog.",
+      "sandboxA_other": "Every account gets a sandbox key with {{calls}} calls a month, a sample of mantras and books, and access to available astrology calculations. Paid plans add a live key for the full available catalog.",
+      "astrologyQ": "Is astrology included?",
+      "astrologyA": "Yes, on every plan. Each calculation counts as one normal request. The default sidereal offset is approximate, with a custom ayanamsa option. <link>Read about the astrology API</link>.",
+      "commercialQ": "Can I use the content commercially?",
+      "commercialA": "Yes. Paid plans unlock the full catalog and include a license to use it in your product, and you can also purchase a content license. See the <link>content license</link> for what each covers. The Free plan is for testing.",
+      "audioQ": "How is audio metered?",
+      "audioA": "Audio allowances measure data delivered each month, not storage. {{plans}}.",
+      "audioPlan": "{{plan}} includes {{audio}}"
+    },
+    "cta": {
+      "title": "Begin with a free sandbox key.",
+      "copy": "{{calls}} calls a month on sample records. Upgrade when you’re ready to go live."
+    },
+    "render": {
+      "signedLink": "Signed link",
+      "expires": "Expires in {{minutes}} min",
+      "size": "Size",
+      "format": "Format",
+      "metered": "Metered",
+      "meteredValue": "File bytes per link",
+      "audioNote": "Omit <code>?format=json</code> to get a 302 redirect straight to the file. The signed URL is shortened here.",
+      "sidereal": "Sidereal · Lahiri (approx.)",
+      "pada": "{{name}}, pada {{pada}}",
+      "motion": "Motion",
+      "perDay": "{{degrees}}°/day",
+      "planetsNote": "The full response covers the Sun through Saturn. The Moon is shown here.",
+      "instant": "At the requested instant",
+      "number": "No. {{number}}"
+    }
+  },
+  "pricing": {
+    "crumb": "Pricing",
+    "title": "Mantrilo API plans and limits",
+    "lede": "Every account starts with a sandbox key. Subscribe for a live key, the full catalog and higher limits. Allowances reset monthly in UTC.",
+    "plans": "Plans",
+    "billingNote": "Prices are billed monthly in USD.",
+    "compare": "Compare plans",
+    "compareCopy": "Each row matches the limits the API and billing enforce.",
+    "comparison": "Plan comparison",
+    "feature": "Feature",
+    "perMonth": "{{price}}/mo",
+    "free": {
+      "title": "What can I try on the Free plan?",
+      "copy": "The Free plan includes a sandbox key, sample catalog access, and {{requests}} requests per month. You do not need a payment card to start.",
+      "mantras": "Five sample mantras and the recordings available for those samples.",
+      "books": "The opening chapter and first three stored rows of the <gita>Bhagavad Gita</gita> and <isha>Isha Upanishad</isha>.",
+      "astrology": "Astrology calculations marked available in the <link>operation catalog</link>.",
+      "compare": "Compare sandbox and live access"
+    },
+    "nextStep": "Next step",
+    "callout": "A customer product is an app or website covered by your plan. Each issued audio link counts the recording’s file size toward the audio allowance. Each successful astrology calculation counts as one request. Commercial use is subject to the <link>content license</link>.",
+    "cards": {
+      "reads": {
+        "title": "What each plan reads",
+        "copy": "Browse mantras, recordings, book collections and astrology in the Library.",
+        "link": "Open the Library"
+      },
+      "usage": {
+        "title": "How usage is counted",
+        "copy": "Rate limits, quota headers and what happens when an allowance runs out.",
+        "link": "Usage limits"
+      },
+      "scope": {
+        "title": "Scope the integration",
+        "copy": "Guides by goal, each with a working request and its quota behavior."
+      }
+    },
+    "cta": {
+      "title": "Start with the sandbox.",
+      "copy": "No card needed. Upgrade when you are ready for the full catalog."
+    },
+    "period": "Billing period",
+    "monthly": "Monthly",
+    "annual": "Annual",
+    "save": "Save 20%",
+    "billingNoteAnnual": "Prices are shown per month and billed once a year in USD."
+  },
+  "info": {
+    "eyebrow": {
+      "contact": "Contact",
+      "about": "About",
+      "legal": "Legal"
+    },
+    "notFound": "Page not found.",
+    "returnHome": "Return home",
+    "about": {
+      "title": "About Mantrilo.",
+      "lede": "One developer API for Sanskrit content and astrology calculations.",
+      "servesTitle": "Who it serves",
+      "serves": "Mantrilo helps developers build Hindu devotional, learning and calendar apps. The API organizes mantra verses, scripture collections and available recordings, and calculates astrology data from inputs your app supplies.",
+      "catalogTitle": "How to read the catalog",
+      "catalog": "Original text, transliteration, translation and audio are separate fields. Coverage varies by record. Keep source references where supplied. Paid plans include a license to use the catalog in your product.",
+      "sandbox": "The sandbox uses a limited sample. Check the <library>Library</library> and <docs>API docs</docs> to see data formats, then <contact>contact Mantrilo</contact> for title-specific rights and coverage."
+    },
+    "contact": {
+      "title": "Talk to us.",
+      "astrologyTitle": "Plan an astrology inquiry.",
+      "astrologyIntro": "Tell us what you want to calculate and how your product will use it. Astrology is included in every plan.",
+      "intro": "Questions about the catalog, licensing, recordings or a larger plan? Tell us what you’re building.",
+      "apiKey": "Looking for an API key? <link>Create a free account</link> in the developer console and you’ll have a sandbox key straight away.",
+      "emailReady": "Fill in your details, then send the prepared email from your email app.",
+      "notConnected": "This form is not connected to a submission service yet. You can prepare and download your message below. Nothing is sent or stored on a server.",
+      "name": "Your name",
+      "email": "Work email",
+      "product": "App or website",
+      "productPlaceholder": "Product name or URL",
+      "message": "How can we help?",
+      "messagePlaceholder": "Tell us about your product and what you need from the API.",
+      "prepareAstrology": "Prepare astrology inquiry",
+      "prepare": "Prepare message",
+      "local": "Your details stay in your browser until you send the email.",
+      "yourMessage": "Your message",
+      "openDraft": "Open email draft",
+      "download": "Download as a text file",
+      "sendFromApp": "Send the email from your email app to reach us.",
+      "notSubmitted": "Your draft has not been submitted. A verified contact address must be configured before you can send it from this website.",
+      "draftName": "Name",
+      "draftEmail": "Work email",
+      "draftProduct": "Product",
+      "draftMessage": "Message"
+    },
+    "license": {
+      "title": "Content license.",
+      "lede": "How you can use Mantrilo’s mantras, recordings, books and astrology results in your product.",
+      "licensedTitle": "Mantrilo licenses its catalog",
+      "licensed": "Mantrilo holds the licensing for the content it serves: mantra texts and transliterations, audio recordings, scripture books and retellings, and astrology results. You can use that content in your own product in two ways: through the Mantrilo API, or by purchasing a content license.",
+      "serviceTitle": "Use it through the Mantrilo API",
+      "service": "Every paid plan includes a license to use the catalog through the API in the apps and websites your plan covers, and to show it to your users. The license applies while your plan is active.",
+      "purchaseTitle": "Purchase a content license",
+      "purchase": "If you want the content inside your app, available offline or without calling the API, you can purchase a license for the titles and recordings you need. Tell us what you need and how you will use it, and we will send you a quote.",
+      "limitsTitle": "What the license does not cover",
+      "limits": "You may not resell Mantrilo’s catalog itself, or offer it as a dataset or an API of your own. The Free plan’s sandbox key is for testing only.",
+      "publicTitle": "Public-domain Sanskrit",
+      "public": "Many original Sanskrit texts are in the public domain. Mantrilo’s license covers the catalog as we provide it, including our transliterations, recordings and retellings. Keep the source reference with the text where one is supplied.",
+      "questionsTitle": "Licensing questions",
+      "questions": "To purchase a license or ask about a title, <link>contact Mantrilo</link> with the titles you need and a short description of how you plan to use them."
+    },
+    "privacy": {
+      "title": "Privacy & data.",
+      "lede": "What this website does with the details you enter.",
+      "warning": "A final operator privacy policy has not been supplied. Review and provide it before launch.",
+      "previewTitle": "What this preview does",
+      "preview": "The contact form prepares a draft locally in your browser. It does not submit form entries to a server or save them in browser storage. If you download a draft, the file contains the details you entered. If configured, the email link passes the draft to your chosen email app.",
+      "referral": "The public site keeps a broad referral category for the current tab. When you choose to try the API or open signup, the link includes that category and the public page path so Mantrilo can count Console visits and signup starts. It does not include the referring URL, account details, or request inputs. The developer console handles account registration and billing separately.",
+      "contact": "Contact us"
+    },
+    "terms": {
+      "title": "Website terms status.",
+      "lede": "The status of Mantrilo’s website terms.",
+      "warning": "Final website terms have not been supplied. This status page is not a service agreement.",
+      "site": "This website presents Mantrilo’s content API and monthly plans. Catalog examples use placeholder values unless marked otherwise.",
+      "keys": "API keys are issued in the developer console. Preparing a message on the contact page does not create an account or start a subscription.",
+      "commercialTitle": "Commercial content use",
+      "commercial": "Paid plans include a license to use Mantrilo’s content in your product through the API, and you can also purchase a content license. The content license page explains what each covers.",
+      "license": "View the content license"
+    }
+  },
+  "guides": {
+    "search-mantras": {
+      "name": "Build a searchable mantra library",
+      "summary": "List mantras and shlokas, filter by deity, and search the titles you have loaded.",
+      "render": "Display data[].title, deity.name and verseCount. Use nextCursor for the next page. Open a row by passing its id to GET /v1/mantras/{id}.",
+      "inputs": "Use limit (1–100, default 20), cursor (the previous nextCursor), and optional deity (a deity ID such as annapurna). The Mantras route also serves shlokas. The API has no full-text search parameter. The example filters one loaded page by title and optionally by audio availability. For catalog-wide search, index permitted content in your backend.",
+      "usage": "Each successful page, deity-filter request, and detail fetch uses one request. Searching or filtering audio on already loaded results, or serving an entire response from your own cache without calling Mantrilo, uses zero Mantrilo requests."
+    },
+    "featured-mantra": {
+      "name": "Add a daily mantra or featured shloka",
+      "summary": "Fetch a selected mantra and present its original Sanskrit and transliteration.",
+      "render": "Render data.title and the verses array. Display sanskrit and transliteration when present. The translation field is currently null.",
+      "inputs": "Use the stable id from the catalog. Choose or schedule the featured ID in your app. The API supplies the selected entry.",
+      "usage": "Each successful detail fetch uses one request. Reusing an entry already in your backend cache uses no additional request."
+    },
+    "sacred-audio": {
+      "name": "Play a sacred recording",
+      "summary": "Request a temporary playback URL for an entry with a recording.",
+      "render": "Pass data.url to your player, and request a fresh link after data.expiresAt. The example response substitutes a placeholder for the expired signed URL.",
+      "inputs": "Use audio.href from the mantra record and append ?format=json. If audio is null, hide the player. The plain endpoint redirects to the recording. JSON mode gives your backend the signed URL.",
+      "usage": "Each successful link issuance uses one request and charges the full file size in bytes against audio allowance. Reading the already issued URL in the player makes no new Mantrilo API request."
+    },
+    "upanishads": {
+      "name": "Load the Upanishads into your app",
+      "summary": "Call one collection directly, page through it, then open a book, chapter or verse.",
+      "render": "List data[].title and description, then open a book with GET /v1/books/{id}. Its chapters[] gives the chapter numbers for GET /v1/books/{id}/chapters/{chapter}, whose verses[] carry each verse number.",
+      "inputs": "collection is a collection id: upanishads, bhagavad-gita, advaita-vedanta-prakarana-granthas, vedanta or yoga. limit is 1–100 (default 24). Pass nextCursor as cursor for the next page; it is null on the last page. Every book in the response carries collection.id, so the same id works for links back to the collection. Sandbox keys return Isha Upanishad for this collection, with nextCursor set to null. Paid keys can page through the available collection. Collections without a designated sample return an empty sandbox page.",
+      "usage": "Each collection page, book index and chapter page uses one request. Paging three books at a time through a collection of twelve uses four requests.",
+      "followups": {
+        "0": "Book and chapter index",
+        "1": "First chapter"
+      }
+    },
+    "book-reader": {
+      "name": "Build a book reader",
+      "summary": "Read Sanskrit verses or English retellings of the Ramayana and Mahabharata.",
+      "render": "Use the book title and chapter index for navigation. Scripture chapters return verses for available Sanskrit and transliteration. With a live key, open /v1/books/ramayana or /v1/books/mahabharata and append /chapters/1 for the first chapter. For format \"prose\", show the source citation and render each sections entry’s title and paragraphs. The chapter comes in one response.",
+      "inputs": "GET /v1/books returns up to 24 books. Follow nextCursor as cursor. Fetch /v1/books/{id} for the chapters index, then /v1/books/{id}/chapters/{chapter} using its numeric chapter number. Follow data.nextOffset as offset for more verses. Paid chapter pages contain up to 30 verses. Sandbox shows the opening chapter and first three verses of its sample books.",
+      "usage": "A successful book list, book detail, or chapter page each uses one request. The complete example below makes three calls. Reuse cached indexes and pages when appropriate.",
+      "followups": {
+        "0": "Book and chapter index",
+        "1": "First chapter"
+      }
+    },
+    "astrology-positions": {
+      "summary": "Show the planets at a specific instant.",
+      "render": "Render data.planets with each body, its longitude in degrees and its rashi or nakshatra.",
+      "inputs": "datetime must be ISO 8601 with seconds and a UTC offset. Optional ayanamsaDegrees overrides the approximate sidereal offset. The default is a linear Lahiri approximation."
+    },
+    "astrology-panchang": {
+      "summary": "Show Panchang elements at a specific instant.",
+      "render": "Render data.panchang.tithi, nakshatra, yoga and karana.",
+      "inputs": "datetime must be ISO 8601 with seconds and a UTC offset. Optional ayanamsaDegrees overrides the approximate sidereal offset. The default is a linear Lahiri approximation."
+    },
+    "astrology-chart": {
+      "summary": "Build a Lahiri birth chart with optional Dasha periods.",
+      "render": "Use data.charts for divisions, ascendant, planets and houses. Show data.vimshottariDasha when requested.",
+      "inputs": "Provide birth with an ISO 8601 datetime including an offset and seconds set to 00, latitude/longitude in decimal degrees, and an IANA timezone matching the offset. Optional divisions are 1 and/or 9. If dashaLevels is greater than zero, include referenceDate as YYYY-MM-DD."
+    },
+    "astrology-daily-panchang": {
+      "summary": "Build a local daily Panchang calendar.",
+      "render": "Show data.date, sunrise, sunset, tithi, nakshatra, yoga, karanas and rahuKalam.",
+      "inputs": "Provide a local date (YYYY-MM-DD), latitude and longitude in decimal degrees, and an IANA timezone."
+    },
+    "astrology-match": {
+      "summary": "Compare two birth profiles in a compatibility view.",
+      "render": "Show data.score out of data.maxScore, followed by data.factors.",
+      "inputs": "Provide person1 and person2. Each needs an ISO 8601 datetime with seconds set to 00 and an offset matching the IANA timezone, plus latitude and longitude in decimal degrees."
+    },
+    "astrology-chart-image": {
+      "summary": "Show a North, South or East Indian chart in an app.",
+      "render": "Use data.contentType and data.imageBase64 to render the chart as a data URI.",
+      "inputs": "Provide birth with an offset-aware ISO datetime (seconds set to 00), decimal latitude/longitude, and an IANA timezone matching the offset. Optionally choose divisions 1 and/or 9 and layout north, south, or east."
+    },
+    "astrology-places": {
+      "summary": "Let a user select a birthplace and time zone.",
+      "render": "Render data.places as suggestions and keep the selected coordinates and time zone.",
+      "inputs": "Provide a query of 2–100 characters. Optional country is a two-letter uppercase country code. Optional limit is 1–10. Keep the attribution from data.attribution when displaying place data."
+    },
+    "astrology-western-chat": {
+      "summary": "Add a Western astrology question form.",
+      "render": "Display data.result.reply and prompt for birth details when needs_birth_data is true. Example field: data.result.reply."
+    },
+    "astrology-western-natal": {
+      "summary": "Show a Western birth chart.",
+      "render": "Show chart placements, houses and angles from data.result. Example field: data.result.planets."
+    },
+    "astrology-western-natal-insights": {
+      "summary": "Explain the main patterns in a Western birth chart.",
+      "render": "Use the natal interpretation returned by the operation."
+    },
+    "astrology-western-chart-similarity": {
+      "summary": "Compare a birth chart with a ranked set of similar charts.",
+      "render": "Display the ranked matches and their scores from data.result. Example field: data.result.matches."
+    },
+    "astrology-western-ephemeris": {
+      "summary": "Show planetary motion for selected dates.",
+      "render": "Display the dates and planetary positions from data.result. Example field: data.result.data.astrology."
+    },
+    "astrology-western-astrocartography": {
+      "summary": "Draw planetary lines on a world map.",
+      "render": "Draw the returned GeoJSON in WGS84 longitude, latitude order. Example field: data.result.lines."
+    },
+    "astrology-western-astrocartography-parans": {
+      "summary": "Show planetary crossing zones on a map.",
+      "render": "Draw returned GeoJSON bands in longitude, latitude order and label the planetary pairs. Example field: data.result.parans."
+    },
+    "astrology-western-astrocartography-relocation": {
+      "summary": "Compare a birth chart at a destination city.",
+      "render": "Display the relocated chart and relocation summary from data.result."
+    },
+    "astrology-western-astrocartography-recommendations": {
+      "summary": "Rank destinations for a selected focus.",
+      "render": "Display destination names, ranking and scores from data.result. Example field: data.result.results."
+    },
+    "astrology-western-astrocartography-city": {
+      "summary": "Review a single destination in a relocation view.",
+      "render": "Display the city and focus scores from data.result. Example field: data.result.focus_scores."
+    },
+    "astrology-western-wedding-electional": {
+      "summary": "Compare candidate wedding times.",
+      "render": "Display each candidate time and its rationale when the operation is available."
+    },
+    "astrology-western-sun-sign": {
+      "summary": "Add a Sun sign profile card.",
+      "render": "Show the Sun sign from data.result. Example field: data.result.sign_id."
+    },
+    "astrology-western-moon-sign": {
+      "summary": "Add a Moon sign profile card.",
+      "render": "Show the Moon sign from data.result. Example field: data.result.sign_id."
+    },
+    "astrology-western-rising-sign": {
+      "summary": "Add a rising sign to a profile.",
+      "render": "Show the ascendant sign from data.result. Example field: data.result.sign_id."
+    },
+    "astrology-western-midheaven-sign": {
+      "summary": "Show the Midheaven sign on a chart profile.",
+      "render": "Show the Midheaven sign from data.result. Example field: data.result.sign_id."
+    },
+    "astrology-western-transits": {
+      "summary": "Compare current sky positions with a natal chart.",
+      "render": "Show the transiting bodies and natal aspects from data.result. Example field: data.result.transit_planets."
+    },
+    "astrology-western-transit-timeline": {
+      "summary": "Show transits across a date range.",
+      "render": "Plot dated transit windows when the operation is available."
+    },
+    "astrology-western-transit-insights": {
+      "summary": "Explain upcoming transit themes.",
+      "render": "Display dated interpretation windows when the operation is available."
+    },
+    "astrology-western-profections": {
+      "summary": "Show the annual profection for a birth chart.",
+      "render": "Display the activated house and time lord from data.result. Example field: data.result.annual_profection."
+    },
+    "astrology-western-primary-directions": {
+      "summary": "Show primary direction events across a period.",
+      "render": "List the direction events and dates returned in data.result. Example field: data.result.events."
+    },
+    "astrology-western-secondary-progressions": {
+      "summary": "Show a progressed chart on a target date.",
+      "render": "Use the progressed chart from data.result. Example field: data.result.progressed_chart."
+    },
+    "astrology-western-progressions-calendar": {
+      "summary": "Build a calendar of progression events.",
+      "render": "Display dated progression events from data.result. Example field: data.result.events."
+    },
+    "astrology-western-solar-return": {
+      "summary": "Show a yearly Solar return chart.",
+      "render": "Display the return moment and chart from data.result. Example field: data.result.meta.solar_return."
+    },
+    "astrology-western-planetary-return": {
+      "summary": "Find the next or selected return of a planet.",
+      "render": "Display the returned body, event moment and chart from data.result. Example field: data.result.meta.return_event."
+    },
+    "astrology-western-synastry": {
+      "summary": "Compare two natal charts.",
+      "render": "Show cross-chart aspects from data.result. Example field: data.result.synastry.aspects."
+    },
+    "astrology-western-synastry-cards": {
+      "summary": "Build a card view for relationship chart insights.",
+      "render": "Render the returned cards from data.result. Example field: data.result.summary."
+    },
+    "astrology-western-daily-sign": {
+      "summary": "Show a daily horoscope for a zodiac sign.",
+      "render": "Render the sign and forecast returned in data.result. Example field: data.result.data."
+    },
+    "astrology-western-daily-personal": {
+      "summary": "Build a daily forecast from a birth profile.",
+      "render": "Render the date and interpretation returned in data.result. Example field: data.result.data."
+    },
+    "astrology-western-weekly-personal": {
+      "summary": "Build a week view of a personal forecast.",
+      "render": "Display the period and forecast entries from data.result. Example field: data.result.data.content.text."
+    },
+    "astrology-western-couples-horoscope": {
+      "summary": "Show a daily forecast for two people.",
+      "render": "Display the date and relationship forecast from data.result. Example field: data.result.summary.scores."
+    },
+    "astrology-western-natal-image": {
+      "summary": "Embed a Western natal chart image.",
+      "render": "Use data.contentType and data.imageBase64 to render the chart as a data URI."
+    },
+    "astrology-western-transit-image": {
+      "summary": "Embed a chart overlay of natal and transit positions.",
+      "render": "Use data.contentType and data.imageBase64 to render the chart as a data URI."
+    },
+    "astrology-western-solar-return-image": {
+      "summary": "Embed a Solar return chart.",
+      "render": "Use data.contentType and data.imageBase64 to render the chart as a data URI."
+    },
+    "astrology-western-progressions-image": {
+      "summary": "Embed a secondary progressions chart.",
+      "render": "Use data.contentType and data.imageBase64 to render the chart as a data URI."
+    },
+    "astrology-western-synastry-image": {
+      "summary": "Embed a two-person synastry chart.",
+      "render": "Use data.contentType and data.imageBase64 to render the chart as a data URI."
+    },
+    "astrology-western-composite-image": {
+      "summary": "Embed a composite relationship chart.",
+      "render": "Use data.contentType and data.imageBase64 to render the chart as a data URI."
+    },
+    "astrology-numerology-profile": {
+      "summary": "Generate a numerology profile from a birth date and chosen method.",
+      "render": "Render the calculated numerology profile from data.result. Example field: data.result.meta.method."
+    },
+    "astrology-vedic-chat": {
+      "summary": "Add a Vedic astrology question form.",
+      "render": "Display data.result.reply and prompt for birth details when needs_birth_data is true. Example field: data.result.reply."
+    },
+    "astrology-vedic-natal": {
+      "summary": "Build a sidereal natal chart.",
+      "render": "Display ascendant, planetary placements and houses from data.result. Example field: data.result.planets."
+    },
+    "astrology-vedic-full-chart": {
+      "summary": "Combine Vedic chart calculations in one request.",
+      "render": "Render the returned chart and any requested modules from data.result. Example field: data.result.chart."
+    },
+    "astrology-vedic-kp": {
+      "summary": "Show a Krishnamurti Paddhati chart.",
+      "render": "Show KP planetary and cusp placements from data.result. Example field: data.result.cuspal_sub_lord_table."
+    },
+    "astrology-vedic-kp-image": {
+      "summary": "Embed a KP chart image.",
+      "render": "Use data.contentType and data.imageBase64 to render the chart as a data URI."
+    },
+    "astrology-vedic-dasha": {
+      "summary": "Display Vimshottari periods for a birth chart.",
+      "render": "Render the periods and dates from data.result. Example field: data.result.timeline."
+    },
+    "astrology-vedic-dasha-insights": {
+      "summary": "Explain a person’s Dasha periods.",
+      "render": "Show period dates and interpretation from data.result. Example field: data.result.summary."
+    },
+    "astrology-vedic-gochar": {
+      "summary": "Build a dated Vedic transit calendar.",
+      "render": "Display Gochar intervals from data.result. Example field: data.result.windows."
+    },
+    "astrology-vedic-gochar-insights": {
+      "summary": "Explain Vedic transit windows.",
+      "render": "Display the transit dates and interpretation in data.result. Example field: data.result.facts."
+    },
+    "astrology-vedic-daily-personal": {
+      "summary": "Display a Vedic forecast using birth details.",
+      "render": "Render the personalized forecast from data.result. Example field: data.result.scores.overall."
+    },
+    "astrology-vedic-daily-sign": {
+      "summary": "Show the daily Rashifal for one sign.",
+      "render": "Display the requested sign and its forecast from data.result. Example field: data.result.data.interpretation.summary."
+    },
+    "astrology-vedic-daily-bulk": {
+      "summary": "Build a daily Rashifal view for all signs.",
+      "render": "List the forecasts by sign from data.result. Example field: data.result.data.aries.interpretation.summary."
+    },
+    "astrology-vedic-yogas": {
+      "summary": "Show the yogas detected in a birth chart.",
+      "render": "Render yoga names and descriptions from data.result. Example field: data.result.yogas."
+    },
+    "astrology-vedic-strength": {
+      "summary": "Compare strengths across planets.",
+      "render": "Render the planetary strength measures from data.result. Example field: data.result.shadbala."
+    },
+    "astrology-vedic-vargas": {
+      "summary": "Let a reader switch between divisional charts.",
+      "render": "Render the requested chart divisions from data.result. Example field: data.result.vargas.D9."
+    },
+    "astrology-vedic-muhurat": {
+      "summary": "Look up auspicious timing for a date and location.",
+      "render": "Display the returned timing details from data.result. Example field: data.result.answer."
+    },
+    "astrology-vedic-muhurat-search": {
+      "summary": "Search for Muhurat windows across a date range.",
+      "render": "List candidate times and the returned context from data.result. Example field: data.result.best_windows."
+    },
+    "astrology-vedic-personalized-muhurat": {
+      "summary": "Find Muhurat windows for a specific birth profile.",
+      "render": "Display the candidate windows from data.result. Example field: data.result.best_moment."
+    },
+    "astrology-vedic-compatibility": {
+      "summary": "Compare two profiles using Moon placements.",
+      "render": "Display compatibility scores and factors from data.result. Example field: data.result.ashtakoota.score."
+    },
+    "astrology-moon-phase": {
+      "summary": "Add a Moon phase card for a day.",
+      "render": "Display phase and illumination from data.result. Example field: data.result.phase."
+    },
+    "astrology-moon-timeline": {
+      "summary": "Build a monthly calendar of lunar phases.",
+      "render": "Render data.result.days with calendar_date, phase.name, illumination (0–1) and next_phases.",
+      "inputs": "Provide integer year (1900–2100) and month (1–12). Optional tz_str is an IANA time zone and defaults to UTC."
+    },
+    "astrology-sky-events": {
+      "summary": "Build a calendar of upcoming sky events.",
+      "render": "List the events and their times from data.result. Example field: data.result.events."
+    },
+    "common": {
+      "oneRequest": "A successful call uses one content request. Sandbox and live requests have separate usage totals. Failed calculations are refunded.",
+      "defaultRender": "Inspect the calculation response.",
+      "paramsList": "Send these sample parameters under parameters: {{params}}.",
+      "paramsEmpty": "Send an empty parameters object for the default request.",
+      "birth": "Use the birth shape shown in the request. For split fields, year/month/day are local calendar integers and hour/minute are local 24-hour time. lat/lng are decimal degrees and tz_str is an IANA time zone or AUTO where shown. Nested datetime and location objects follow the sample.",
+      "synthetic": "The request uses synthetic inputs where applicable. The sample includes optional settings when relevant."
+    },
+    "labels": {
+      "sandboxList": "Sandbox list example",
+      "sandboxMantra": "Sandbox mantra example",
+      "placeholderUrl": "Illustrative response with a placeholder URL",
+      "sandboxCollection": "Sandbox collection response",
+      "bookList": "Book list excerpt",
+      "verified": "Verified sandbox response excerpt",
+      "illustrative": "Illustrative response excerpt",
+      "envelope": "Response envelope · operation payload omitted",
+      "verifiedChart": "Verified synthetic D1/D9 and Vimshottari Dasha response excerpt",
+      "verifiedDelhi": "Verified New Delhi response excerpt"
+    }
+  },
+  "guide": {
+    "step1": "Make a working request",
+    "step2": "Call it from your server",
+    "step2Copy": "Keep the key in your backend and return only the content to your app. This Node.js server exposes one route your app can call.",
+    "inView": "In your view",
+    "step3": "Inputs and pagination",
+    "step4": "Quota",
+    "library": "See it in the Library",
+    "reference": "Endpoint reference",
+    "trySandbox": "Try this request in the sandbox",
+    "baseUrl": "Requests read the base URL from <env/>. The server example falls back to <api/>."
+  },
+  "docs": {
+    "noKey": "No key needed",
+    "noParams": "No parameters.",
+    "tester": "Open the sandbox request tester",
+    "tryPositions": "Try planetary positions in the sandbox",
+    "limited": "Limited",
+    "areas": {
+      "Mantras": "Mantras",
+      "Audio": "Audio",
+      "Books": "Books",
+      "Astrology": "Astrology"
+    },
+    "nav": {
+      "label": "Documentation",
+      "searchLabel": "Search the docs",
+      "search": "Search docs",
+      "guides": "Guides",
+      "none": "No sections match “{{query}}”.",
+      "getStarted": "Get started",
+      "quickstart": "Quickstart",
+      "authentication": "Authentication",
+      "environments": "Sandbox and live",
+      "concepts": "Concepts",
+      "pagination": "Pagination",
+      "epics": "Ramayana and Mahabharata",
+      "errors": "Errors",
+      "limits": "Usage limits",
+      "endpoints": "Endpoints"
+    },
+    "endpoints": {
+      "api-info": {
+        "summary": "The API name, version and resource list. Useful as a health check."
+      },
+      "list-mantras": {
+        "summary": "Mantras and shlokas, in a stable order. Each item is a summary without verses.",
+        "params": {
+          "limit": "Integer, 1–100. Default 20.",
+          "cursor": "The nextCursor from the previous page.",
+          "deity": "A deity id, such as shiva or annapurna. Exact match."
+        }
+      },
+      "get-mantra": {
+        "summary": "One mantra with its verses. Any text field can be null, so render only what is present.",
+        "params": {
+          "id": "The mantra id from a list response."
+        },
+        "notes": "<code>description</code> is the mantra’s short public summary. It is <code>null</code> when a record has none."
+      },
+      "mantra-audio": {
+        "summary": "The recording for a mantra whose audio field is not null. Without format=json the response is a 302 redirect to the file.",
+        "params": {
+          "id": "The mantra id.",
+          "format": "json returns the signed link as JSON instead of redirecting."
+        },
+        "notes": "Links last 15 minutes. Each link counts its file size toward your audio allowance."
+      },
+      "list-books": {
+        "summary": "Live books in catalog order. Filter by collection to call a set such as the Upanishads directly.",
+        "params": {
+          "collection": "A collection id: {{collections}}.",
+          "limit": "Integer, 1–100. Default 24.",
+          "cursor": "The nextCursor from the previous page."
+        },
+        "notes": "Sandbox keys list Isha Upanishad and the Bhagavad Gita. Other collections may return no sandbox titles."
+      },
+      "get-book": {
+        "summary": "A book summary with its chapter index. Use the chapter numbers to request text.",
+        "params": {
+          "id": "The book id from a list response."
+        },
+        "notes": "<code>preview</code> is <code>true</code> for sandbox keys, which see the opening chapter only."
+      },
+      "get-chapter": {
+        "summary": "A page of up to 30 verses or a complete chapter of a prose retelling.",
+        "params": {
+          "id": "The book id.",
+          "chapter": "A chapter number from the book’s chapter index.",
+          "offset": "For verses, pass nextOffset from the previous page. Omit for prose."
+        },
+        "notes": "Sandbox keys read the first three verses of the opening chapter of sample books. <epic>Ramayana and Mahabharata</epic> require a live key."
+      },
+      "astrology-catalog": {
+        "summary": "The current operation catalog, with IDs, categories, and sample inputs where available."
+      },
+      "astrology-calculate": {
+        "summary": "Run one operation. Send <code>operation</code> and that operation’s inputs as JSON. Each operation’s inputs are on the <link>Astrology page</link>.",
+        "params": {
+          "operation": "An operation id from GET /v1/astrology.",
+          "datetime": "For positions and panchang: ISO 8601 with seconds and a UTC offset.",
+          "other": "Other inputs depend on the operation."
+        },
+        "notes": "Failed calculations are not charged."
+      }
+    },
+    "title": "Make your first Mantrilo API request",
+    "lede": "One REST API for mantras, sacred audio, scripture books and astrology. Start from a guide for what you’re building, or look up any endpoint. Examples show the response format. Some use excerpts or placeholders.",
+    "quick": {
+      "key": "<b>Get a key.</b> Every account starts with a sandbox key.",
+      "open": "Open the sandbox quickstart",
+      "server": "<b>Keep it on your server.</b> Set <key/> and <url/> in your backend’s environment.",
+      "request": "<b>Make a request.</b> List one mantra, then follow <endpoints>the endpoint reference</endpoints> or a <goals>guide for your goal</goals>.",
+      "first": "Your first request"
+    },
+    "goals": {
+      "title": "Start from your goal",
+      "copy": "Each guide starts with a request you can run, then shows the server code, pagination and quota.",
+      "open": "Open guide",
+      "astrology": "Astrology has a guide for every capability.",
+      "browseAstrology": "Browse astrology capabilities"
+    },
+    "auth": "Send your key on every request as <header/>. The API blocks browser cross-origin calls, so call it from your server and pass only the content to your app. Never put a key in a web bundle, mobile app or repository. If a key leaks, regenerate it in the console; the old key stops working within a minute.",
+    "env": {
+      "label": "Key environments",
+      "environment": "Environment",
+      "prefix": "Key prefix",
+      "reads": "What it reads",
+      "sandbox": "Sample mantras, the sample books’ opening verses, and available astrology operations. Every account has one.",
+      "live": "Live",
+      "liveReads": "The full available catalog. Issued with a paid plan.",
+      "note": "Sandbox and live keep separate usage totals. A sandbox request for an item outside the sample returns <code>403 sandbox_sample_only</code>."
+    },
+    "pagination": {
+      "cursor": "List endpoints return <code>nextCursor</code>. Pass it back as <code>cursor</code> to read the next page. It is <code>null</code> on the last page. Set the page size with <code>limit</code> (1–100).",
+      "offset": "Chapter pages return <code>nextOffset</code>. Pass it back as <code>offset</code> to read more verses of the same chapter.",
+      "example": "Continue when nextCursor is present"
+    },
+    "errors": {
+      "copy": "Every error has the same shape. The <code>code</code> is stable; the <code>message</code> explains what to fix. Only successful responses count toward your plan.",
+      "example": "Error",
+      "label": "API errors",
+      "status": "Status",
+      "code": "Code",
+      "fix": "What to do",
+      "rows": {
+        "invalid_limit": "Fix the query parameter named in the message.",
+        "invalid_operation": "Fix the astrology input named in the message.",
+        "invalid_api_key": "The key is missing, wrong, or revoked.",
+        "plan_inactive": "Live keys need an active paid plan.",
+        "sandbox_sample_only": "That item is outside the sandbox sample. Use your live key.",
+        "not_found": "No such item, or it has no recording.",
+        "method_not_allowed": "Use the method listed for the endpoint.",
+        "rate_limited": "Wait for the Retry-After header, then retry.",
+        "quota_exceeded": "The monthly allowance has run out.",
+        "too_many_failed_attempts": "Too many bad keys from one address. Retry later.",
+        "internal_error": "Retry, and quote the requestId if it continues.",
+        "books_unavailable": "The service or operation is temporarily unavailable. Retry later.",
+        "astrology_timeout": "The calculation took too long. Retry. Nothing is charged."
+      }
+    },
+    "limits": {
+      "copy": "Allowances apply to your whole workspace, not to each key, and reset monthly in UTC. Each successful content response or astrology calculation is one request. Each audio link also counts the file’s size.",
+      "label": "Plan limits",
+      "plan": "Plan",
+      "requests": "Requests a month",
+      "audio": "Audio",
+      "rate": "Rate",
+      "burst": "Burst",
+      "headers": "Responses include <code>X-RateLimit-Limit</code>, <code>X-RateLimit-Remaining</code>, <code>X-Quota-Requests-Remaining</code> and <code>X-Request-Id</code>. A <code>rate_limited</code> response adds <code>Retry-After</code>. Sandbox keys always use the Free rate. If your workspace has no monthly request cap, <code>X-Quota-Requests-Remaining</code> is <code>unlimited</code>."
+    },
+    "epics": {
+      "copy": "Use a live key to read these English prose retellings. Open a book for its chapter index, then use a chapter number to load the full chapter in one request.",
+      "chapters_one": "{{n}} chapter",
+      "chapters_other": "{{n}} chapters",
+      "example": "{{title}} book and first chapter",
+      "format": "Books return <code>format: \"prose\"</code> and <code>language: \"en\"</code>. For a chapter, display <code>data.source</code> and iterate over <code>data.sections</code>. Render each section’s <code>title</code> and <code>paragraphs</code> in order. Prose chapters return an empty <code>verses</code> array and <code>nextOffset: null</code>.",
+      "guide": "Book reader integration guide"
+    },
+    "libraryCallout": "Want to see what each content type returns first? Browse the <library>Library</library>."
+  },
+  "library": {
+    "available": "Available",
+    "searchLabel": "Search the catalog",
+    "searchPlaceholder": "Search mantras, books, audio and astrology",
+    "area": "Product area",
+    "all": "All",
+    "filter": "Filter",
+    "areas": {
+      "mantras": "Mantras",
+      "audio": "Audio",
+      "books": "Books",
+      "astrology": "Astrology"
+    },
+    "types": {
+      "Mantra list": "Mantra list",
+      "Mantra": "Mantra",
+      "Recording": "Recording",
+      "Book collection": "Book collection",
+      "Astrology capability": "Astrology capability"
+    },
+    "facets": {
+      "List": "List",
+      "Record": "Record",
+      "Signed link": "Signed link",
+      "Shruti": "Shruti",
+      "Smriti": "Smriti",
+      "Darshana": "Darshana",
+      "Core": "Core",
+      "Vedic": "Vedic",
+      "Western": "Western",
+      "Numerology": "Numerology",
+      "Utilities": "Utilities"
+    },
+    "items": {
+      "mantra-list": {
+        "title": "All mantras and shlokas",
+        "summary": "Page through the catalog in a stable order, optionally filtered by deity."
+      },
+      "recording": {
+        "title": "Recording · {{title}}",
+        "summary": "A 15-minute signed link to the recording of a mantra."
+      }
+    },
+    "collections": {
+      "upanishads": "Principal Upanishads, including Isha, Kena, Katha, Mundaka and Mandukya.",
+      "bhagavad-gita": "The Gita, chapter by chapter.",
+      "advaita-vedanta-prakarana-granthas": "Introductory and explanatory works such as Atmabodha and Tattvabodha.",
+      "vedanta": "The Brahma Sutras.",
+      "yoga": "The Yoga Sutras."
+    },
+    "responseLabels": {
+      "Real record, one item": "Real record, one item",
+      "Real record": "Real record",
+      "Real size and type, placeholder link": "Real size and type, placeholder link",
+      "Sandbox collection response": "Sandbox collection response",
+      "Illustrative collection response": "Illustrative collection response"
+    },
+    "results_one": "{{n}} result",
+    "results_other": "{{n}} results",
+    "resultsFor_one": "{{n}} result for “{{query}}”",
+    "resultsFor_other": "{{n}} results for “{{query}}”",
+    "noMatchQuery": "Nothing matches “{{query}}”.",
+    "noMatch": "Nothing matches this filter.",
+    "noMatchHint": "Try a broader word, another area, or clear the filters.",
+    "clear": "Clear filters",
+    "back": "Back to results",
+    "inputs": "Inputs",
+    "using": "Using the response",
+    "limited": "Limited: this Mantrilo operation may be unavailable. It returns 503 astrology_operation_unavailable when it is, and is not charged.",
+    "trySandbox": "Try in Sandbox",
+    "getSandboxKey": "Get a sandbox key",
+    "guide": "Implementation guide",
+    "steps": {
+      "0": "Next page",
+      "1": "Open a book and its chapter index",
+      "2": "Open a chapter; each verse is in verses[]",
+      "3": "Read further into a long chapter",
+      "label": "Paginate and open a book",
+      "title": "Paginate, then open a book, chapter or verse"
+    },
+    "showResponse": "Show response"
+  },
+  "libraryPage": {
+    "title": "Explore Mantrilo’s Content Library",
+    "lede": "Nearly {{records}} mantras and stotras, {{books}} Sanskrit books verse by verse, and the English epics. Every page shows the API request behind it.",
+    "upanishads": {
+      "eyebrow": "Collections",
+      "title": "The Upanishads, callable directly",
+      "copy": "Filter the book catalog by collection and page through it with <code>limit</code> and <code>cursor</code>. Every book links to its chapters and verses.",
+      "open": "Open the collection"
+    },
+    "mantras": {
+      "title": "Mantras & stotras",
+      "copy": "Nearly {{records}} hymns in Devanagari and transliteration, about {{recordings}} with recordings. Each page has the text, the request and the exact JSON response.",
+      "byDeity": "By deity",
+      "byDeityLabel": "Mantras by deity",
+      "all": "All mantras",
+      "build": "Build a searchable library"
+    },
+    "books": {
+      "retelling": "English prose retelling",
+      "liveKey": "Read with a live API key",
+      "languages": "Sanskrit and English",
+      "sandbox": "Sandbox sample",
+      "live": "Live catalog",
+      "upanishads": "Browse the Upanishads"
+    },
+    "catalog": "Browse the API catalog"
+  },
+  "books": {
+    "terms": {
+      "Adhyaya_one": "{{n}} adhyaya",
+      "Adhyaya_other": "{{n}} adhyayas",
+      "Chapter_one": "{{n}} chapter",
+      "Chapter_other": "{{n}} chapters",
+      "Khanda_one": "{{n}} khanda",
+      "Khanda_other": "{{n}} khandas",
+      "Mundaka_one": "{{n}} mundaka",
+      "Mundaka_other": "{{n}} mundakas",
+      "Pada_one": "{{n}} pada",
+      "Pada_other": "{{n}} padas",
+      "Prapathaka_one": "{{n}} prapathaka",
+      "Prapathaka_other": "{{n}} prapathakas",
+      "Question_one": "{{n}} question",
+      "Question_other": "{{n}} questions",
+      "Valli_one": "{{n}} valli",
+      "Valli_other": "{{n}} vallis"
+    },
+    "term": {
+      "Adhyaya": "Adhyaya",
+      "Chapter": "Chapter",
+      "Khanda": "Khanda",
+      "Mundaka": "Mundaka",
+      "Pada": "Pada",
+      "Prapathaka": "Prapathaka",
+      "Question": "Question",
+      "Valli": "Valli"
+    },
+    "termPlural": {
+      "Adhyaya": "Adhyayas",
+      "Chapter": "Chapters",
+      "Khanda": "Khandas",
+      "Mundaka": "Mundakas",
+      "Pada": "Padas",
+      "Prapathaka": "Prapathakas",
+      "Question": "Questions",
+      "Valli": "Vallis"
+    }
+  },
+  "shelf": {
+    "oneText": "One text",
+    "sourceChapters": "Chapters with a source reference",
+    "epics": "Itihasa (epics)",
+    "epicsNote": "English retellings of the Ramayana and Mahabharata, chapter by chapter.",
+    "title": "Scripture, served verse by verse.",
+    "lede": "The Bhagavad Gita, the Upanishads, the Advaita classics, the sutras and the epics, as JSON your reader lays out. Every book has a stable id and comes back chapter by chapter in Devanagari with transliteration.",
+    "startGita": "Start with the Gita",
+    "browseAll_one": "Browse {{n}} book",
+    "browseAll_other": "Browse all {{n}} books",
+    "checkSandbox": "Gita and Isha Upanishad on every sandbox key",
+    "checkDeva": "Devanagari with transliteration",
+    "stats": {
+      "books": "books",
+      "verses": "Sanskrit verses",
+      "epicChapters": "epic chapters",
+      "collections": "collections"
+    },
+    "shelves": {
+      "kicker": "The library",
+      "title": "From the Upanishads to the epics.",
+      "copy": "Grouped by collection. List any shelf with one request and open a book by its id."
+    },
+    "liveKey": "Live key",
+    "volume": "vol {{n}} / {{total}}",
+    "inside": {
+      "kicker": "Inside the response",
+      "title": "Read the source, not a summary of it.",
+      "copy": "Every book comes back as structured verses, so your reader decides the layout. Try the switches on this verse.",
+      "deva": {
+        "title": "Devanagari as sourced",
+        "copy": "<code>sanskrit</code> keeps the original text and its line breaks."
+      },
+      "translit": {
+        "title": "Transliteration on every verse",
+        "copy": "<code>transliteration</code> gives readers a way to chant along."
+      },
+      "paging": {
+        "title": "Chapters that page",
+        "copy": "Up to 30 verses per call. Pass <code>nextOffset</code> back as <code>offset</code> for the rest."
+      },
+      "nulls": {
+        "title": "Nulls you can design for",
+        "copy": "Any verse field can be null, and <code>translation</code> is not distributed, so leave out what is missing."
+      }
+    },
+    "verse": "verse {{key}}",
+    "view": "View",
+    "rendered": "Rendered",
+    "nullNote": "your app shows its own translation, or none.",
+    "flow": {
+      "kicker": "How an integration flows",
+      "title": "Collection, book, chapter. Three calls.",
+      "list": {
+        "title": "List a collection",
+        "copy": "Titles, authors and verse counts, with a cursor for the next page."
+      },
+      "book": {
+        "title": "Open a book",
+        "copy": "The book record lists every chapter with its number and verse count."
+      },
+      "chapter": {
+        "title": "Read a chapter",
+        "copy": "Up to 30 verses per call, in order, ready for your reader."
+      },
+      "code": "page through a chapter",
+      "reference": "Chapter reference",
+      "upanishads": "Upanishads collection"
+    },
+    "closing": {
+      "title": "Start with the Gita in the sandbox.",
+      "copy": "The Bhagavad Gita and the Isha Upanishad are open on every sandbox key. A live key reads the full catalog.",
+      "guide": "Book reader guide"
+    }
+  },
+  "upanishads": {
+    "eyebrow": "Library · Books",
+    "title": "Upanishads",
+    "lede_one": "Read {{n}} Upanishad verse by verse in Sanskrit with English, then use one collection request to list the titles available to your key.",
+    "lede_other": "Read {{n}} Upanishads verse by verse in Sanskrit with English, then use one collection request to list the titles available to your key.",
+    "try": "Try the Upanishads API",
+    "readEach": "Read each Upanishad",
+    "sandboxSample": "Sandbox sample",
+    "build": "Build an Upanishads reader",
+    "step1": "List the collection and use the returned book ID to load its chapter index.",
+    "step2": "Read a chapter by number and follow <code>nextOffset</code> for additional verses.",
+    "step3": "Display Sanskrit and transliteration when available. Supply any translations you have permission to use separately.",
+    "guide": "Integration guide",
+    "sandboxTitle": "What the sandbox returns",
+    "sandboxCopy": "The collection request returns Isha Upanishad. Its opening chapter includes the invocation and the first two numbered verses in the sandbox. Use a live key for the other titles.",
+    "sandboxResponse": "Sandbox collection response"
+  },
+  "calculators": {
+    "faq": {
+      "accuracy": {
+        "q": "How accurate is it?",
+        "a": "Planetary positions come from an astronomical ephemeris for the exact minute and place you enter. Signs are only uncertain when a body sits right on a sign boundary or the birth time is approximate, so a time to the nearest few minutes gives the best result."
+      },
+      "privacy": {
+        "q": "Do you store my birth details?",
+        "a": "No. Your date, time and place are sent once to calculate the result and are not saved or logged. The result stays in this browser tab."
+      }
+    },
+    "pages": {
+      "zodiac-signs": {
+        "heading": "Find all your signs, Western and Vedic.",
+        "lede": "Enter your birth date, time and place to see your Sun, Moon and Rising signs, and your Vedic Rashi, Lagna, Sun sign and Nakshatra side by side.",
+        "about": {
+          "heading": "Why you have two sets of signs",
+          "p0": "Western astrology uses the tropical zodiac, which starts at the March equinox. Vedic (Jyotish) astrology uses the sidereal zodiac, which is fixed to the stars. The two have drifted about 24 degrees apart, so most people’s Vedic signs fall one sign earlier than their Western ones.",
+          "p1": "Your Sun sign depends only on your birth date. Your Moon sign changes every two to three days, and your Rising sign (Lagna in Vedic astrology) changes about every two hours, so those need your birth time and place."
+        },
+        "faqs": {
+          "q0": "Why is my Vedic sign different from my Western sign?",
+          "a0": "The Vedic zodiac is measured against the fixed stars and the Western zodiac against the seasons. The difference between them, called the ayanamsa, is about 24 degrees today, so a planet at 10° Gemini in the Western zodiac sits at about 16° Taurus in the Vedic one.",
+          "q1": "Which signs matter most?",
+          "a1": "Western astrology leads with the Sun sign. Vedic astrology leads with the Moon sign (Rashi) and the ascendant (Lagna), and uses the Moon’s Nakshatra for names, matching and the Vimshottari Dasha."
+        }
+      },
+      "sun-sign": {
+        "heading": "What is my Sun sign?",
+        "lede": "Your Sun sign is the zodiac sign the Sun was in when you were born. Enter your birth date to see it to the degree, along with your Vedic Sun sign.",
+        "about": {
+          "heading": "Born on the cusp?",
+          "p0": "The Sun changes sign around the 20th of each month, but the exact moment moves by up to a day from year to year. If you were born near a change, the date alone can’t settle it: add your birth time and place for the exact answer.",
+          "p1": "In Vedic astrology the Sun is measured against the stars, so it enters each sign about three weeks later. That’s why many people are, for example, a Western Gemini but a Vedic Taurus."
+        },
+        "faqs": {
+          "q0": "Do I need my birth time for my Sun sign?",
+          "a0": "Usually not. The Sun moves about one degree a day, so only people born within a day of a sign change need their birth time and place.",
+          "q1": "What are the Sun sign dates?",
+          "a1": "Roughly: Aries Mar 21–Apr 19, Taurus Apr 20–May 20, Gemini May 21–Jun 20, Cancer Jun 21–Jul 22, Leo Jul 23–Aug 22, Virgo Aug 23–Sep 22, Libra Sep 23–Oct 22, Scorpio Oct 23–Nov 21, Sagittarius Nov 22–Dec 21, Capricorn Dec 22–Jan 19, Aquarius Jan 20–Feb 18, Pisces Feb 19–Mar 20. The exact boundaries shift slightly each year."
+        }
+      },
+      "moon-sign": {
+        "heading": "What is my Moon sign?",
+        "lede": "Your Moon sign is the zodiac sign the Moon was in at the moment you were born. Enter your birth details to find it in both the Western and Vedic zodiacs.",
+        "about": {
+          "heading": "Why the Moon needs a birth time",
+          "p0": "The Moon moves about 13 degrees a day and changes sign every two to three days. If it changed sign on your birthday, the time you were born decides which sign it was in.",
+          "p1": "If you don’t know your birth time, leave it blank. The calculator uses midday and tells you when the Moon changed sign that day, so you know whether the answer is certain."
+        },
+        "faqs": {
+          "q0": "Is the Moon sign the same as the Rashi?",
+          "a0": "In Vedic astrology, yes: your Rashi is your Moon sign in the sidereal zodiac. It is usually one sign earlier than your Western Moon sign."
+        }
+      },
+      "rising-sign": {
+        "heading": "What is my Rising sign?",
+        "lede": "Your Rising sign, or ascendant, is the zodiac sign that was rising on the eastern horizon when you were born. Enter your birth date, time and place to find it.",
+        "about": {
+          "heading": "Why the exact time matters",
+          "p0": "The whole zodiac rises over the horizon once a day, so the Rising sign changes roughly every two hours, and faster or slower depending on your latitude. Being off by 15 minutes can change it, so use the time on your birth certificate if you can.",
+          "p1": "The place matters too. The calculator uses your birthplace’s coordinates and its historical time zone, including daylight saving time, to work out the exact moment of your birth."
+        },
+        "faqs": {
+          "q0": "What if I don’t know my birth time?",
+          "a0": "Then your Rising sign can’t be calculated reliably. Your Sun sign and, on most days, your Moon sign still can.",
+          "q1": "Is the Rising sign the same as the Lagna?",
+          "a1": "They are the same point. The Lagna is the ascendant measured in the Vedic (sidereal) zodiac, so it is usually one sign earlier than the Western Rising sign."
+        }
+      },
+      "rashi": {
+        "heading": "What is my Rashi?",
+        "lede": "Your Rashi is the sign the Moon occupied at your birth in the Vedic (sidereal) zodiac. Enter your birth details to find your Rashi, its lord and your Nakshatra.",
+        "about": {
+          "heading": "Rashi in Vedic astrology",
+          "p0": "Vedic astrology gives the Moon sign more weight than the Sun sign. Your Rashi is used for daily horoscopes (rashifal), for Gochar (transits) and, with your Nakshatra, for Kundli matching.",
+          "p1": "This calculator uses the Lahiri (Chitrapaksha) ayanamsa, the standard adopted by the Government of India’s calendar reform committee and used by most Panchangs."
+        },
+        "faqs": {
+          "q0": "What are the 12 Rashis?",
+          "a0": "Mesha (Aries), Vrishabha (Taurus), Mithuna (Gemini), Karka (Cancer), Simha (Leo), Kanya (Virgo), Tula (Libra), Vrishchika (Scorpio), Dhanu (Sagittarius), Makara (Capricorn), Kumbha (Aquarius) and Meena (Pisces).",
+          "q1": "Is my Rashi based on my name?",
+          "a1": "A name Rashi (naam rashi) is chosen from the first syllable of a name. Your birth Rashi, calculated here, comes from the Moon’s position when you were born and is the one used in a Kundli."
+        }
+      },
+      "lagna": {
+        "heading": "What is my Lagna?",
+        "lede": "Your Lagna is the sign rising on the eastern horizon at your birth, in the Vedic zodiac. It is the first house of your Kundli. Enter your exact birth time and place to find it.",
+        "about": {
+          "heading": "The Lagna and your Kundli",
+          "p0": "In a Vedic birth chart the Lagna is the first house, and every other house follows from it. Two people born on the same day in the same city can have different Lagnas only a couple of hours apart.",
+          "p1": "Because the Lagna changes about every two hours, an exact birth time matters. Lagna is calculated here with the Lahiri ayanamsa and whole-sign houses."
+        },
+        "faqs": {
+          "q0": "What is the difference between Lagna and Rashi?",
+          "a0": "The Lagna is the rising sign at your birth and changes every couple of hours. The Rashi is the Moon’s sign and changes every two to three days. Both come from the same moment."
+        }
+      },
+      "nakshatra": {
+        "heading": "What is my Nakshatra?",
+        "lede": "Your birth Nakshatra, or birth star, is the lunar mansion the Moon was in when you were born. Enter your birth details to find it, with its pada and ruling planet.",
+        "about": {
+          "heading": "The 27 Nakshatras",
+          "p0": "The Vedic zodiac is divided into 27 Nakshatras of 13°20′ each, and each Nakshatra into four padas (quarters). The Moon passes through about one Nakshatra a day, so the birth time often decides which one is yours.",
+          "p1": "Your Nakshatra’s lord sets the order of your Vimshottari Dasha periods, and its pada gives the traditional first syllable for a name. It is also central to Kundli matching."
+        },
+        "faqs": {
+          "q0": "Can I find my Nakshatra without a birth time?",
+          "a0": "Only sometimes. The Moon spends about a day in each Nakshatra, so without a time the result may be one of two. The calculator uses midday and you should treat the result as a likely answer.",
+          "q1": "What is a pada?",
+          "a1": "Each Nakshatra is split into four padas of 3°20′. The pada narrows down your Moon’s position and links it to a Navamsa (D9) sign."
+        }
+      }
+    },
+    "hub": {
+      "eyebrow": "Free calculators",
+      "title": "Find your signs, Western and Vedic.",
+      "lede": "Enter your birth date, time and place once and see your Sun, Moon and Rising signs alongside your Rashi, Lagna and Nakshatra. Free, with no sign-up.",
+      "open": "Open calculator",
+      "ctaTitle": "Building an astrology app?",
+      "ctaCopy": "Every calculator here runs on Mantrilo’s astrology API. Get the same results as JSON from your own server."
+    },
+    "page": {
+      "eyebrow": "Free calculator",
+      "questions": "Questions",
+      "more": "More calculators",
+      "ctaTitle": "Put this calculator in your app.",
+      "ctaCopy": "The same Western and Vedic signs, plus Kundli charts, Panchang and matching, through one astrology API."
+    }
+  },
+  "calc": {
+    "elements": {
+      "Fire": "Fire",
+      "Earth": "Earth",
+      "Air": "Air",
+      "Water": "Water"
+    },
+    "modes": {
+      "Cardinal": "Cardinal",
+      "Fixed": "Fixed",
+      "Mutable": "Mutable"
+    },
+    "planets": {
+      "Sun": "Sun",
+      "Moon": "Moon",
+      "Mars": "Mars",
+      "Mercury": "Mercury",
+      "Jupiter": "Jupiter",
+      "Venus": "Venus",
+      "Saturn": "Saturn",
+      "Rahu": "Rahu",
+      "Ketu": "Ketu"
+    },
+    "westernFacts": "{{element}} · {{mode}} · ruled by {{ruler}}",
+    "lord": "lord {{lord}}",
+    "addTime": "Add your birth time to calculate this.",
+    "moonMoved": "The Moon moved from {{from}} to {{to}} that day. Add your birth time to be sure.",
+    "western": "Western",
+    "vedic": "Vedic",
+    "sun": "Sun sign",
+    "moon": "Moon sign",
+    "rising": "Rising sign",
+    "ascendant": "Ascendant",
+    "rashi": "Rashi",
+    "vedicMoon": "Vedic Moon sign",
+    "lagna": "Lagna",
+    "vedicAscendant": "Vedic ascendant",
+    "nakshatra": "Nakshatra",
+    "birthStar": "Birth star",
+    "midday": "Calculated for midday. Add your birth time to be sure.",
+    "middayNakshatra": "Calculated for midday. The Moon changes Nakshatra about once a day, so add your birth time to be sure.",
+    "inNakshatra": "In {{name}} nakshatra, pada {{pada}}",
+    "ofTotal": "{{n}} of {{total}}",
+    "pada": "pada {{n}}",
+    "tropical": "Tropical zodiac",
+    "sidereal": "Sidereal · Lahiri",
+    "errors": {
+      "places": "Place search failed.",
+      "date": "Enter your birth date.",
+      "place": "Choose your birthplace from the list.",
+      "time": "Enter your birth time, or tick “{{unknown}}”.",
+      "failed": "The calculation failed.",
+      "network": "Could not reach the calculator. Check your connection and try again."
+    },
+    "birthDate": "Birth date",
+    "birthTime": "Birth time",
+    "optional": "(optional)",
+    "unknownTime": "I don’t know my birth time",
+    "birthplace": "Birthplace",
+    "placePlaceholder": "Start typing a city, e.g. Kathmandu",
+    "noPlaces": "No matching places. Try a nearby larger city.",
+    "calculating": "Calculating…",
+    "submit": "Calculate my signs",
+    "privacy": "Your birth details are not stored.",
+    "apiSummary": "Building an app? See this as an API call",
+    "apiCopy": "This result comes from Mantrilo’s astrology API. Send the same request from your server with an API key and you get the same JSON back.",
+    "response": "Response",
+    "getKey": "Get a free API key"
+  },
+  "notFound": {
+    "title": "That page isn’t here.",
+    "lede": "Try the docs, the Library or the homepage.",
+    "home": "Mantrilo home",
+    "docs": "API documentation"
+  },
+  "astroPage": {
+    "title": "Astrology API for developers",
+    "lede": "Browse every capability. Each one lists its inputs, a copyable request with synthetic birth data, a representative response and the guide that builds on it.",
+    "tryPositions": "Try planetary positions",
+    "reference": "Endpoint reference",
+    "stats": {
+      "capabilities": "Capabilities",
+      "available": "Marked available",
+      "categories": "Categories",
+      "endpoint": "Endpoint"
+    },
+    "featured": "Featured astrology API references",
+    "chartGuide": "Vedic birth chart guide",
+    "search": "Search {{n}} capabilities: chart, panchang, transit…",
+    "note": "Availability reflects the catalog at the time this page was published. Core capabilities run on Mantrilo’s own engine. Limited operations may be unavailable. Every successful calculation is one request on any plan, and failed calculations are not charged.",
+    "ctaTitle": "Run a calculation in the sandbox.",
+    "ctaCopy": "Use a sandbox key to test available calculations. The console shows current availability.",
+    "browse": "Browse all capabilities",
+    "byCategory": {
+      "kicker": "By category",
+      "title": "{{n}} categories. One endpoint.",
+      "copy": "Pick a category to filter the list below. Every capability is a POST to the same endpoint; only the <code>operation</code> and its inputs change."
+    },
+    "featuredSection": {
+      "kicker": "Most used",
+      "title": "Start with the calculations apps use most."
+    },
+    "all": {
+      "kicker": "All capabilities",
+      "title": "Find a calculation by name.",
+      "searchLabel": "Search capabilities by name",
+      "sandbox": "In the sandbox",
+      "capability": "Capability",
+      "sandboxCol": "Sandbox",
+      "empty": "No capabilities match. Try another name or clear the filters.",
+      "showing": "Showing {{n}} of {{total}} capabilities"
+    },
+    "request": {
+      "kicker": "One endpoint",
+      "title": "Every calculation is one POST.",
+      "copy": "Send an <code>operation</code> and its inputs from your server with your API key. The result comes back under <code>data</code>."
+    }
+  },
+  "astroCap": {
+    "try": "Try this calculation",
+    "limited": "This capability is marked limited. It may be unavailable for some requests, and it is not in the sandbox. The console shows its current availability.",
+    "make": "Make a calculation",
+    "send": "Send <operation/> to <endpoint/> from your server with your API key.",
+    "build": "Build with the result",
+    "instant": "This calculation describes one instant. For a local calendar day and sunrise-based timings, see the <link>Daily Panchang API</link>. Its location and time zone determine the local day.",
+    "dailyTitle": "Local dates and transition times",
+    "daily1": "Send a local calendar date, coordinates and an IANA zone such as Asia/Kolkata. The adapter accepts years 1900–2100. Availability depends on the date and location. Transition timestamps include the UTC offset and can fall on the next local day.",
+    "daily2": "This example is for New Delhi on November 15, 2026. Sunrise and sunset are local times. Use the location’s time zone when displaying them. For a single timestamp, use the <link>Instant Panchang API</link>.",
+    "reference": "Reference",
+    "readReference": "Read the endpoint reference",
+    "trySandbox": "Try this calculation in the sandbox",
+    "related": "Related {{category}} capabilities",
+    "browseAll": "Browse all astrology capabilities",
+    "checkFailed": "Failed calculations are free",
+    "operation": "Operation",
+    "response": "What comes back.",
+    "relatedTitle": "Same endpoint, another operation."
+  },
+  "products": {
+    "mantra-api": {
+      "title": "Sanskrit Mantra and Shloka API",
+      "intro": "Add mantras to your app or website with one REST API. Records bring original Sanskrit together with transliteration and source references where available.",
+      "status": "Create a free sandbox key to try sample mantras. Fields can be empty on individual records, so check the titles, languages and source details your app needs.",
+      "exampleTitle": "A mantra response",
+      "sections": {
+        "s0": {
+          "title": "Build a reading experience around the verse",
+          "copy": "A developer can present original text first, offer transliteration alongside it, and add a translation they have permission to distribute. Keep source context close to the text so readers can distinguish a verse from its explanation."
+        },
+        "s1": {
+          "title": "Treat optional fields as optional",
+          "copy": "Mantra verses return Sanskrit and transliteration where available. Translation is null and wordMeanings is empty. Hide missing fields in your app."
+        },
+        "s2": {
+          "title": "Keep text and recordings connected",
+          "copy": "A mantra with a recording includes an audio link in its response. Request the signed recording link through your server, and show a listening control only when that link is present."
+        },
+        "s3": {
+          "title": "Licensed for your product",
+          "copy": "Paid plans include a license to use the verses and recordings in your app. Keep source references with the text, and see the content license for what it covers."
+        }
+      },
+      "workflow": {
+        "w0": "Receive a selected text record through your server.",
+        "w1": "Render original text and available transliteration.",
+        "w2": "Show a source reference and linked recording only when supplied."
+      }
+    },
+    "sacred-audio-api": {
+      "title": "Mantra Recording API",
+      "intro": "Add sacred audio to devotional apps, learning products, and websites. Mantrilo links recordings to their mantras, so listening stays connected to the words.",
+      "status": "Recordings are delivered through signed links that last 15 minutes. They are available for mantras where a recording exists.",
+      "exampleTitle": "A mantra with its recording link",
+      "sections": {
+        "s0": {
+          "title": "A recording belongs with its content",
+          "copy": "A mantra with a recording includes an audio link in its response. A reading view can reveal a listening control when that link is present and omit it when it isn’t."
+        },
+        "s1": {
+          "title": "Load audio when a visitor asks to listen",
+          "copy": "Request the signed recording link from your server when someone chooses to listen. Each link counts the file’s size toward your monthly allowance, so avoid requesting links during page load."
+        },
+        "s2": {
+          "title": "Plan for monthly data delivery",
+          "copy": "Audio allowances measure the data delivered, not file storage. The pricing page compares each plan’s monthly allowance. Recording length and how often people listen will affect delivery usage. Ask us about recording coverage and formats."
+        },
+        "s3": {
+          "title": "Recordings licensed for your app",
+          "copy": "Paid plans include a license to play the recordings to your users through the API. To bundle recordings in your app for offline listening, purchase a content license."
+        }
+      },
+      "workflow": {
+        "w0": "Check whether the displayed content has a recording.",
+        "w1": "Request a signed link through your server.",
+        "w2": "Start playback after user input and monitor delivered data."
+      }
+    },
+    "books-api": {
+      "title": "Books API",
+      "intro": "Add Hindu scriptures and English retellings of the Ramayana and Mahabharata to your app. Browse books by collection and read chapters with source references.",
+      "status": "Browse the catalog by collection. The sandbox shows sample titles and opening verses; a live key can access the full available catalog.",
+      "exampleTitle": "A collection page",
+      "sections": {
+        "s0": {
+          "title": "Give readers a path through a text",
+          "copy": "A scripture reader can start at a book overview, move into a chapter, and show individual verses within that chapter. Preserve the book and chapter relationship when linking to a selected passage."
+        },
+        "s1": {
+          "title": "Ramayana and Mahabharata retellings",
+          "copy": "A live key can read all 22 Ramayana chapters and 62 Mahabharata chapters. Each chapter returns a source reference and ordered prose sections with paragraphs."
+        },
+        "s2": {
+          "title": "Handle missing translations and references",
+          "copy": "A reading view should render available original text and display translation or commentary only when supplied. Any verse field can be null, so build the view to leave it out."
+        },
+        "s3": {
+          "title": "Review coverage and licensing by title",
+          "copy": "Start with the Bhagavad Gita and Isha Upanishad in the sandbox. Browse the Library for previews and check the content license before publishing material in an app."
+        }
+      },
+      "workflow": {
+        "w0": "List a collection with GET /v1/books?collection=upanishads.",
+        "w1": "Open a book for its chapter index.",
+        "w2": "Render the sections of a prose chapter or follow nextOffset to page through verses."
+      }
+    }
+  },
+  "product": {
+    "try": "Try it in the sandbox",
+    "guide": "Implementation guide",
+    "build": "What you can build",
+    "browse": "Browse it in the Library",
+    "browseCopy": "See the public preview and find the related request.",
+    "openLibrary": "Open the Library",
+    "booksNav": "Books and guides",
+    "ramayana": "Ramayana API",
+    "mahabharata": "Mahabharata API",
+    "referenceCopy": "Parameters, request and response for {{path}}.",
+    "readDocs": "Read the docs",
+    "otherApis": "Other APIs",
+    "license": "Content license",
+    "ctaTitle": "Try it with a sandbox key.",
+    "ctaCopy": "Every account starts with sample content, so you can build before you subscribe."
+  },
+  "audio": {
+    "label": "{{title}} recording",
+    "loading": "Loading…",
+    "used": "Free previews used",
+    "retry": "Try again",
+    "pause": "Pause",
+    "again": "Play again",
+    "resume": "Resume",
+    "play": "Play recording",
+    "usedTitle": "This browser’s {{n}} free previews are used",
+    "limit": "You’ve used this browser’s {{n}} free previews. Get an API key to stream every recording in your own app.",
+    "playThe": "Play the recording",
+    "error": "The recording couldn’t be loaded. Try again in a moment.",
+    "free": "Free preview: {{n}} recordings per browser. Your app streams them with an API key."
+  },
+  "bookPage": {
+    "api": {
+      "chapterTitle": "Load this chapter with the API",
+      "bookTitle": "Load this book with the API",
+      "bookCopy": "The book record lists every chapter with its number and verse count. Use the id <code>{{id}}</code>.",
+      "illustrative": "Illustrative response",
+      "paging": "A chapter request returns up to 30 verses. Pass <code>nextOffset</code> back as <code>offset</code> to read the rest.",
+      "pagingOffset": "A chapter request returns up to 30 verses. Pass <code>nextOffset</code> back as <code>offset</code> to read the rest; this page starts at the offset shown.",
+      "fields": "Each verse has <code>sanskrit</code> and <code>transliteration</code>. <code>translation</code> is <code>null</code>: the English on this page is Mantrilo’s own rendering and is not part of the API response.",
+      "bookEndpoint": "Book endpoint",
+      "chapterEndpoint": "Chapter endpoint",
+      "trySandbox": "Try this book in the sandbox",
+      "tryApi": "Try the Books API",
+      "live": "Sandbox keys return sample books only; a live key reads the full {{title}}."
+    },
+    "invocation": "Invocation",
+    "source": "Sanskrit and transliteration from the <source>source text</source>. English rendering by Mantrilo. The API returns its catalog edition of the Sanskrit and transliteration, so spelling and line breaks can differ from this page.",
+    "pages": "{{title}} pages",
+    "chapters": "{{title}} chapters",
+    "name": "Name",
+    "verses": "Verses",
+    "readFirst": "Read {{term}} {{n}}",
+    "every": "Every {{term}} page shows the Sanskrit in Devanagari, its transliteration and an English rendering, verse by verse.",
+    "allBooks": "All books in the Library",
+    "bookId": "Book id",
+    "collection": "Collection",
+    "versesOf": "{{title}}, verses {{first}}–{{last}}",
+    "lede": "{{verses}} in Sanskrit, with transliteration and English.",
+    "ledeRange": "{{verses}} ({{first}} to {{last}}) in Sanskrit, with transliteration and English.",
+    "index": "{{title}} chapter index",
+    "parts": "Parts of this text",
+    "missingEnglish_one": "{{n}} verse on this page does not have an English rendering yet.",
+    "missingEnglish_other": "{{n}} verses on this page do not have an English rendering yet.",
+    "all": "All {{terms}}"
+  },
+  "mantraPage": {
+    "recordingLower": "recording",
+    "recording": "Recording",
+    "streamable": "Streamable recording",
+    "audioTag": "audio",
+    "fields": {
+      "description": "Short summary (see the response)",
+      "number": "Position in the hymn",
+      "sanskrit": "Devanagari text",
+      "transliteration": "Roman transliteration",
+      "translation": "Translations are not distributed"
+    },
+    "views": {
+      "both": "Devanagari + IAST",
+      "sa": "Devanagari"
+    },
+    "ledeCollection_one": "{{title}} is in the {{deities}} collection.",
+    "ledeCollection_other": "{{title}} is in the {{deities}} collections.",
+    "ledeIds": "It is filed under {{n}} ids.",
+    "ledeReturns": "GET {{path}} returns its {{verses}} in Devanagari and Roman transliteration as JSON.",
+    "ledeReturnsAudio": "GET {{path}} returns its {{verses}} in Devanagari and Roman transliteration as JSON, plus a link to stream its recording.",
+    "deityMantras": "{{name}} mantras",
+    "allDeity": "All {{name}} mantras",
+    "trySandbox": "Try this mantra in the sandbox",
+    "checkFree": "500 free calls a month",
+    "checkCard": "No card needed",
+    "next": "next",
+    "about": "About {{title}}",
+    "aboutField": "From the description field",
+    "request": {
+      "kicker": "Request this mantra",
+      "title": "One call returns every verse.",
+      "copy": "Call the API from your server with your key. The id is stable, so you can store it and link to it."
+    },
+    "requestLanguage": "Request language",
+    "alternates_one": "The same hymn is also filed under {{n}} other id: <ids/>. Each returns the same text under its own deity.",
+    "alternates_other": "The same hymn is also filed under {{n}} other ids: <ids/>. Each returns the same text under its own deity.",
+    "verseByVerse": "{{title}}, verse by verse",
+    "shownFirst": "The first {{n}} of {{total}} verses, exactly as <code>verses[]</code> returns them.",
+    "shownAll_one": "The verse, exactly as <code>verses[]</code> returns it.",
+    "shownAll_other": "All {{n}} verses, exactly as <code>verses[]</code> returns them.",
+    "script": "Script",
+    "hideJson": "Hide JSON",
+    "more_one": "{{n}} more verse with a key",
+    "more_other": "{{n}} more verses with a key",
+    "moreCopy": "Your app gets all {{n}} verses from <endpoint/>.",
+    "endpointRef": "Mantra endpoint reference",
+    "audioGuide": "Audio playback guide",
+    "details": "Mantra details",
+    "glance": "At a glance",
+    "mantraId": "Mantra id",
+    "deity": "Deity",
+    "category": "Category",
+    "source": "Source",
+    "yes": "Yes",
+    "no": "No",
+    "audioCopy": "Your server asks for a signed link and passes it to your player. Links expire after 15 minutes and count toward your plan’s monthly audio allowance.",
+    "noAudio": "This mantra has no recording, so <code>audio</code> is <code>null</code>. Hide the player when it is.",
+    "promo": {
+      "title": "Put {{title}} in your app",
+      "copy": "500 free calls a month with no card. Live keys from {{price}} a month include the full catalog and astrology.",
+      "pricing": "See pricing"
+    },
+    "response": {
+      "title": "The exact JSON your app receives.",
+      "first_one": "The first {{n}} verse of {{total}} is shown.",
+      "first_other": "The first {{n}} verses of {{total}} are shown.",
+      "fields": "Every field is listed beside it.",
+      "link": "Recording link · placeholder",
+      "label": "Fields returned for {{title}}",
+      "field": "Field",
+      "type": "Type",
+      "value": "Value for this mantra"
+    },
+    "related": {
+      "kicker": "More from the {{name}} collection",
+      "title_one": "{{n}} {{name}} mantra, same shape.",
+      "title_other": "{{n}} {{name}} mantras, same shape."
+    },
+    "library": "Mantra library",
+    "closing": {
+      "title": "Begin with a free sandbox key."
+    },
+    "deityPage": {
+      "lede_one": "{{n}} mantra and stotras for {{name}}, each with its Sanskrit text, transliteration and API response.",
+      "lede_other": "{{n}} mantras and stotras for {{name}}, each with its Sanskrit text, transliteration and API response.",
+      "every": "Mantras for every deity",
+      "list": "List them with the API",
+      "filter": "Filter the list by deity id <code>{{id}}</code>. Pages are ordered by id; pass <code>nextCursor</code> back as <code>cursor</code> for the next page.",
+      "excerpt": "Illustrative response excerpt"
+    },
+    "listRef": "List endpoint reference"
+  },
+  "mantraHub": {
+    "title": "Every mantra, one request away.",
+    "lede": "Nearly {{records}} mantras and stotras in Devanagari with transliteration, about {{recordings}} with recordings. Filter by deity, then fetch any hymn by its stable id.",
+    "browse": "Browse the library",
+    "stats": {
+      "records": "mantras and stotras",
+      "recordings": "with recordings",
+      "deities": "deities"
+    },
+    "page2": "page 2",
+    "byDeity": {
+      "kicker": "By deity",
+      "title": "{{n}} deities. One filter.",
+      "copy": "Pick a deity to filter the list below, or pass the same id as <code>?deity=</code> in your request."
+    },
+    "more": "More",
+    "deityNav": "Mantra pages by deity",
+    "openDeity": "Open a deity’s page",
+    "featured": {
+      "kicker": "Most requested",
+      "title": "Start with the ones people chant most."
+    },
+    "all": {
+      "kicker": "All mantras",
+      "title": "Find a mantra by name.",
+      "searchLabel": "Search mantras by name",
+      "search": "Search by name",
+      "withRecording": "With recording",
+      "clear": "Clear the {{name}} filter",
+      "mantra": "Mantra",
+      "audio": "Audio",
+      "empty": "No mantras match. Try another name or clear the filters.",
+      "showing": "Showing {{n}} of {{total}} hymns",
+      "withARecording": "with a recording",
+      "sorted": "Sorted A to Z"
+    },
+    "list": {
+      "kicker": "List and filter",
+      "title": "Page through a deity’s mantras.",
+      "copy": "Each page holds up to 20 mantras with their ids, verse counts and whether a recording exists. Pass <code>nextCursor</code> back as <code>cursor</code> until it comes back null.",
+      "first": "first {{n}} of {{total}}"
+    },
+    "closing": {
+      "title": "Fetch your first mantra in a minute.",
+      "copy": "Every account starts with a sandbox key and sample mantras, so you can build before you subscribe."
+    }
+  },
+  "astroHindi": {
+    "docs": "Hindi responses: five operations answer in Hindi when you add <code>\"lang\": \"hi\"</code> or <code>\"language\": \"hi\"</code> under <code>parameters</code>. These are Daily Rashifal, Daily Rashifal for all signs, the Western daily sign horoscope, Daily Muhurat lookup and Moon sign compatibility. Codes and scores stay the same in both languages. Every other operation answers in English. The list is on the <link>Astrology page</link>.",
+    "title": "Hindi responses",
+    "body": "Add <code>{{field}}</code> under <code>parameters</code> to get {{localized}} in Hindi. Codes, scores and calculated values stay the same as in English.",
+    "fact": "Languages",
+    "both": "English, Hindi",
+    "english": "English",
+    "kicker": "Hindi",
+    "hubTitle": "Answer your users in Hindi",
+    "hubLede": "These operations return their readings, names and labels in Hindi when you add one field under parameters. Codes and scores stay the same as in English. Other operations answer in English.",
+    "ops": {
+      "vedic-daily-sign": "the reading and the rashi name",
+      "vedic-daily-bulk": "all twelve readings and rashi names",
+      "western-daily-sign": "the reading and its score explanations",
+      "vedic-muhurat": "the answer, period names and display labels",
+      "vedic-compatibility": "the messages and the sign and nakshatra names"
+    },
+    "card": "Returns {{localized}} in Hindi."
+  }
+}

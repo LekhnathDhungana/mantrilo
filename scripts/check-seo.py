@@ -1,0 +1,181 @@
+"""Check static HTML, links, metadata, structured data and index controls.
+
+Preview: python3 scripts/check-seo.py
+Production smoke test: python3 scripts/check-seo.py /tmp/export https://mantrilo.example
+The .example domain is a reserved test origin, not Mantrilo's production domain.
+"""
+import gzip
+import json
+from html.parser import HTMLParser
+from pathlib import Path
+import sys
+from urllib.parse import urlsplit
+import re
+import xml.etree.ElementTree as ET
+
+root = Path(sys.argv[1] if len(sys.argv) > 1 else 'dist')
+origin = sys.argv[2].rstrip('/') if len(sys.argv) > 2 else None
+manifest = json.loads(Path('src/data/seo-pages.json').read_text())
+guides = json.loads(Path('src/data/public-guides.json').read_text())
+for slug, guide in guides.items():
+    manifest[f'/docs/guides/{slug}'] = {
+        'title': guide['title'] + ' | Mantrilo',
+        'description': guide['description'],
+        'indexable': True,
+    }
+
+# Languages with their own /<code>/ copy of each page (src/i18n/locales.ts). English has none.
+locales = re.findall(r"code: '([a-z]{2})'", Path('src/i18n/locales.ts').read_text())
+assert locales[0] == 'en' and len(locales) == len(set(locales)), ('locales', locales)
+prefixed = [code for code in locales if code != 'en']
+def split_locale(route):
+    first = route.split('/')[1] if route != '/' else ''
+    if first in prefixed:
+        rest = route[len(first) + 1:]
+        return first, rest or '/'
+    return 'en', route
+
+class Page(HTMLParser):
+    def __init__(self, source):
+        super().__init__()
+        self.ids = set()
+        self.links = []
+        self.meta = {}
+        self.canonicals = []
+        self.alternates = []
+        self.h1_count = 0
+        self.title = ''
+        self.in_title = False
+        self.jsonld = []
+        self.in_jsonld = False
+        self.script_data = ''
+        self.language = None
+        self.feed(source)
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        if 'id' in a: self.ids.add(a['id'])
+        if tag == 'html': self.language = a.get('lang')
+        if tag == 'h1': self.h1_count += 1
+        if tag == 'title': self.in_title = True
+        if tag == 'a' and 'href' in a: self.links.append(a['href'])
+        if tag == 'meta':
+            key = a.get('name') or a.get('property')
+            if key:
+                assert key not in self.meta, f'Duplicate metadata: {key}'
+                self.meta[key] = a.get('content', '')
+        if tag == 'link' and a.get('rel') == 'canonical': self.canonicals.append(a['href'])
+        if tag == 'link' and a.get('rel') == 'alternate' and 'hreflang' in a:
+            self.alternates.append((a['hreflang'], a['href']))
+        if tag == 'script' and a.get('type') == 'application/ld+json':
+            self.in_jsonld = True
+            self.script_data = ''
+    def handle_data(self, value):
+        if self.in_title: self.title += value
+        if self.in_jsonld: self.script_data += value
+    def handle_endtag(self, tag):
+        if tag == 'title': self.in_title = False
+        if tag == 'script' and self.in_jsonld:
+            self.jsonld.append(json.loads(self.script_data))
+            self.in_jsonld = False
+
+# Every exported page is checked: the hand-written routes against seo-pages.json, the generated
+# catalog pages (astrology capabilities, books, mantras) against their own tags.
+reserved = {'404.html', '+not-found.html', '_sitemap.html'}
+exported = sorted(
+    '/' if f.relative_to(root).as_posix() == 'index.html' else '/' + f.relative_to(root).as_posix()[:-5]
+    for f in root.rglob('*.html')
+    if f.relative_to(root).as_posix() not in reserved and not f.relative_to(root).as_posix().startswith('_expo/')
+)
+missing = sorted(set(manifest) - set(exported))
+assert not missing, ('manifest routes not exported', missing)
+pages = {}
+link_count = 0
+for route in exported:
+    filename = 'index.html' if route == '/' else route.lstrip('/') + '.html'
+    page = Page((root / filename).read_text())
+    pages[route] = page
+    lang, english = split_locale(route)
+    # A translated page's title and description come from its locale file, so they are checked
+    # like a generated page's; its English original must exist.
+    if lang != 'en':
+        assert english in exported, (route, 'translated page without an English original')
+    expected = manifest.get(route) if lang == 'en' else None
+    if not expected:
+        expected = {
+            'title': page.title,
+            'description': page.meta.get('description', ''),
+            'indexable': page.meta.get('robots') == 'index,follow',
+        }
+        # A translated page keeps the suffix its English original has (/docs has none).
+        suffixed = manifest.get(english, {}).get('title', ' | Mantrilo').endswith(' | Mantrilo')
+        assert expected['title'].endswith(' | Mantrilo') == suffixed or (lang == 'en' and suffixed), (route, 'title', expected['title'])
+        assert len(expected['description']) >= 50, (route, 'description too short')
+    assert page.language == lang, (route, 'language', page.language)
+    translated = all(english == '/' and f'/{code}' in exported or f'/{code}{english}' in exported for code in prefixed)
+    if origin and translated:
+        expected_alternates = sorted(
+            [(code, origin + (english if code == 'en' else f'/{code}' + ('' if english == '/' else english))) for code in locales]
+            + [('x-default', origin + english)]
+        )
+        assert sorted(page.alternates) == expected_alternates, (route, 'hreflang', page.alternates)
+    else:
+        assert not page.alternates, (route, page.alternates)
+    assert page.title == expected['title'], (route, 'title', page.title)
+    # /blog-shell is the empty layout the blog server fills in; each blog page brings its own h1.
+    if route == '/blog-shell':
+        assert page.h1_count == 0 and not expected['indexable'], (route, 'blog shell')
+    else:
+        assert page.h1_count == 1, (route, 'primary heading', page.h1_count)
+    assert page.meta['description'] == expected['description'], (route, 'description')
+    for key in ['og:title', 'twitter:title']:
+        assert page.meta[key] == expected['title'], (route, key)
+    for key in ['og:description', 'twitter:description']:
+        assert page.meta[key] == expected['description'], (route, key)
+    assert page.meta['robots'] == ('index,follow' if origin and expected['indexable'] else 'noindex,follow'), (route, 'robots')
+    assert page.canonicals == ([origin + route] if origin else []), (route, 'canonical', page.canonicals)
+    if origin:
+        assert page.meta['og:url'] == origin + route
+        assert page.meta['og:image'] == origin + '/mantrilo-social.png', (route, 'social image')
+        assert page.meta['twitter:card'] == 'summary_large_image', (route, 'social card')
+        assert (root / 'mantrilo-social.png').is_file(), 'Missing social image file'
+        assert len(page.jsonld) == 1, (route, 'structured data absent')
+        graph = page.jsonld[0]['@graph']
+        assert graph[0]['@type'] == ('Organization' if english == '/' else 'BreadcrumbList'), (route, 'structured data')
+        assert 'AggregateRating' not in json.dumps(graph)
+    else:
+        assert not page.jsonld, (route, 'unconfigured origin must not emit invented structured URLs')
+# Titles and descriptions are unique within each language.
+for code in locales:
+    group = [p for r, p in pages.items() if split_locale(r)[0] == code]
+    assert len({p.title for p in group}) == len(group), (code, 'Duplicate titles')
+    assert len({p.meta['description'] for p in group}) == len(group), (code, 'Duplicate descriptions')
+for route, page in pages.items():
+    for href in page.links:
+        url = urlsplit(href)
+        if url.scheme or url.netloc: continue
+        target = url.path or route
+        # /blog is rendered live by the blog server (developer/server/blog.mjs), not exported.
+        if target == '/blog' or target.startswith('/blog/'):
+            assert not (root / 'blog.html').exists() and not (root / 'blog').exists(), (
+                'a static /blog export would hide the live blog behind Firebase Hosting'
+            )
+            continue
+        assert target in pages, (route, href, 'broken internal link')
+        if url.fragment: assert url.fragment in pages[target].ids, (route, href, 'missing anchor')
+        link_count += 1
+not_found = Page((root / '404.html').read_text())
+assert not_found.h1_count == 1 and not_found.meta['robots'].startswith('noindex')
+assert not not_found.canonicals
+assert not (root / '[page].html').exists(), 'Catch-all export remains'
+assert not (root / '_sitemap.html').exists(), 'Internal route exposed'
+urls = ET.parse(root / 'sitemap.xml').getroot()
+locations = [node.text for node in urls.iter('{http://www.sitemaps.org/schemas/sitemap/0.9}loc')]
+expected_urls = sorted(origin + route for route, page in pages.items() if page.meta['robots'] == 'index,follow') if origin else []
+assert locations == expected_urls, ('sitemap', sorted(set(locations) ^ set(expected_urls)))
+robots = (root / 'robots.txt').read_text()
+assert ('Allow: /' in robots and f'Sitemap: {origin}/sitemap.xml' in robots) if origin else ('Disallow: /' in robots)
+print(f'PASS: {len(pages)} routes, {link_count} internal links, unique metadata, one H1 per page, language, canonical/social tags, JSON-LD, robots, sitemap, and 404 artifact.')
+entry = list((root / '_expo/static/js/web').glob('entry-*.js'))
+for file in entry:
+    data = file.read_bytes()
+    print(f'Framework entry JS: {len(data):,} bytes raw; {len(gzip.compress(data)):,} bytes gzip (local file measurement, not real-user CWV).')
